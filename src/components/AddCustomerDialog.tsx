@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
 import { useCreateCustomer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
@@ -21,10 +22,10 @@ export function AddCustomerDialog() {
     phone: '',
     company: '',
     subscription_status: 'active',
-    subscription_plan: '',
+    has_live: false,
     subscription_start_date: '',
     subscription_end_date: '',
-    vod_plan: '',
+    has_vod: false,
     vod_start_date: '',
     vod_end_date: '',
   });
@@ -45,12 +46,12 @@ export function AddCustomerDialog() {
         phone: form.phone || null,
         company: form.company || null,
         subscription_status: form.subscription_status,
-        subscription_plan: form.subscription_plan || null,
-        subscription_start_date: form.subscription_start_date || null,
-        subscription_end_date: form.subscription_end_date || null,
-        vod_plan: form.vod_plan || null,
-        vod_start_date: form.vod_start_date || null,
-        vod_end_date: form.vod_end_date || null,
+        subscription_plan: form.has_live ? 'Active' : null,
+        subscription_start_date: form.has_live ? form.subscription_start_date || null : null,
+        subscription_end_date: form.has_live ? form.subscription_end_date || null : null,
+        vod_plan: form.has_vod ? 'Active' : null,
+        vod_start_date: form.has_vod ? form.vod_start_date || null : null,
+        vod_end_date: form.has_vod ? form.vod_end_date || null : null,
         custom_data: customData,
       } as any,
       {
@@ -63,10 +64,10 @@ export function AddCustomerDialog() {
             phone: '',
             company: '',
             subscription_status: 'active',
-            subscription_plan: '',
+            has_live: false,
             subscription_start_date: '',
             subscription_end_date: '',
-            vod_plan: '',
+            has_vod: false,
             vod_start_date: '',
             vod_end_date: '',
           });
@@ -150,73 +151,71 @@ export function AddCustomerDialog() {
           </div>
 
           <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium mb-3">LIVE Subscription</h4>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="live_plan">LIVE Plan</Label>
-                <Input
-                  id="live_plan"
-                  value={form.subscription_plan}
-                  onChange={(e) => setForm({ ...form, subscription_plan: e.target.value })}
-                  placeholder="e.g., Professional"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="live_start_date">Start Date</Label>
-                <Input
-                  id="live_start_date"
-                  type="date"
-                  value={form.subscription_start_date}
-                  onChange={(e) => setForm({ ...form, subscription_start_date: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="live_end_date">Expiry Date</Label>
-                <Input
-                  id="live_end_date"
-                  type="date"
-                  value={form.subscription_end_date}
-                  onChange={(e) => setForm({ ...form, subscription_end_date: e.target.value })}
-                />
-              </div>
+            <div className="flex items-center space-x-2 mb-3">
+              <Checkbox
+                id="has_live"
+                checked={form.has_live}
+                onCheckedChange={(checked) => setForm({ ...form, has_live: checked as boolean })}
+              />
+              <Label htmlFor="has_live" className="font-medium">LIVE Subscription</Label>
             </div>
+            {form.has_live && (
+              <div className="space-y-4 ml-6">
+                <div className="space-y-2">
+                  <Label htmlFor="live_start_date">Start Date</Label>
+                  <Input
+                    id="live_start_date"
+                    type="date"
+                    value={form.subscription_start_date}
+                    onChange={(e) => setForm({ ...form, subscription_start_date: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="live_end_date">Expiry Date</Label>
+                  <Input
+                    id="live_end_date"
+                    type="date"
+                    value={form.subscription_end_date}
+                    onChange={(e) => setForm({ ...form, subscription_end_date: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium mb-3">VOD Subscription</h4>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="vod_plan">VOD Plan</Label>
-                <Input
-                  id="vod_plan"
-                  value={form.vod_plan}
-                  onChange={(e) => setForm({ ...form, vod_plan: e.target.value })}
-                  placeholder="e.g., Premium"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="vod_start_date">Start Date</Label>
-                <Input
-                  id="vod_start_date"
-                  type="date"
-                  value={form.vod_start_date}
-                  onChange={(e) => setForm({ ...form, vod_start_date: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="vod_end_date">Expiry Date</Label>
-                <Input
-                  id="vod_end_date"
-                  type="date"
-                  value={form.vod_end_date}
-                  onChange={(e) => setForm({ ...form, vod_end_date: e.target.value })}
-                />
-              </div>
+            <div className="flex items-center space-x-2 mb-3">
+              <Checkbox
+                id="has_vod"
+                checked={form.has_vod}
+                onCheckedChange={(checked) => setForm({ ...form, has_vod: checked as boolean })}
+              />
+              <Label htmlFor="has_vod" className="font-medium">VOD Subscription</Label>
             </div>
+            {form.has_vod && (
+              <div className="space-y-4 ml-6">
+                <div className="space-y-2">
+                  <Label htmlFor="vod_start_date">Start Date</Label>
+                  <Input
+                    id="vod_start_date"
+                    type="date"
+                    value={form.vod_start_date}
+                    onChange={(e) => setForm({ ...form, vod_start_date: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="vod_end_date">Expiry Date</Label>
+                  <Input
+                    id="vod_end_date"
+                    type="date"
+                    value={form.vod_end_date}
+                    onChange={(e) => setForm({ ...form, vod_end_date: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {customFields.map((field) => (

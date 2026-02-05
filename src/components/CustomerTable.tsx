@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Check, X } from 'lucide-react';
 
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import { useCustomFields } from '@/hooks/useCustomFields';
@@ -185,8 +185,12 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                   </TableCell>
                 )}
                 {visibleColumns.includes('subscription_plan') && (
-                  <TableCell>
-                    <span className="font-medium">{customer.subscription_plan || '-'}</span>
+                  <TableCell className="text-center">
+                    {customer.subscription_plan ? (
+                      <Check className="h-5 w-5 text-green-500 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-red-500 mx-auto" />
+                    )}
                   </TableCell>
                 )}
                 {visibleColumns.includes('subscription_start_date') && (
@@ -204,8 +208,12 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                   </TableCell>
                 )}
                 {visibleColumns.includes('vod_plan') && (
-                  <TableCell>
-                    <span className="font-medium">{(customer as any).vod_plan || '-'}</span>
+                  <TableCell className="text-center">
+                    {(customer as any).vod_plan ? (
+                      <Check className="h-5 w-5 text-green-500 mx-auto" />
+                    ) : (
+                      <X className="h-5 w-5 text-red-500 mx-auto" />
+                    )}
                   </TableCell>
                 )}
                 {visibleColumns.includes('vod_start_date') && (
