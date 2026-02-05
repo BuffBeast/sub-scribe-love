@@ -20,19 +20,25 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmail(to: string, subject: string, html: string, replyTo?: string | null) {
+  const emailPayload: Record<string, unknown> = {
+    from: "Subscription Reminder <noreply@yourdomain.com>", // Update with your verified domain
+    to: [to],
+    subject,
+    html,
+  };
+
+  if (replyTo) {
+    emailPayload.reply_to = replyTo;
+  }
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${RESEND_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      from: "Subscription Reminder <noreply@yourdomain.com>", // Update with your verified domain
-      to: [to],
-      subject,
-      html,
-    }),
+    body: JSON.stringify(emailPayload),
   });
   return response.json();
 }
@@ -85,10 +91,12 @@ serve(async (req: Request): Promise<Response> => {
       let subject = "Your subscription expires in 30 days";
       let messageTemplate = `Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!`;
 
+      let replyToEmail: string | null = null;
+
       if (customer.user_id) {
         const { data: settings } = await supabase
           .from('app_settings')
-          .select('reminder_subject, reminder_message')
+          .select('reminder_subject, reminder_message, reply_to_email')
           .eq('user_id', customer.user_id)
           .maybeSingle();
 
@@ -97,6 +105,9 @@ serve(async (req: Request): Promise<Response> => {
         }
         if (settings?.reminder_message) {
           messageTemplate = settings.reminder_message;
+        }
+        if (settings?.reply_to_email) {
+          replyToEmail = settings.reply_to_email;
         }
       }
 
@@ -119,7 +130,7 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(customer.email, subject, html);
+        const result = await sendEmail(customer.email, subject, html, replyToEmail);
         emailResults.push({ email: customer.email, success: true, result });
       } catch (e) {
         emailResults.push({ email: customer.email, success: false, error: String(e) });

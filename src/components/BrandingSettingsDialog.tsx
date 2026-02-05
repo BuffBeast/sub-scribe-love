@@ -27,6 +27,7 @@ export function BrandingSettingsDialog() {
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
   const [reminderSubject, setReminderSubject] = useState('');
   const [reminderMessage, setReminderMessage] = useState('');
+  const [replyToEmail, setReplyToEmail] = useState('');
   const [themeColor, setThemeColor] = useState<ThemeColor>('purple');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +43,7 @@ export function BrandingSettingsDialog() {
       setPendingLogoFile(null);
       setReminderSubject(settings.reminder_subject || 'Your subscription expires in 30 days');
       setReminderMessage(settings.reminder_message || 'Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!');
+      setReplyToEmail((settings as any).reply_to_email || '');
       setThemeColor((settings.theme_color as ThemeColor) || 'purple');
     }
   }, [settings, open]);
@@ -95,6 +97,7 @@ export function BrandingSettingsDialog() {
       tagline,
       reminderSubject,
       reminderMessage,
+      replyToEmail: replyToEmail.trim() || null,
       themeColor,
     });
     setOpen(false);
@@ -198,6 +201,20 @@ export function BrandingSettingsDialog() {
           </TabsContent>
 
           <TabsContent value="reminders" className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="replyToEmail">Reply-To Email (optional)</Label>
+              <Input
+                id="replyToEmail"
+                type="email"
+                value={replyToEmail}
+                onChange={(e) => setReplyToEmail(e.target.value)}
+                placeholder="replies@yourcompany.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                When customers reply to reminder emails, replies will go to this address
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="reminderSubject">Email Subject</Label>
               <Input
