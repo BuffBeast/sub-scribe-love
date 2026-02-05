@@ -14,7 +14,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useDeleteCustomer } from '@/hooks/useCustomers';
@@ -33,7 +33,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Default columns to show when no visibility settings exist
-  const defaultColumns = ['name', 'email', 'company', 'subscription_plan', 'subscription_status', 'last_contact_date', 'total_spent'];
+  const defaultColumns = ['name', 'email', 'company', 'subscription_plan', 'subscription_status', 'subscription_start_date', 'subscription_end_date'];
   
   // If no column visibility settings exist, show all default columns
   const visibleColumns = columns.length > 0 
@@ -52,14 +52,6 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
       .toUpperCase();
   };
 
-  const formatCurrency = (amount: number | null) => {
-    if (amount === null) return '$0';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -140,8 +132,8 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
               {visibleColumns.includes('company') && <TableHead className="font-semibold">Company</TableHead>}
               {visibleColumns.includes('subscription_plan') && <TableHead className="font-semibold">Plan</TableHead>}
               {visibleColumns.includes('subscription_status') && <TableHead className="font-semibold">Status</TableHead>}
-              {visibleColumns.includes('last_contact_date') && <TableHead className="font-semibold">Last Contact</TableHead>}
-              {visibleColumns.includes('total_spent') && <TableHead className="font-semibold text-right">Total Spent</TableHead>}
+              {visibleColumns.includes('subscription_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
+              {visibleColumns.includes('subscription_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
               {visibleCustomFields.map((field) => (
                 <TableHead key={field.id} className="font-semibold">{field.name}</TableHead>
               ))}
@@ -202,16 +194,18 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     <StatusBadge status={customer.subscription_status as any || 'active'} />
                   </TableCell>
                 )}
-                {visibleColumns.includes('last_contact_date') && (
+                {visibleColumns.includes('subscription_start_date') && (
                   <TableCell className="text-muted-foreground">
-                    {customer.last_contact_date
-                      ? formatDistanceToNow(new Date(customer.last_contact_date), { addSuffix: true })
+                    {customer.subscription_start_date
+                      ? new Date(customer.subscription_start_date).toLocaleDateString()
                       : '-'}
                   </TableCell>
                 )}
-                {visibleColumns.includes('total_spent') && (
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(customer.total_spent)}
+                {visibleColumns.includes('subscription_end_date') && (
+                  <TableCell className="text-muted-foreground">
+                    {customer.subscription_end_date
+                      ? new Date(customer.subscription_end_date).toLocaleDateString()
+                      : '-'}
                   </TableCell>
                 )}
                 {visibleCustomFields.map((field) => (

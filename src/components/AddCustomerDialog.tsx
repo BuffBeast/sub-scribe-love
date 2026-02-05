@@ -22,7 +22,8 @@ export function AddCustomerDialog() {
     company: '',
     subscription_status: 'active',
     subscription_plan: '',
-    total_spent: '',
+    subscription_start_date: '',
+    subscription_end_date: '',
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -42,7 +43,8 @@ export function AddCustomerDialog() {
         company: form.company || null,
         subscription_status: form.subscription_status,
         subscription_plan: form.subscription_plan || null,
-        total_spent: form.total_spent ? parseFloat(form.total_spent) : 0,
+        subscription_start_date: form.subscription_start_date || null,
+        subscription_end_date: form.subscription_end_date || null,
         custom_data: customData,
       },
       {
@@ -56,7 +58,8 @@ export function AddCustomerDialog() {
             company: '',
             subscription_status: 'active',
             subscription_plan: '',
-            total_spent: '',
+            subscription_start_date: '',
+            subscription_end_date: '',
           });
           setCustomData({});
         },
@@ -148,13 +151,22 @@ export function AddCustomerDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="spent">Total Spent</Label>
+            <Label htmlFor="start_date">Start Date</Label>
             <Input
-              id="spent"
-              type="number"
-              value={form.total_spent}
-              onChange={(e) => setForm({ ...form, total_spent: e.target.value })}
-              placeholder="0"
+              id="start_date"
+              type="date"
+              value={form.subscription_start_date}
+              onChange={(e) => setForm({ ...form, subscription_start_date: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="end_date">Expiry Date</Label>
+            <Input
+              id="end_date"
+              type="date"
+              value={form.subscription_end_date}
+              onChange={(e) => setForm({ ...form, subscription_end_date: e.target.value })}
             />
           </div>
 
