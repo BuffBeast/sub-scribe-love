@@ -10,6 +10,7 @@ import { MetricCard } from '@/components/MetricCard';
 import { CustomerTable } from '@/components/CustomerTable';
 import { MobileCustomerCard } from '@/components/MobileCustomerCard';
 import { MobileHeader } from '@/components/MobileHeader';
+import { PullToRefresh } from '@/components/PullToRefresh';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterTabs } from '@/components/FilterTabs';
 import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
@@ -27,7 +28,7 @@ const Index = () => {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const { data: customers = [], isLoading } = useCustomers();
+  const { data: customers = [], isLoading, refetch } = useCustomers();
   const { data: customFields = [] } = useCustomFields();
   const { data: appSettings } = useAppSettings();
   const { signOut } = useAuth();
@@ -94,10 +95,14 @@ const Index = () => {
     });
   };
 
+  const handleRefresh = async () => {
+    await refetch();
+  };
+
   // Mobile layout
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-ghost-gradient">
+      <div className="min-h-screen bg-ghost-gradient flex flex-col">
         <MobileHeader
           displayName={displayName}
           displayLogo={displayLogo}
@@ -107,70 +112,72 @@ const Index = () => {
           signOut={signOut}
         />
 
-        <main className="px-4 py-4 space-y-4">
-          {/* Compact Metrics */}
-          <div className="grid grid-cols-2 gap-3">
-            <MetricCard
-              title="Total"
-              value={metrics.totalCustomers}
-              icon={Users}
-            />
-            <MetricCard
-              title="Live"
-              value={metrics.activeLive}
-              icon={Tv}
-            />
-            <MetricCard
-              title="VOD"
-              value={metrics.activeVod}
-              icon={Video}
-            />
-            <MetricCard
-              title="Trial"
-              value={metrics.trialCustomers}
-              icon={Clock}
-            />
-          </div>
-
-          {/* Search and Filters */}
-          <div className="space-y-3">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
-            <div className="overflow-x-auto -mx-4 px-4">
-              <FilterTabs
-                value={statusFilter}
-                onChange={setStatusFilter}
-                counts={statusCounts}
+        <PullToRefresh onRefresh={handleRefresh} className="flex-1">
+          <main className="px-4 py-4 space-y-4">
+            {/* Compact Metrics */}
+            <div className="grid grid-cols-2 gap-3">
+              <MetricCard
+                title="Total"
+                value={metrics.totalCustomers}
+                icon={Users}
+              />
+              <MetricCard
+                title="Live"
+                value={metrics.activeLive}
+                icon={Tv}
+              />
+              <MetricCard
+                title="VOD"
+                value={metrics.activeVod}
+                icon={Video}
+              />
+              <MetricCard
+                title="Trial"
+                value={metrics.trialCustomers}
+                icon={Clock}
               />
             </div>
-          </div>
 
-          {/* Customer Cards */}
-          <div className="space-y-3">
-            {isLoading ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Loading customers...</p>
-              </div>
-            ) : filteredCustomers.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  {customers.length === 0
-                    ? 'No customers yet. Add your first customer!'
-                    : 'No customers found matching your criteria.'}
-                </p>
-              </div>
-            ) : (
-              filteredCustomers.map((customer) => (
-                <MobileCustomerCard
-                  key={customer.id}
-                  customer={customer}
-                  selected={selectedIds.has(customer.id)}
-                  onSelect={toggleSelect}
-                  onClick={(c) => setEditingCustomer(c)}
+            {/* Search and Filters */}
+            <div className="space-y-3">
+              <SearchBar value={searchQuery} onChange={setSearchQuery} />
+              <div className="overflow-x-auto -mx-4 px-4">
+                <FilterTabs
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  counts={statusCounts}
                 />
-              ))
-            )}
-          </div>
-        </main>
+              </div>
+            </div>
+
+            {/* Customer Cards */}
+            <div className="space-y-3">
+              {isLoading ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Loading customers...</p>
+                </div>
+              ) : filteredCustomers.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    {customers.length === 0
+                      ? 'No customers yet. Add your first customer!'
+                      : 'No customers found matching your criteria.'}
+                  </p>
+                </div>
+              ) : (
+                filteredCustomers.map((customer) => (
+                  <MobileCustomerCard
+                    key={customer.id}
+                    customer={customer}
+                    selected={selectedIds.has(customer.id)}
+                    onSelect={toggleSelect}
+                    onClick={(c) => setEditingCustomer(c)}
+                  />
+                ))
+              )}
+            </div>
+          </main>
+        </PullToRefresh>
 
         <EditCustomerDialog
           customer={editingCustomer}
