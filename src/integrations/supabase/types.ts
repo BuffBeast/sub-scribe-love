@@ -23,6 +23,7 @@ export type Database = {
           reminder_message: string | null
           reminder_subject: string | null
           tagline: string | null
+          theme_color: string | null
           updated_at: string
           user_id: string | null
         }
@@ -34,6 +35,7 @@ export type Database = {
           reminder_message?: string | null
           reminder_subject?: string | null
           tagline?: string | null
+          theme_color?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -45,6 +47,7 @@ export type Database = {
           reminder_message?: string | null
           reminder_subject?: string | null
           tagline?: string | null
+          theme_color?: string | null
           updated_at?: string
           user_id?: string | null
         }

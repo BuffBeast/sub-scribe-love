@@ -5,6 +5,7 @@ import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useThemeColor } from '@/hooks/useThemeColor';
 import { MetricCard } from '@/components/MetricCard';
 import { CustomerTable } from '@/components/CustomerTable';
 import { MobileCustomerCard } from '@/components/MobileCustomerCard';
@@ -31,6 +32,7 @@ const Index = () => {
   const { data: appSettings } = useAppSettings();
   const { signOut } = useAuth();
   const isMobile = useIsMobile();
+  useThemeColor(); // Apply theme color
 
   const displayName = appSettings?.app_name || 'Customer Tracker';
   const displayLogo = appSettings?.logo_url || letsStreamLogo;
