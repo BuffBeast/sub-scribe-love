@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Settings, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,6 +67,20 @@ export function BrandingSettingsDialog() {
   };
 
   const handleSave = async () => {
+    // Validate required fields
+    if (!appName.trim()) {
+      toast.error('App name is required');
+      return;
+    }
+    if (!reminderSubject.trim()) {
+      toast.error('Email subject is required');
+      return;
+    }
+    if (!reminderMessage.trim()) {
+      toast.error('Email message is required');
+      return;
+    }
+
     let logoUrl = settings?.logo_url ?? null;
 
     if (pendingLogoFile) {
