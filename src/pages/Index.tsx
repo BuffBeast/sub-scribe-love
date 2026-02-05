@@ -44,8 +44,8 @@ const Index = () => {
   const statusCounts = useMemo(() => {
     return {
       all: customers.length,
-      active: customers.filter(c => c.subscription_status === 'active').length,
-      trial: customers.filter(c => c.subscription_status === 'trial').length,
+      active: customers.filter(c => c.subscription_status === 'active' && !c.has_trial).length,
+      trial: customers.filter(c => c.has_trial === true).length,
       expired: customers.filter(c => c.subscription_status === 'expired').length,
       cancelled: customers.filter(c => c.subscription_status === 'cancelled').length,
     };
@@ -59,7 +59,16 @@ const Index = () => {
         (customer.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (customer.company?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
-      const matchesStatus = statusFilter === 'all' || customer.subscription_status === statusFilter;
+      let matchesStatus = false;
+      if (statusFilter === 'all') {
+        matchesStatus = true;
+      } else if (statusFilter === 'trial') {
+        matchesStatus = customer.has_trial === true;
+      } else if (statusFilter === 'active') {
+        matchesStatus = customer.subscription_status === 'active' && !customer.has_trial;
+      } else {
+        matchesStatus = customer.subscription_status === statusFilter;
+      }
 
       return matchesSearch && matchesStatus;
     });
