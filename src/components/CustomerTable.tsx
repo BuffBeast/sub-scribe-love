@@ -33,7 +33,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Default columns to show when no visibility settings exist
-  const defaultColumns = ['name', 'email', 'company', 'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'vod_plan', 'vod_start_date', 'vod_end_date', 'subscription_status'];
+  const defaultColumns = ['name', 'email', 'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'vod_plan', 'vod_start_date', 'vod_end_date', 'company', 'subscription_status'];
   
   // If no column visibility settings exist, show all default columns
   const visibleColumns = columns.length > 0 
@@ -129,13 +129,13 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 />
               </TableHead>
               {visibleColumns.includes('name') && <TableHead className="font-semibold">Customer</TableHead>}
-              {visibleColumns.includes('company') && <TableHead className="font-semibold">Company</TableHead>}
               {visibleColumns.includes('subscription_plan') && <TableHead className="font-semibold">LIVE</TableHead>}
               {visibleColumns.includes('subscription_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
               {visibleColumns.includes('subscription_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
               {visibleColumns.includes('vod_plan') && <TableHead className="font-semibold">VOD</TableHead>}
               {visibleColumns.includes('vod_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
               {visibleColumns.includes('vod_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
+              {visibleColumns.includes('company') && <TableHead className="font-semibold">Plan Cost</TableHead>}
               {visibleColumns.includes('subscription_status') && <TableHead className="font-semibold">Status</TableHead>}
               {visibleCustomFields.map((field) => (
                 <TableHead key={field.id} className="font-semibold">{field.name}</TableHead>
@@ -184,9 +184,6 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </div>
                   </TableCell>
                 )}
-                {visibleColumns.includes('company') && (
-                  <TableCell className="text-muted-foreground">{customer.company || '-'}</TableCell>
-                )}
                 {visibleColumns.includes('subscription_plan') && (
                   <TableCell>
                     <span className="font-medium">{customer.subscription_plan || '-'}</span>
@@ -224,6 +221,9 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                       ? new Date((customer as any).vod_end_date).toLocaleDateString()
                       : '-'}
                   </TableCell>
+                )}
+                {visibleColumns.includes('company') && (
+                  <TableCell className="text-muted-foreground">{customer.company || '-'}</TableCell>
                 )}
                 {visibleColumns.includes('subscription_status') && (
                   <TableCell>

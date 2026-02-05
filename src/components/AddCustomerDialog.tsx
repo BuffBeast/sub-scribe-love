@@ -125,12 +125,12 @@ export function AddCustomerDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="company">Company</Label>
+            <Label htmlFor="company">Plan Cost</Label>
             <Input
               id="company"
               value={form.company}
               onChange={(e) => setForm({ ...form, company: e.target.value })}
-              placeholder="Company name"
+              placeholder="e.g., $99/month"
             />
           </div>
 
