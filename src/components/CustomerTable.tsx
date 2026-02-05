@@ -33,7 +33,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Default columns to show when no visibility settings exist
-  const defaultColumns = ['name', 'email', 'company', 'subscription_plan', 'subscription_status', 'subscription_start_date', 'subscription_end_date'];
+  const defaultColumns = ['name', 'email', 'company', 'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'vod_plan', 'vod_start_date', 'vod_end_date', 'subscription_status'];
   
   // If no column visibility settings exist, show all default columns
   const visibleColumns = columns.length > 0 
@@ -130,10 +130,13 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
               </TableHead>
               {visibleColumns.includes('name') && <TableHead className="font-semibold">Customer</TableHead>}
               {visibleColumns.includes('company') && <TableHead className="font-semibold">Company</TableHead>}
-              {visibleColumns.includes('subscription_plan') && <TableHead className="font-semibold">Plan</TableHead>}
-              {visibleColumns.includes('subscription_status') && <TableHead className="font-semibold">Status</TableHead>}
+              {visibleColumns.includes('subscription_plan') && <TableHead className="font-semibold">LIVE</TableHead>}
               {visibleColumns.includes('subscription_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
               {visibleColumns.includes('subscription_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
+              {visibleColumns.includes('vod_plan') && <TableHead className="font-semibold">VOD</TableHead>}
+              {visibleColumns.includes('vod_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
+              {visibleColumns.includes('vod_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
+              {visibleColumns.includes('subscription_status') && <TableHead className="font-semibold">Status</TableHead>}
               {visibleCustomFields.map((field) => (
                 <TableHead key={field.id} className="font-semibold">{field.name}</TableHead>
               ))}
@@ -189,11 +192,6 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     <span className="font-medium">{customer.subscription_plan || '-'}</span>
                   </TableCell>
                 )}
-                {visibleColumns.includes('subscription_status') && (
-                  <TableCell>
-                    <StatusBadge status={customer.subscription_status as any || 'active'} />
-                  </TableCell>
-                )}
                 {visibleColumns.includes('subscription_start_date') && (
                   <TableCell className="text-muted-foreground">
                     {customer.subscription_start_date
@@ -206,6 +204,30 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     {customer.subscription_end_date
                       ? new Date(customer.subscription_end_date).toLocaleDateString()
                       : '-'}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('vod_plan') && (
+                  <TableCell>
+                    <span className="font-medium">{(customer as any).vod_plan || '-'}</span>
+                  </TableCell>
+                )}
+                {visibleColumns.includes('vod_start_date') && (
+                  <TableCell className="text-muted-foreground">
+                    {(customer as any).vod_start_date
+                      ? new Date((customer as any).vod_start_date).toLocaleDateString()
+                      : '-'}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('vod_end_date') && (
+                  <TableCell className="text-muted-foreground">
+                    {(customer as any).vod_end_date
+                      ? new Date((customer as any).vod_end_date).toLocaleDateString()
+                      : '-'}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('subscription_status') && (
+                  <TableCell>
+                    <StatusBadge status={customer.subscription_status as any || 'active'} />
                   </TableCell>
                 )}
                 {visibleCustomFields.map((field) => (
