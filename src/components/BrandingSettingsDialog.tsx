@@ -3,6 +3,8 @@ import { Settings, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,8 @@ export function BrandingSettingsDialog() {
   const [appName, setAppName] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
+  const [reminderSubject, setReminderSubject] = useState('');
+  const [reminderMessage, setReminderMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: settings } = useAppSettings();
@@ -31,6 +35,8 @@ export function BrandingSettingsDialog() {
       setAppName(settings.app_name);
       setLogoPreview(settings.logo_url);
       setPendingLogoFile(null);
+      setReminderSubject(settings.reminder_subject || 'Your subscription expires in 30 days');
+      setReminderMessage(settings.reminder_message || 'Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!');
     }
   }, [settings, open]);
 
@@ -63,7 +69,12 @@ export function BrandingSettingsDialog() {
       logoUrl = null;
     }
 
-    await updateSettings.mutateAsync({ appName, logoUrl });
+    await updateSettings.mutateAsync({ 
+      appName, 
+      logoUrl,
+      reminderSubject,
+      reminderMessage,
+    });
     setOpen(false);
   };
 
@@ -77,68 +88,101 @@ export function BrandingSettingsDialog() {
           <Settings className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Branding Settings</DialogTitle>
+          <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
-            Customize your app name and logo
+            Customize your branding and email reminders
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="appName">App Name</Label>
-            <Input
-              id="appName"
-              value={appName}
-              onChange={(e) => setAppName(e.target.value)}
-              placeholder="Enter app name"
-            />
-          </div>
+        <Tabs defaultValue="branding" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="branding">Branding</TabsTrigger>
+            <TabsTrigger value="reminders">Email Reminders</TabsTrigger>
+          </TabsList>
 
-          <div className="space-y-2">
-            <Label>Logo</Label>
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <img
-                  src={currentLogo}
-                  alt="Logo preview"
-                  className="h-16 w-16 rounded-full object-cover border-2 border-border"
-                />
-                {logoPreview && (
-                  <button
+          <TabsContent value="branding" className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="appName">App Name</Label>
+              <Input
+                id="appName"
+                value={appName}
+                onChange={(e) => setAppName(e.target.value)}
+                placeholder="Enter app name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Logo</Label>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <img
+                    src={currentLogo}
+                    alt="Logo preview"
+                    className="h-16 w-16 rounded-full object-cover border-2 border-border"
+                  />
+                  {logoPreview && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="logo-upload"
+                  />
+                  <Button
                     type="button"
-                    onClick={handleRemoveLogo}
-                    className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
-              <div className="flex-1">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="logo-upload"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Logo
-                </Button>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Recommended: Square image, at least 128x128px
-                </p>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Logo
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Recommended: Square image, at least 128x128px
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="reminders" className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reminderSubject">Email Subject</Label>
+              <Input
+                id="reminderSubject"
+                value={reminderSubject}
+                onChange={(e) => setReminderSubject(e.target.value)}
+                placeholder="Your subscription expires in 30 days"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reminderMessage">Email Message</Label>
+              <Textarea
+                id="reminderMessage"
+                value={reminderMessage}
+                onChange={(e) => setReminderMessage(e.target.value)}
+                placeholder="Enter your reminder message..."
+                rows={8}
+              />
+              <p className="text-xs text-muted-foreground">
+                Available placeholders: {'{name}'}, {'{plan}'}, {'{date}'}
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>

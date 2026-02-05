@@ -52,9 +52,10 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Checking for customers expiring on: ${targetDate}`);
 
+    // Get customers expiring in 30 days with reminders enabled
     const { data: customers, error } = await supabase
       .from('customers')
-      .select('id, name, email, subscription_plan, subscription_end_date, reminders_enabled')
+      .select('id, name, email, subscription_plan, subscription_end_date, reminders_enabled, user_id')
       .eq('subscription_end_date', targetDate)
       .eq('reminders_enabled', true)
       .not('email', 'is', null);
@@ -68,18 +69,40 @@ serve(async (req: Request): Promise<Response> => {
     for (const customer of customers || []) {
       if (!customer.email) continue;
 
+      // Fetch user's custom reminder settings
+      let subject = "Your subscription expires in 30 days";
+      let messageTemplate = `Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!`;
+
+      if (customer.user_id) {
+        const { data: settings } = await supabase
+          .from('app_settings')
+          .select('reminder_subject, reminder_message')
+          .eq('user_id', customer.user_id)
+          .maybeSingle();
+
+        if (settings?.reminder_subject) {
+          subject = settings.reminder_subject;
+        }
+        if (settings?.reminder_message) {
+          messageTemplate = settings.reminder_message;
+        }
+      }
+
+      // Replace placeholders
+      const formattedDate = new Date(customer.subscription_end_date).toLocaleDateString();
+      const messageBody = messageTemplate
+        .replace(/\{name\}/g, customer.name)
+        .replace(/\{plan\}/g, customer.subscription_plan || 'subscription')
+        .replace(/\{date\}/g, formattedDate);
+
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #333;">Subscription Renewal Reminder</h1>
-          <p>Hi ${customer.name},</p>
-          <p>Your <strong>${customer.subscription_plan || 'subscription'}</strong> expires on <strong>${new Date(customer.subscription_end_date).toLocaleDateString()}</strong>.</p>
-          <p>Please renew to continue your service.</p>
-          <p>Thank you!</p>
+          ${messageBody.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}
         </div>
       `;
 
       try {
-        const result = await sendEmail(customer.email, "Your subscription expires in 30 days", html);
+        const result = await sendEmail(customer.email, subject, html);
         emailResults.push({ email: customer.email, success: true, result });
       } catch (e) {
         emailResults.push({ email: customer.email, success: false, error: String(e) });

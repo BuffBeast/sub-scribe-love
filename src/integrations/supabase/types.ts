@@ -20,6 +20,8 @@ export type Database = {
           created_at: string
           id: string
           logo_url: string | null
+          reminder_message: string | null
+          reminder_subject: string | null
           updated_at: string
           user_id: string | null
         }
@@ -28,6 +30,8 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
+          reminder_message?: string | null
+          reminder_subject?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -36,6 +40,8 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
+          reminder_message?: string | null
+          reminder_subject?: string | null
           updated_at?: string
           user_id?: string | null
         }
