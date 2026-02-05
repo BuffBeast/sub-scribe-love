@@ -104,7 +104,7 @@ export default function Auth() {
           <div className="flex justify-center mb-4">
             <img src={letsStreamLogo} alt="Let's Stream logo" className="h-40 w-auto object-contain drop-shadow-xl" />
           </div>
-          <CardTitle className="text-2xl text-gradient">Let's Stream Customer Tracker</CardTitle>
+          
           <CardDescription className="text-blue-900 font-semibold text-lg">Customer Tracker</CardDescription>
         </CardHeader>
         <CardContent>
