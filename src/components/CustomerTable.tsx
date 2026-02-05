@@ -119,6 +119,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
       )}
 
       <Card className="shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -205,7 +206,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     }}
                   >
                     {customer.has_trial ? (
-                      <Check className="h-5 w-5 text-green-500" />
+                      <Check className="h-5 w-5 text-success" />
                     ) : (
                       <X className="h-5 w-5 text-muted-foreground" />
                     )}
@@ -225,9 +226,9 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                       }}
                     >
                       {customer.subscription_plan ? (
-                        <Check className="h-5 w-5 text-green-500" />
+                        <Check className="h-5 w-5 text-success" />
                       ) : (
-                        <X className="h-5 w-5 text-red-500" />
+                        <X className="h-5 w-5 text-destructive" />
                       )}
                     </Button>
                   </TableCell>
@@ -300,9 +301,9 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                       }}
                     >
                       {customer.vod_plan ? (
-                        <Check className="h-5 w-5 text-green-500" />
+                        <Check className="h-5 w-5 text-success" />
                       ) : (
-                        <X className="h-5 w-5 text-red-500" />
+                        <X className="h-5 w-5 text-destructive" />
                       )}
                     </Button>
                   </TableCell>
@@ -407,6 +408,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             ))}
           </TableBody>
         </Table>
+        </div>
       </Card>
     </div>
   );
