@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Users, CreditCard, TrendingUp, Clock, LogOut } from 'lucide-react';
+import { Users, CreditCard, TrendingUp, Clock, Tv, Video, LogOut } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -33,11 +33,12 @@ const Index = () => {
   // Calculate metrics
   const metrics = useMemo(() => {
     const totalCustomers = customers.length;
-    const activeCustomers = customers.filter(c => c.subscription_status === 'active').length;
+    const activeLive = customers.filter(c => c.subscription_plan).length;
+    const activeVod = customers.filter(c => c.vod_plan).length;
     const totalRevenue = customers.reduce((sum, c) => sum + (c.total_spent || 0), 0);
     const trialCustomers = customers.filter(c => c.has_trial === true).length;
 
-    return { totalCustomers, activeCustomers, totalRevenue, trialCustomers };
+    return { totalCustomers, activeLive, activeVod, totalRevenue, trialCustomers };
   }, [customers]);
 
   // Calculate status counts
@@ -109,7 +110,7 @@ const Index = () => {
 
       <main className="container mx-auto px-6 py-8">
         {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <MetricCard
             title="Total Customers"
             value={metrics.totalCustomers}
@@ -117,10 +118,16 @@ const Index = () => {
             trend={{ value: 12, isPositive: true }}
           />
           <MetricCard
-            title="Active Subscriptions"
-            value={metrics.activeCustomers}
-            subtitle={metrics.totalCustomers > 0 ? `${Math.round((metrics.activeCustomers / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
-            icon={TrendingUp}
+            title="Active Live"
+            value={metrics.activeLive}
+            subtitle={metrics.totalCustomers > 0 ? `${Math.round((metrics.activeLive / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
+            icon={Tv}
+          />
+          <MetricCard
+            title="Active VOD"
+            value={metrics.activeVod}
+            subtitle={metrics.totalCustomers > 0 ? `${Math.round((metrics.activeVod / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
+            icon={Video}
           />
           <MetricCard
             title="Total Revenue"
