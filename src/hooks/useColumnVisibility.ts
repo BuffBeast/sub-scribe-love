@@ -24,14 +24,35 @@ export function useUpdateColumnVisibility() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ column_name, is_visible }: { column_name: string; is_visible: boolean }) => {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
+      // Try to update existing record first
+      const { data: existing } = await supabase
         .from('column_visibility')
-        .update({ is_visible })
+        .select('id')
         .eq('column_name', column_name)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existing) {
+        const { data, error } = await supabase
+          .from('column_visibility')
+          .update({ is_visible })
+          .eq('id', existing.id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase
+          .from('column_visibility')
+          .insert({ column_name, is_visible, user_id: user.id })
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['column_visibility'] });

@@ -8,6 +8,7 @@ export interface AppSettings {
   logo_url: string | null;
   created_at: string;
   updated_at: string;
+  user_id: string | null;
 }
 
 export function useAppSettings() {
@@ -17,10 +18,10 @@ export function useAppSettings() {
       const { data, error } = await supabase
         .from('app_settings')
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as AppSettings;
+      return data as AppSettings | null;
     },
   });
 }
@@ -30,19 +31,27 @@ export function useUpdateAppSettings() {
 
   return useMutation({
     mutationFn: async ({ appName, logoUrl }: { appName: string; logoUrl?: string | null }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data: existing } = await supabase
         .from('app_settings')
         .select('id')
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (!existing) throw new Error('No settings found');
-
-      const { error } = await supabase
-        .from('app_settings')
-        .update({ app_name: appName, logo_url: logoUrl })
-        .eq('id', existing.id);
-
-      if (error) throw error;
+      if (existing) {
+        const { error } = await supabase
+          .from('app_settings')
+          .update({ app_name: appName, logo_url: logoUrl })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('app_settings')
+          .insert({ app_name: appName, logo_url: logoUrl, user_id: user.id });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['app-settings'] });

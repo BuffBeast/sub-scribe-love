@@ -17,6 +17,7 @@ export interface Customer {
   custom_data: Json;
   created_at: string;
   updated_at: string;
+  user_id: string | null;
 }
 
 export function useCustomers() {
@@ -36,10 +37,13 @@ export function useCustomers() {
 export function useCreateCustomer() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (customer: Omit<Partial<Customer>, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (customer: Omit<Partial<Customer>, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       const { data, error } = await supabase
         .from('customers')
-        .insert(customer as any)
+        .insert({ ...customer, user_id: user.id } as any)
         .select()
         .single();
       if (error) throw error;

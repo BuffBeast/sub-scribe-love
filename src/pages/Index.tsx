@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Users, CreditCard, TrendingUp, Clock } from 'lucide-react';
+import { Users, CreditCard, TrendingUp, Clock, LogOut } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAuth } from '@/hooks/useAuth';
 import { MetricCard } from '@/components/MetricCard';
 import { CustomerTable } from '@/components/CustomerTable';
 import { SearchBar } from '@/components/SearchBar';
@@ -13,6 +14,7 @@ import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { ExportCSVButton } from '@/components/ExportCSVButton';
 import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
+import { Button } from '@/components/ui/button';
 import ghostBuffLogo from '@/assets/ghostbuff-logo.jpeg';
 
 const Index = () => {
@@ -23,6 +25,7 @@ const Index = () => {
   const { data: customers = [], isLoading } = useCustomers();
   const { data: customFields = [] } = useCustomFields();
   const { data: appSettings } = useAppSettings();
+  const { signOut } = useAuth();
 
   const displayName = appSettings?.app_name || 'GhostBuff';
   const displayLogo = appSettings?.logo_url || ghostBuffLogo;
@@ -96,6 +99,9 @@ const Index = () => {
               <BrandingSettingsDialog />
               <ImportCustomersDialog />
               <AddCustomerDialog />
+              <Button variant="outline" size="icon" onClick={signOut} title="Sign Out">
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
