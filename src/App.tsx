@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -52,6 +54,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <PWAInstallPrompt />
+      <PWAUpdatePrompt />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={
