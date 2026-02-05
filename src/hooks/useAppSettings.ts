@@ -6,6 +6,8 @@ export interface AppSettings {
   id: string;
   app_name: string;
   logo_url: string | null;
+  reminder_subject: string | null;
+  reminder_message: string | null;
   created_at: string;
   updated_at: string;
   user_id: string | null;
@@ -30,7 +32,17 @@ export function useUpdateAppSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ appName, logoUrl }: { appName: string; logoUrl?: string | null }) => {
+    mutationFn: async ({ 
+      appName, 
+      logoUrl,
+      reminderSubject,
+      reminderMessage,
+    }: { 
+      appName: string; 
+      logoUrl?: string | null;
+      reminderSubject?: string;
+      reminderMessage?: string;
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -40,16 +52,20 @@ export function useUpdateAppSettings() {
         .eq('user_id', user.id)
         .maybeSingle();
 
+      const updates: Record<string, unknown> = { app_name: appName, logo_url: logoUrl };
+      if (reminderSubject !== undefined) updates.reminder_subject = reminderSubject;
+      if (reminderMessage !== undefined) updates.reminder_message = reminderMessage;
+
       if (existing) {
         const { error } = await supabase
           .from('app_settings')
-          .update({ app_name: appName, logo_url: logoUrl })
+          .update(updates)
           .eq('id', existing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('app_settings')
-          .insert({ app_name: appName, logo_url: logoUrl, user_id: user.id });
+          .insert({ ...updates, user_id: user.id });
         if (error) throw error;
       }
     },
