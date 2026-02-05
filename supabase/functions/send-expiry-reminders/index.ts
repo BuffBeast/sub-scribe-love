@@ -54,8 +54,9 @@ serve(async (req: Request): Promise<Response> => {
 
     const { data: customers, error } = await supabase
       .from('customers')
-      .select('id, name, email, subscription_plan, subscription_end_date')
+      .select('id, name, email, subscription_plan, subscription_end_date, reminders_enabled')
       .eq('subscription_end_date', targetDate)
+      .eq('reminders_enabled', true)
       .not('email', 'is', null);
 
     if (error) throw error;

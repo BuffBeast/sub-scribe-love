@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
@@ -28,6 +29,7 @@ export function AddCustomerDialog() {
     has_vod: false,
     vod_start_date: '',
     vod_end_date: '',
+    reminders_enabled: true,
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -52,6 +54,7 @@ export function AddCustomerDialog() {
         vod_plan: form.has_vod ? 'Active' : null,
         vod_start_date: form.has_vod ? form.vod_start_date || null : null,
         vod_end_date: form.has_vod ? form.vod_end_date || null : null,
+        reminders_enabled: form.reminders_enabled,
         custom_data: customData,
       } as any,
       {
@@ -70,6 +73,7 @@ export function AddCustomerDialog() {
             has_vod: false,
             vod_start_date: '',
             vod_end_date: '',
+            reminders_enabled: true,
           });
           setCustomData({});
         },
@@ -216,6 +220,20 @@ export function AddCustomerDialog() {
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="border-t pt-4 mt-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="reminders_enabled" className="font-medium">Email Reminders</Label>
+                <p className="text-sm text-muted-foreground">Send automatic expiry reminders</p>
+              </div>
+              <Switch
+                id="reminders_enabled"
+                checked={form.reminders_enabled}
+                onCheckedChange={(checked) => setForm({ ...form, reminders_enabled: checked })}
+              />
+            </div>
           </div>
 
           {customFields.map((field) => (

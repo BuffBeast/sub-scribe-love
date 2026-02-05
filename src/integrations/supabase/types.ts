@@ -102,6 +102,7 @@ export type Database = {
           last_contact_date: string | null
           name: string
           phone: string | null
+          reminders_enabled: boolean
           subscription_end_date: string | null
           subscription_plan: string | null
           subscription_start_date: string | null
@@ -122,6 +123,7 @@ export type Database = {
           last_contact_date?: string | null
           name: string
           phone?: string | null
+          reminders_enabled?: boolean
           subscription_end_date?: string | null
           subscription_plan?: string | null
           subscription_start_date?: string | null
@@ -142,6 +144,7 @@ export type Database = {
           last_contact_date?: string | null
           name?: string
           phone?: string | null
+          reminders_enabled?: boolean
           subscription_end_date?: string | null
           subscription_plan?: string | null
           subscription_start_date?: string | null

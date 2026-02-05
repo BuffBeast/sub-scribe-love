@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Customer, useUpdateCustomer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +28,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
     subscription_status: 'active',
     subscription_plan: '',
     total_spent: '',
+    reminders_enabled: true,
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -40,6 +42,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         subscription_status: customer.subscription_status || 'active',
         subscription_plan: customer.subscription_plan || '',
         total_spent: customer.total_spent?.toString() || '',
+        reminders_enabled: customer.reminders_enabled ?? true,
       });
       const cd = customer.custom_data as Record<string, unknown> || {};
       const mapped: Record<string, string> = {};
@@ -70,6 +73,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         subscription_status: form.subscription_status,
         subscription_plan: form.subscription_plan || null,
         total_spent: form.total_spent ? parseFloat(form.total_spent) : 0,
+        reminders_enabled: form.reminders_enabled,
         custom_data: customData,
       },
       {
@@ -180,6 +184,20 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
               />
             </div>
           ))}
+
+          <div className="border-t pt-4 mt-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="edit-reminders" className="font-medium">Email Reminders</Label>
+                <p className="text-sm text-muted-foreground">Send automatic expiry reminders</p>
+              </div>
+              <Switch
+                id="edit-reminders"
+                checked={form.reminders_enabled}
+                onCheckedChange={(checked) => setForm({ ...form, reminders_enabled: checked })}
+              />
+            </div>
+          </div>
 
           <Button type="submit" className="w-full" disabled={updateCustomer.isPending}>
             {updateCustomer.isPending ? 'Saving...' : 'Save Changes'}
