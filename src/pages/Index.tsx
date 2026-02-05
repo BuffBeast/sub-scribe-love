@@ -3,24 +3,20 @@ import { Users, CreditCard, TrendingUp, Clock } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { MetricCard } from '@/components/MetricCard';
 import { CustomerTable } from '@/components/CustomerTable';
-import { CustomerDetailPanel } from '@/components/CustomerDetailPanel';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterTabs } from '@/components/FilterTabs';
 import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
+import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import ghostBuffLogo from '@/assets/ghostbuff-logo.jpeg';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   const { data: customers = [], isLoading } = useCustomers();
-
-  const selectedCustomer = useMemo(() => {
-    return customers.find((c) => c.id === selectedCustomerId) || null;
-  }, [customers, selectedCustomerId]);
 
   // Calculate metrics
   const metrics = useMemo(() => {
@@ -65,21 +61,6 @@ const Index = () => {
       maximumFractionDigits: 0,
     }).format(amount);
   };
-
-  // Convert Customer to old format for detail panel
-  const legacyCustomer = selectedCustomer ? {
-    id: selectedCustomer.id,
-    name: selectedCustomer.name,
-    email: selectedCustomer.email || '',
-    phone: selectedCustomer.phone || '',
-    company: selectedCustomer.company || '',
-    subscriptionStatus: (selectedCustomer.subscription_status || 'active') as 'active' | 'trial' | 'expired' | 'cancelled',
-    subscriptionPlan: selectedCustomer.subscription_plan || '',
-    subscriptionStartDate: selectedCustomer.subscription_start_date || '',
-    subscriptionEndDate: selectedCustomer.subscription_end_date || '',
-    lastContactDate: selectedCustomer.last_contact_date || '',
-    totalSpent: selectedCustomer.total_spent || 0,
-  } : null;
 
   return (
     <div className="min-h-screen bg-ghost-gradient">
@@ -151,42 +132,35 @@ const Index = () => {
         </div>
 
         {/* Content */}
-        <div className="flex gap-6">
-          {/* Customer Table */}
-          <div className={selectedCustomer ? 'flex-1' : 'w-full'}>
-            {isLoading ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Loading customers...</p>
-              </div>
-            ) : (
-              <>
-                <CustomerTable
-                  customers={filteredCustomers}
-                  onCustomerClick={(c) => setSelectedCustomerId(c.id)}
-                />
-                {filteredCustomers.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-muted-foreground">
-                      {customers.length === 0 
-                        ? 'No customers yet. Add your first customer!' 
-                        : 'No customers found matching your criteria.'}
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Detail Panel */}
-          {legacyCustomer && (
-            <div className="w-96 shrink-0">
-              <CustomerDetailPanel
-                customer={legacyCustomer}
-                onClose={() => setSelectedCustomerId(null)}
-              />
+        <div className="w-full">
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Loading customers...</p>
             </div>
+          ) : (
+            <>
+              <CustomerTable
+                customers={filteredCustomers}
+                onCustomerClick={(c) => setEditingCustomer(c)}
+              />
+              {filteredCustomers.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    {customers.length === 0 
+                      ? 'No customers yet. Add your first customer!' 
+                      : 'No customers found matching your criteria.'}
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
+
+        <EditCustomerDialog
+          customer={editingCustomer}
+          open={!!editingCustomer}
+          onOpenChange={(open) => !open && setEditingCustomer(null)}
+        />
       </main>
     </div>
   );
