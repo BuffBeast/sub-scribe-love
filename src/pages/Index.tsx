@@ -7,6 +7,7 @@ import { CustomerTable } from '@/components/CustomerTable';
 import { CustomerDetailPanel } from '@/components/CustomerDetailPanel';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterTabs } from '@/components/FilterTabs';
+import ghostBuffMascot from '@/assets/ghostbuff-mascot.png';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,16 +59,23 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-ghost-gradient">
       {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Customer Dashboard</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Manage your customer relationships and subscriptions
-              </p>
+            <div className="flex items-center gap-4">
+              <img 
+                src={ghostBuffMascot} 
+                alt="GhostBuff mascot" 
+                className="h-14 w-14 animate-ghost-float"
+              />
+              <div>
+                <h1 className="text-2xl font-extrabold tracking-tight text-gradient">GhostBuff</h1>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Your spooky-good customer dashboard 👻
+                </p>
+              </div>
             </div>
           </div>
         </div>
