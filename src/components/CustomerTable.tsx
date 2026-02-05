@@ -138,7 +138,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
               {visibleColumns.includes('vod_plan') && <TableHead className="font-semibold">VOD</TableHead>}
               {visibleColumns.includes('vod_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
               {visibleColumns.includes('vod_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
-              {visibleColumns.includes('company') && <TableHead className="font-semibold">Plan Cost</TableHead>}
+              {visibleColumns.includes('company') && <TableHead className="font-semibold">Notes</TableHead>}
               {visibleColumns.includes('subscription_status') && <TableHead className="font-semibold">Status</TableHead>}
               <TableHead className="font-semibold text-center">Reminders</TableHead>
               {visibleCustomFields.map((field) => (
