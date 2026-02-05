@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Users, CreditCard, TrendingUp, Clock } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { MetricCard } from '@/components/MetricCard';
 import { CustomerTable } from '@/components/CustomerTable';
 import { SearchBar } from '@/components/SearchBar';
@@ -11,6 +12,7 @@ import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { ExportCSVButton } from '@/components/ExportCSVButton';
+import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
 import ghostBuffLogo from '@/assets/ghostbuff-logo.jpeg';
 
 const Index = () => {
@@ -20,6 +22,10 @@ const Index = () => {
 
   const { data: customers = [], isLoading } = useCustomers();
   const { data: customFields = [] } = useCustomFields();
+  const { data: appSettings } = useAppSettings();
+
+  const displayName = appSettings?.app_name || 'GhostBuff';
+  const displayLogo = appSettings?.logo_url || ghostBuffLogo;
 
   // Calculate metrics
   const metrics = useMemo(() => {
@@ -73,12 +79,12 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img 
-                src={ghostBuffLogo} 
-                alt="GhostBuff logo" 
+                src={displayLogo} 
+                alt={`${displayName} logo`} 
                 className="h-14 w-14 rounded-full shadow-glow animate-ghost-float object-cover"
               />
               <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-gradient">GhostBuff</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight text-gradient">{displayName}</h1>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   Your spooky-good customer dashboard 👻
                 </p>
@@ -87,6 +93,7 @@ const Index = () => {
             <div className="flex items-center gap-2">
               <ExportCSVButton customers={customers} customFields={customFields} />
               <ColumnSettingsDialog />
+              <BrandingSettingsDialog />
               <ImportCustomersDialog />
               <AddCustomerDialog />
             </div>
