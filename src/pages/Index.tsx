@@ -27,7 +27,7 @@ const Index = () => {
   const { data: appSettings } = useAppSettings();
   const { signOut } = useAuth();
 
-  const displayName = appSettings?.app_name || 'Let\'s Stream Customer Tracker';
+  const displayName = appSettings?.app_name || 'Customer Tracker';
   const displayLogo = appSettings?.logo_url || letsStreamLogo;
 
   // Calculate metrics
