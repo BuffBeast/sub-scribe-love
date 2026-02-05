@@ -21,6 +21,7 @@ export type Database = {
           id: string
           logo_url: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           app_name?: string
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           app_name?: string
@@ -35,6 +37,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -43,16 +46,19 @@ export type Database = {
           column_name: string
           id: string
           is_visible: boolean
+          user_id: string | null
         }
         Insert: {
           column_name: string
           id?: string
           is_visible?: boolean
+          user_id?: string | null
         }
         Update: {
           column_name?: string
           id?: string
           is_visible?: boolean
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -64,6 +70,7 @@ export type Database = {
           is_visible: boolean
           name: string
           sort_order: number
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -72,6 +79,7 @@ export type Database = {
           is_visible?: boolean
           name: string
           sort_order?: number
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -80,6 +88,7 @@ export type Database = {
           is_visible?: boolean
           name?: string
           sort_order?: number
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -99,6 +108,7 @@ export type Database = {
           subscription_status: string | null
           total_spent: number | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           company?: string | null
@@ -115,6 +125,7 @@ export type Database = {
           subscription_status?: string | null
           total_spent?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           company?: string | null
@@ -131,6 +142,7 @@ export type Database = {
           subscription_status?: string | null
           total_spent?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
