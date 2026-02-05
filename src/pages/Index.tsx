@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Users, CreditCard, TrendingUp, Clock } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
+import { useCustomFields } from '@/hooks/useCustomFields';
 import { MetricCard } from '@/components/MetricCard';
 import { CustomerTable } from '@/components/CustomerTable';
 import { SearchBar } from '@/components/SearchBar';
@@ -9,6 +10,7 @@ import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
+import { ExportCSVButton } from '@/components/ExportCSVButton';
 import ghostBuffLogo from '@/assets/ghostbuff-logo.jpeg';
 
 const Index = () => {
@@ -17,6 +19,7 @@ const Index = () => {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   const { data: customers = [], isLoading } = useCustomers();
+  const { data: customFields = [] } = useCustomFields();
 
   // Calculate metrics
   const metrics = useMemo(() => {
@@ -82,6 +85,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <ExportCSVButton customers={customers} customFields={customFields} />
               <ColumnSettingsDialog />
               <ImportCustomersDialog />
               <AddCustomerDialog />
