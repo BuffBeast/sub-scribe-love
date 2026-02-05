@@ -35,7 +35,7 @@ const Index = () => {
     const totalCustomers = customers.length;
     const activeCustomers = customers.filter(c => c.subscription_status === 'active').length;
     const totalRevenue = customers.reduce((sum, c) => sum + (c.total_spent || 0), 0);
-    const trialCustomers = customers.filter(c => c.subscription_status === 'trial').length;
+    const trialCustomers = customers.filter(c => c.has_trial === true).length;
 
     return { totalCustomers, activeCustomers, totalRevenue, trialCustomers };
   }, [customers]);
