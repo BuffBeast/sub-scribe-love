@@ -15,7 +15,7 @@ import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { ExportCSVButton } from '@/components/ExportCSVButton';
 import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
 import { Button } from '@/components/ui/button';
-import ghostBuffLogo from '@/assets/ghostbuff-logo.jpeg';
+import letsStreamLogo from '@/assets/lets-stream-logo.png';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,7 +28,7 @@ const Index = () => {
   const { signOut } = useAuth();
 
   const displayName = appSettings?.app_name || 'Let\'s Stream Customer Tracker';
-  const displayLogo = appSettings?.logo_url || ghostBuffLogo;
+  const displayLogo = appSettings?.logo_url || letsStreamLogo;
 
   // Calculate metrics
   const metrics = useMemo(() => {
