@@ -32,7 +32,13 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const { toast } = useToast();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const visibleColumns = columns.filter((c) => c.is_visible).map((c) => c.column_name);
+  // Default columns to show when no visibility settings exist
+  const defaultColumns = ['name', 'email', 'company', 'subscription_plan', 'subscription_status', 'last_contact_date', 'total_spent'];
+  
+  // If no column visibility settings exist, show all default columns
+  const visibleColumns = columns.length > 0 
+    ? columns.filter((c) => c.is_visible).map((c) => c.column_name)
+    : defaultColumns;
   const visibleCustomFields = customFields.filter((f) => f.is_visible);
 
   const allSelected = customers.length > 0 && selectedIds.size === customers.length;
