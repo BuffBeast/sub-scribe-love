@@ -24,6 +24,9 @@ export function AddCustomerDialog() {
     subscription_plan: '',
     subscription_start_date: '',
     subscription_end_date: '',
+    vod_plan: '',
+    vod_start_date: '',
+    vod_end_date: '',
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -45,8 +48,11 @@ export function AddCustomerDialog() {
         subscription_plan: form.subscription_plan || null,
         subscription_start_date: form.subscription_start_date || null,
         subscription_end_date: form.subscription_end_date || null,
+        vod_plan: form.vod_plan || null,
+        vod_start_date: form.vod_start_date || null,
+        vod_end_date: form.vod_end_date || null,
         custom_data: customData,
-      },
+      } as any,
       {
         onSuccess: () => {
           toast({ title: 'Customer added' });
@@ -60,6 +66,9 @@ export function AddCustomerDialog() {
             subscription_plan: '',
             subscription_start_date: '',
             subscription_end_date: '',
+            vod_plan: '',
+            vod_start_date: '',
+            vod_end_date: '',
           });
           setCustomData({});
         },
@@ -140,34 +149,74 @@ export function AddCustomerDialog() {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="plan">Plan</Label>
-            <Input
-              id="plan"
-              value={form.subscription_plan}
-              onChange={(e) => setForm({ ...form, subscription_plan: e.target.value })}
-              placeholder="e.g., Professional"
-            />
+          <div className="border-t pt-4 mt-4">
+            <h4 className="font-medium mb-3">LIVE Subscription</h4>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="live_plan">LIVE Plan</Label>
+                <Input
+                  id="live_plan"
+                  value={form.subscription_plan}
+                  onChange={(e) => setForm({ ...form, subscription_plan: e.target.value })}
+                  placeholder="e.g., Professional"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="live_start_date">Start Date</Label>
+                <Input
+                  id="live_start_date"
+                  type="date"
+                  value={form.subscription_start_date}
+                  onChange={(e) => setForm({ ...form, subscription_start_date: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="live_end_date">Expiry Date</Label>
+                <Input
+                  id="live_end_date"
+                  type="date"
+                  value={form.subscription_end_date}
+                  onChange={(e) => setForm({ ...form, subscription_end_date: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="start_date">Start Date</Label>
-            <Input
-              id="start_date"
-              type="date"
-              value={form.subscription_start_date}
-              onChange={(e) => setForm({ ...form, subscription_start_date: e.target.value })}
-            />
-          </div>
+          <div className="border-t pt-4 mt-4">
+            <h4 className="font-medium mb-3">VOD Subscription</h4>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="vod_plan">VOD Plan</Label>
+                <Input
+                  id="vod_plan"
+                  value={form.vod_plan}
+                  onChange={(e) => setForm({ ...form, vod_plan: e.target.value })}
+                  placeholder="e.g., Premium"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="end_date">Expiry Date</Label>
-            <Input
-              id="end_date"
-              type="date"
-              value={form.subscription_end_date}
-              onChange={(e) => setForm({ ...form, subscription_end_date: e.target.value })}
-            />
+              <div className="space-y-2">
+                <Label htmlFor="vod_start_date">Start Date</Label>
+                <Input
+                  id="vod_start_date"
+                  type="date"
+                  value={form.vod_start_date}
+                  onChange={(e) => setForm({ ...form, vod_start_date: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vod_end_date">Expiry Date</Label>
+                <Input
+                  id="vod_end_date"
+                  type="date"
+                  value={form.vod_end_date}
+                  onChange={(e) => setForm({ ...form, vod_end_date: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
 
           {customFields.map((field) => (

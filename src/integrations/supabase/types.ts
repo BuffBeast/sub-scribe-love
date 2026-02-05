@@ -109,6 +109,9 @@ export type Database = {
           total_spent: number | null
           updated_at: string
           user_id: string | null
+          vod_end_date: string | null
+          vod_plan: string | null
+          vod_start_date: string | null
         }
         Insert: {
           company?: string | null
@@ -126,6 +129,9 @@ export type Database = {
           total_spent?: number | null
           updated_at?: string
           user_id?: string | null
+          vod_end_date?: string | null
+          vod_plan?: string | null
+          vod_start_date?: string | null
         }
         Update: {
           company?: string | null
@@ -143,6 +149,9 @@ export type Database = {
           total_spent?: number | null
           updated_at?: string
           user_id?: string | null
+          vod_end_date?: string | null
+          vod_plan?: string | null
+          vod_start_date?: string | null
         }
         Relationships: []
       }
