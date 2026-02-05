@@ -14,31 +14,37 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [importedCustomers, setImportedCustomers] = useState<Customer[]>([]);
+
+  // Combine mock and imported customers
+  const allCustomers = useMemo(() => {
+    return [...mockCustomers, ...importedCustomers];
+  }, [importedCustomers]);
 
   // Calculate metrics
   const metrics = useMemo(() => {
-    const totalCustomers = mockCustomers.length;
-    const activeCustomers = mockCustomers.filter(c => c.subscriptionStatus === 'active').length;
-    const totalRevenue = mockCustomers.reduce((sum, c) => sum + c.totalSpent, 0);
-    const trialCustomers = mockCustomers.filter(c => c.subscriptionStatus === 'trial').length;
+    const totalCustomers = allCustomers.length;
+    const activeCustomers = allCustomers.filter(c => c.subscriptionStatus === 'active').length;
+    const totalRevenue = allCustomers.reduce((sum, c) => sum + c.totalSpent, 0);
+    const trialCustomers = allCustomers.filter(c => c.subscriptionStatus === 'trial').length;
 
     return { totalCustomers, activeCustomers, totalRevenue, trialCustomers };
-  }, []);
+  }, [allCustomers]);
 
   // Calculate status counts
   const statusCounts = useMemo(() => {
     return {
-      all: mockCustomers.length,
-      active: mockCustomers.filter(c => c.subscriptionStatus === 'active').length,
-      trial: mockCustomers.filter(c => c.subscriptionStatus === 'trial').length,
-      expired: mockCustomers.filter(c => c.subscriptionStatus === 'expired').length,
-      cancelled: mockCustomers.filter(c => c.subscriptionStatus === 'cancelled').length,
+      all: allCustomers.length,
+      active: allCustomers.filter(c => c.subscriptionStatus === 'active').length,
+      trial: allCustomers.filter(c => c.subscriptionStatus === 'trial').length,
+      expired: allCustomers.filter(c => c.subscriptionStatus === 'expired').length,
+      cancelled: allCustomers.filter(c => c.subscriptionStatus === 'cancelled').length,
     };
-  }, []);
+  }, [allCustomers]);
 
   // Filter customers
   const filteredCustomers = useMemo(() => {
-    return mockCustomers.filter(customer => {
+    return allCustomers.filter(customer => {
       const matchesSearch = 
         customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -48,7 +54,11 @@ const Index = () => {
 
       return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, allCustomers]);
+
+  const handleImport = (customers: Customer[]) => {
+    setImportedCustomers(prev => [...prev, ...customers]);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -64,7 +74,7 @@ const Index = () => {
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img 
                 src={ghostBuffLogo} 
@@ -78,7 +88,7 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <ImportCustomersDialog />
+            <ImportCustomersDialog onImport={handleImport} />
           </div>
         </div>
       </header>

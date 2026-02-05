@@ -1,59 +1,139 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { scraperApi } from '@/lib/api/scraper';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Upload, FileSpreadsheet, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Papa from 'papaparse';
+import { Customer } from '@/types/customer';
 
-export function ImportCustomersDialog() {
+interface ParsedCustomer {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  subscriptionStatus: string;
+  subscriptionPlan: string;
+  totalSpent: number;
+  [key: string]: string | number;
+}
+
+interface ImportCustomersDialogProps {
+  onImport?: (customers: Customer[]) => void;
+}
+
+export function ImportCustomersDialog({ onImport }: ImportCustomersDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [url, setUrl] = useState('https://ourpanel.live/reseller.php');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [parsedData, setParsedData] = useState<ParsedCustomer[]>([]);
+  const [columns, setColumns] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleScrape = async () => {
-    if (!url) {
-      toast({
-        title: 'URL Required',
-        description: 'Please enter a dashboard URL to scrape',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
     setIsLoading(true);
-    setResult(null);
+    setParsedData([]);
+    setColumns([]);
 
-    try {
-      const response = await scraperApi.scrapeCustomers(url);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        setIsLoading(false);
+        
+        if (results.errors.length > 0) {
+          toast({
+            title: 'Parse Error',
+            description: results.errors[0].message,
+            variant: 'destructive',
+          });
+          return;
+        }
 
-      if (response.success && response.data) {
-        setResult(response.data.markdown);
+        const data = results.data as ParsedCustomer[];
+        if (data.length === 0) {
+          toast({
+            title: 'No Data',
+            description: 'The file appears to be empty',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        setColumns(Object.keys(data[0]));
+        setParsedData(data);
+        
         toast({
-          title: 'Success',
-          description: 'Dashboard data scraped successfully',
+          title: 'File Parsed',
+          description: `Found ${data.length} records`,
         });
-      } else {
+      },
+      error: (error) => {
+        setIsLoading(false);
         toast({
           title: 'Error',
-          description: response.error || 'Failed to scrape dashboard',
+          description: error.message,
           variant: 'destructive',
         });
+      },
+    });
+  };
+
+  const mapToCustomer = (row: ParsedCustomer, index: number): Customer => {
+    // Try to find matching columns (case-insensitive)
+    const findValue = (keys: string[]): string => {
+      for (const key of keys) {
+        const found = Object.keys(row).find(k => k.toLowerCase().includes(key.toLowerCase()));
+        if (found && row[found]) return String(row[found]);
       }
-    } catch (error) {
-      console.error('Scrape error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to connect to scraping service',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+      return '';
+    };
+
+    const findNumber = (keys: string[]): number => {
+      const val = findValue(keys);
+      return parseFloat(val.replace(/[^0-9.-]/g, '')) || 0;
+    };
+
+    const status = findValue(['status', 'subscription', 'state']).toLowerCase();
+    let subscriptionStatus: Customer['subscriptionStatus'] = 'active';
+    if (status.includes('trial')) subscriptionStatus = 'trial';
+    else if (status.includes('expired') || status.includes('inactive')) subscriptionStatus = 'expired';
+    else if (status.includes('cancel')) subscriptionStatus = 'cancelled';
+
+    return {
+      id: String(index + 1000),
+      name: findValue(['name', 'customer', 'user', 'username']) || `Customer ${index + 1}`,
+      email: findValue(['email', 'mail', 'e-mail']) || '',
+      phone: findValue(['phone', 'tel', 'mobile', 'contact']) || '',
+      company: findValue(['company', 'business', 'organization', 'org']) || '',
+      subscriptionStatus,
+      subscriptionPlan: findValue(['plan', 'package', 'tier', 'subscription']) || 'Standard',
+      subscriptionStartDate: findValue(['start', 'created', 'registered']) || new Date().toISOString().split('T')[0],
+      subscriptionEndDate: findValue(['end', 'expires', 'expiry']) || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      lastContactDate: findValue(['contact', 'last', 'activity']) || new Date().toISOString().split('T')[0],
+      totalSpent: findNumber(['spent', 'revenue', 'total', 'amount', 'balance', 'credits']),
+    };
+  };
+
+  const handleImport = () => {
+    const customers = parsedData.map((row, index) => mapToCustomer(row, index));
+    
+    if (onImport) {
+      onImport(customers);
     }
+    
+    toast({
+      title: 'Import Complete',
+      description: `Imported ${customers.length} customers`,
+    });
+    
+    setOpen(false);
+    setParsedData([]);
+    setColumns([]);
   };
 
   return (
@@ -64,49 +144,93 @@ export function ImportCustomersDialog() {
           Import Customers
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Import Customers from External Dashboard</DialogTitle>
+          <DialogTitle>Import Customers from CSV/Excel</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="url">Dashboard URL</Label>
-            <div className="flex gap-2">
-              <Input
-                id="url"
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://example.com/dashboard"
-                className="flex-1"
-              />
-              <Button onClick={handleScrape} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Scraping...
-                  </>
-                ) : (
-                  'Scrape'
-                )}
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Enter the URL of the dashboard you want to import customer data from
-            </p>
+          {/* Upload Section */}
+          <div 
+            className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            {isLoading ? (
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Parsing file...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
+                <p className="font-medium">Click to upload CSV or Excel file</p>
+                <p className="text-sm text-muted-foreground">
+                  Export your customer list from ourpanel.live and upload it here
+                </p>
+              </div>
+            )}
           </div>
 
-          {result && (
-            <div className="space-y-2">
-              <Label>Scraped Content</Label>
-              <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-                <pre className="text-sm whitespace-pre-wrap">{result}</pre>
+          {/* Preview Table */}
+          {parsedData.length > 0 && (
+            <>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Preview: {parsedData.length} records found
+                </p>
+                <Button onClick={handleImport} className="gap-2">
+                  <Check className="h-4 w-4" />
+                  Import {parsedData.length} Customers
+                </Button>
+              </div>
+              
+              <ScrollArea className="h-[300px] border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {columns.slice(0, 6).map((col) => (
+                        <TableHead key={col} className="whitespace-nowrap">
+                          {col}
+                        </TableHead>
+                      ))}
+                      {columns.length > 6 && (
+                        <TableHead className="text-muted-foreground">
+                          +{columns.length - 6} more
+                        </TableHead>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {parsedData.slice(0, 10).map((row, i) => (
+                      <TableRow key={i}>
+                        {columns.slice(0, 6).map((col) => (
+                          <TableCell key={col} className="max-w-[150px] truncate">
+                            {String(row[col] || '')}
+                          </TableCell>
+                        ))}
+                        {columns.length > 6 && (
+                          <TableCell className="text-muted-foreground">...</TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                    {parsedData.length > 10 && (
+                      <TableRow>
+                        <TableCell colSpan={Math.min(columns.length, 7)} className="text-center text-muted-foreground">
+                          ... and {parsedData.length - 10} more rows
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </ScrollArea>
-              <p className="text-sm text-muted-foreground">
-                Review the extracted data above. Customer parsing will be added next.
-              </p>
-            </div>
+            </>
           )}
         </div>
       </DialogContent>
