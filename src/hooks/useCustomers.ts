@@ -12,6 +12,9 @@ export interface Customer {
   subscription_plan: string | null;
   subscription_start_date: string | null;
   subscription_end_date: string | null;
+  vod_plan: string | null;
+  vod_start_date: string | null;
+  vod_end_date: string | null;
   last_contact_date: string | null;
   total_spent: number | null;
   custom_data: Json;

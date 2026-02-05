@@ -208,12 +208,24 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                   </Button>
                 </TableCell>
                 {visibleColumns.includes('subscription_plan') && (
-                  <TableCell className="text-center">
-                    {customer.subscription_plan ? (
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-500 mx-auto" />
-                    )}
+                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        updateCustomer.mutate({
+                          id: customer.id,
+                          subscription_plan: customer.subscription_plan ? null : 'Active',
+                        });
+                      }}
+                    >
+                      {customer.subscription_plan ? (
+                        <Check className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <X className="h-5 w-5 text-red-500" />
+                      )}
+                    </Button>
                   </TableCell>
                 )}
                 {visibleColumns.includes('subscription_start_date') && (
@@ -231,25 +243,37 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                   </TableCell>
                 )}
                 {visibleColumns.includes('vod_plan') && (
-                  <TableCell className="text-center">
-                    {(customer as any).vod_plan ? (
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-500 mx-auto" />
-                    )}
+                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        updateCustomer.mutate({
+                          id: customer.id,
+                          vod_plan: customer.vod_plan ? null : 'Active',
+                        });
+                      }}
+                    >
+                      {customer.vod_plan ? (
+                        <Check className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <X className="h-5 w-5 text-red-500" />
+                      )}
+                    </Button>
                   </TableCell>
                 )}
                 {visibleColumns.includes('vod_start_date') && (
                   <TableCell className="text-muted-foreground">
-                    {(customer as any).vod_start_date
-                      ? new Date((customer as any).vod_start_date).toLocaleDateString()
+                    {customer.vod_start_date
+                      ? new Date(customer.vod_start_date).toLocaleDateString()
                       : '-'}
                   </TableCell>
                 )}
                 {visibleColumns.includes('vod_end_date') && (
                   <TableCell className="text-muted-foreground">
-                    {(customer as any).vod_end_date
-                      ? new Date((customer as any).vod_end_date).toLocaleDateString()
+                    {customer.vod_end_date
+                      ? new Date(customer.vod_end_date).toLocaleDateString()
                       : '-'}
                   </TableCell>
                 )}
