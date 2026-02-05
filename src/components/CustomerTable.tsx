@@ -131,7 +131,8 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 />
               </TableHead>
               {visibleColumns.includes('name') && <TableHead className="font-semibold">Customer</TableHead>}
-              {visibleColumns.includes('subscription_plan') && <TableHead className="font-semibold">LIVE</TableHead>}
+              <TableHead className="font-semibold text-center">TRIAL</TableHead>
+              {visibleColumns.includes('subscription_plan') && <TableHead className="font-semibold text-center">LIVE</TableHead>}
               {visibleColumns.includes('subscription_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
               {visibleColumns.includes('subscription_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
               {visibleColumns.includes('vod_plan') && <TableHead className="font-semibold">VOD</TableHead>}
@@ -187,6 +188,25 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </div>
                   </TableCell>
                 )}
+                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                      updateCustomer.mutate({
+                        id: customer.id,
+                        has_trial: !customer.has_trial,
+                      });
+                    }}
+                  >
+                    {customer.has_trial ? (
+                      <Check className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <X className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </Button>
+                </TableCell>
                 {visibleColumns.includes('subscription_plan') && (
                   <TableCell className="text-center">
                     {customer.subscription_plan ? (
