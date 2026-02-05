@@ -20,6 +20,15 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, m => map[m]);
 }
 
+// Sanitize email subject to prevent header injection attacks
+function sanitizeEmailSubject(subject: string): string {
+  return subject
+    .replace(/[\r\n]/g, '') // Remove newlines to prevent header injection
+    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+    .trim()
+    .slice(0, 200); // Limit length
+}
+
 async function sendEmail(to: string, subject: string, html: string, replyTo?: string | null) {
   const emailPayload: Record<string, unknown> = {
     from: "Subscription Reminder <noreply@yourdomain.com>", // Update with your verified domain
@@ -101,7 +110,7 @@ serve(async (req: Request): Promise<Response> => {
           .maybeSingle();
 
         if (settings?.reminder_subject) {
-          subject = settings.reminder_subject;
+          subject = sanitizeEmailSubject(settings.reminder_subject);
         }
         if (settings?.reminder_message) {
           messageTemplate = settings.reminder_message;
