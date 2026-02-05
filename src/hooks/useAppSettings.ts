@@ -9,6 +9,7 @@ export interface AppSettings {
   tagline: string | null;
   reminder_subject: string | null;
   reminder_message: string | null;
+  theme_color: string | null;
   created_at: string;
   updated_at: string;
   user_id: string | null;
@@ -39,12 +40,14 @@ export function useUpdateAppSettings() {
       tagline,
       reminderSubject,
       reminderMessage,
+      themeColor,
     }: { 
       appName: string; 
       logoUrl?: string | null;
       tagline?: string;
       reminderSubject?: string;
       reminderMessage?: string;
+      themeColor?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -59,6 +62,7 @@ export function useUpdateAppSettings() {
       if (tagline !== undefined) updates.tagline = tagline;
       if (reminderSubject !== undefined) updates.reminder_subject = reminderSubject;
       if (reminderMessage !== undefined) updates.reminder_message = reminderMessage;
+      if (themeColor !== undefined) updates.theme_color = themeColor;
 
       if (existing) {
         const { error } = await supabase

@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useAppSettings, useUpdateAppSettings, useUploadLogo } from '@/hooks/useAppSettings';
+import { ColorThemePicker, ThemeColor } from '@/components/ColorThemePicker';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
 
 export function BrandingSettingsDialog() {
@@ -25,6 +26,7 @@ export function BrandingSettingsDialog() {
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
   const [reminderSubject, setReminderSubject] = useState('');
   const [reminderMessage, setReminderMessage] = useState('');
+  const [themeColor, setThemeColor] = useState<ThemeColor>('purple');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: settings } = useAppSettings();
@@ -39,6 +41,7 @@ export function BrandingSettingsDialog() {
       setPendingLogoFile(null);
       setReminderSubject(settings.reminder_subject || 'Your subscription expires in 30 days');
       setReminderMessage(settings.reminder_message || 'Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!');
+      setThemeColor((settings.theme_color as ThemeColor) || 'purple');
     }
   }, [settings, open]);
 
@@ -77,6 +80,7 @@ export function BrandingSettingsDialog() {
       tagline,
       reminderSubject,
       reminderMessage,
+      themeColor,
     });
     setOpen(false);
   };
@@ -167,6 +171,14 @@ export function BrandingSettingsDialog() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Accent Color</Label>
+              <ColorThemePicker value={themeColor} onChange={setThemeColor} />
+              <p className="text-xs text-muted-foreground">
+                Choose a color theme for your dashboard
+              </p>
             </div>
           </TabsContent>
 
