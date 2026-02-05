@@ -98,6 +98,7 @@ export type Database = {
           created_at: string
           custom_data: Json | null
           email: string | null
+          has_trial: boolean
           id: string
           last_contact_date: string | null
           name: string
@@ -119,6 +120,7 @@ export type Database = {
           created_at?: string
           custom_data?: Json | null
           email?: string | null
+          has_trial?: boolean
           id?: string
           last_contact_date?: string | null
           name: string
@@ -140,6 +142,7 @@ export type Database = {
           created_at?: string
           custom_data?: Json | null
           email?: string | null
+          has_trial?: boolean
           id?: string
           last_contact_date?: string | null
           name?: string
