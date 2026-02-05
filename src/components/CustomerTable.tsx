@@ -13,7 +13,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Check, X } from 'lucide-react';
+import { Trash2, Check, X, Bell, BellOff } from 'lucide-react';
+import { useUpdateCustomer } from '@/hooks/useCustomers';
 
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import { useCustomFields } from '@/hooks/useCustomFields';
@@ -29,6 +30,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const { data: columns = [] } = useColumnVisibility();
   const { data: customFields = [] } = useCustomFields();
   const deleteCustomer = useDeleteCustomer();
+  const updateCustomer = useUpdateCustomer();
   const { toast } = useToast();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -137,6 +139,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
               {visibleColumns.includes('vod_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
               {visibleColumns.includes('company') && <TableHead className="font-semibold">Plan Cost</TableHead>}
               {visibleColumns.includes('subscription_status') && <TableHead className="font-semibold">Status</TableHead>}
+              <TableHead className="font-semibold text-center">Reminders</TableHead>
               {visibleCustomFields.map((field) => (
                 <TableHead key={field.id} className="font-semibold">{field.name}</TableHead>
               ))}
@@ -238,6 +241,25 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     <StatusBadge status={customer.subscription_status as any || 'active'} />
                   </TableCell>
                 )}
+                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                      updateCustomer.mutate({
+                        id: customer.id,
+                        reminders_enabled: !customer.reminders_enabled,
+                      });
+                    }}
+                  >
+                    {customer.reminders_enabled ? (
+                      <Bell className="h-5 w-5 text-primary" />
+                    ) : (
+                      <BellOff className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </Button>
+                </TableCell>
                 {visibleCustomFields.map((field) => (
                   <TableCell key={field.id}>
                     {(customer.custom_data as Record<string, unknown>)?.[field.name]?.toString() || '-'}

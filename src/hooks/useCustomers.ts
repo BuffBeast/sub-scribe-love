@@ -18,6 +18,7 @@ export interface Customer {
   created_at: string;
   updated_at: string;
   user_id: string | null;
+  reminders_enabled: boolean;
 }
 
 export function useCustomers() {
