@@ -6,7 +6,7 @@ import { Download, Loader2, Upload, FileSpreadsheet, Check } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Papa from 'papaparse';
-import { Customer } from '@/types/customer';
+import { useCreateCustomer } from '@/hooks/useCustomers';
 
 interface ParsedCustomer {
   name: string;
@@ -19,17 +19,16 @@ interface ParsedCustomer {
   [key: string]: string | number;
 }
 
-interface ImportCustomersDialogProps {
-  onImport?: (customers: Customer[]) => void;
-}
+interface ImportCustomersDialogProps {}
 
-export function ImportCustomersDialog({ onImport }: ImportCustomersDialogProps) {
+export function ImportCustomersDialog({}: ImportCustomersDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedCustomer[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const createCustomer = useCreateCustomer();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -83,7 +82,7 @@ export function ImportCustomersDialog({ onImport }: ImportCustomersDialogProps) 
     });
   };
 
-  const mapToCustomer = (row: ParsedCustomer, index: number): Customer => {
+  const mapToCustomer = (row: ParsedCustomer) => {
     // Try to find matching columns (case-insensitive)
     const findValue = (keys: string[]): string => {
       for (const key of keys) {
@@ -99,36 +98,38 @@ export function ImportCustomersDialog({ onImport }: ImportCustomersDialogProps) 
     };
 
     const status = findValue(['status', 'subscription', 'state']).toLowerCase();
-    let subscriptionStatus: Customer['subscriptionStatus'] = 'active';
-    if (status.includes('trial')) subscriptionStatus = 'trial';
-    else if (status.includes('expired') || status.includes('inactive')) subscriptionStatus = 'expired';
-    else if (status.includes('cancel')) subscriptionStatus = 'cancelled';
+    let subscription_status = 'active';
+    if (status.includes('trial')) subscription_status = 'trial';
+    else if (status.includes('expired') || status.includes('inactive')) subscription_status = 'expired';
+    else if (status.includes('cancel')) subscription_status = 'cancelled';
 
     return {
-      id: String(index + 1000),
-      name: findValue(['name', 'customer', 'user', 'username']) || `Customer ${index + 1}`,
-      email: findValue(['email', 'mail', 'e-mail']) || '',
-      phone: findValue(['phone', 'tel', 'mobile', 'contact']) || '',
-      company: findValue(['company', 'business', 'organization', 'org']) || '',
-      subscriptionStatus,
-      subscriptionPlan: findValue(['plan', 'package', 'tier', 'subscription']) || 'Standard',
-      subscriptionStartDate: findValue(['start', 'created', 'registered']) || new Date().toISOString().split('T')[0],
-      subscriptionEndDate: findValue(['end', 'expires', 'expiry']) || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      lastContactDate: findValue(['contact', 'last', 'activity']) || new Date().toISOString().split('T')[0],
-      totalSpent: findNumber(['spent', 'revenue', 'total', 'amount', 'balance', 'credits']),
+      name: findValue(['name', 'customer', 'user', 'username']) || 'Unknown',
+      email: findValue(['email', 'mail', 'e-mail']) || null,
+      phone: findValue(['phone', 'tel', 'mobile', 'contact']) || null,
+      company: findValue(['company', 'business', 'organization', 'org']) || null,
+      subscription_status,
+      subscription_plan: findValue(['plan', 'package', 'tier', 'subscription']) || null,
+      total_spent: findNumber(['spent', 'revenue', 'total', 'amount', 'balance', 'credits']),
     };
   };
 
-  const handleImport = () => {
-    const customers = parsedData.map((row, index) => mapToCustomer(row, index));
+  const handleImport = async () => {
+    const customers = parsedData.map((row) => mapToCustomer(row));
     
-    if (onImport) {
-      onImport(customers);
+    let imported = 0;
+    for (const customer of customers) {
+      try {
+        await createCustomer.mutateAsync(customer);
+        imported++;
+      } catch (e) {
+        console.error('Failed to import customer:', e);
+      }
     }
     
     toast({
       title: 'Import Complete',
-      description: `Imported ${customers.length} customers`,
+      description: `Imported ${imported} of ${customers.length} customers`,
     });
     
     setOpen(false);

@@ -1,64 +1,61 @@
 import { useState, useMemo } from 'react';
 import { Users, CreditCard, TrendingUp, Clock } from 'lucide-react';
-import { mockCustomers } from '@/data/mockCustomers';
-import { Customer, SubscriptionStatus } from '@/types/customer';
+import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { MetricCard } from '@/components/MetricCard';
 import { CustomerTable } from '@/components/CustomerTable';
 import { CustomerDetailPanel } from '@/components/CustomerDetailPanel';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterTabs } from '@/components/FilterTabs';
 import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
+import { AddCustomerDialog } from '@/components/AddCustomerDialog';
+import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
 import ghostBuffLogo from '@/assets/ghostbuff-logo.jpeg';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [importedCustomers, setImportedCustomers] = useState<Customer[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
-  // Combine mock and imported customers
-  const allCustomers = useMemo(() => {
-    return [...mockCustomers, ...importedCustomers];
-  }, [importedCustomers]);
+  const { data: customers = [], isLoading } = useCustomers();
+
+  const selectedCustomer = useMemo(() => {
+    return customers.find((c) => c.id === selectedCustomerId) || null;
+  }, [customers, selectedCustomerId]);
 
   // Calculate metrics
   const metrics = useMemo(() => {
-    const totalCustomers = allCustomers.length;
-    const activeCustomers = allCustomers.filter(c => c.subscriptionStatus === 'active').length;
-    const totalRevenue = allCustomers.reduce((sum, c) => sum + c.totalSpent, 0);
-    const trialCustomers = allCustomers.filter(c => c.subscriptionStatus === 'trial').length;
+    const totalCustomers = customers.length;
+    const activeCustomers = customers.filter(c => c.subscription_status === 'active').length;
+    const totalRevenue = customers.reduce((sum, c) => sum + (c.total_spent || 0), 0);
+    const trialCustomers = customers.filter(c => c.subscription_status === 'trial').length;
 
     return { totalCustomers, activeCustomers, totalRevenue, trialCustomers };
-  }, [allCustomers]);
+  }, [customers]);
 
   // Calculate status counts
   const statusCounts = useMemo(() => {
     return {
-      all: allCustomers.length,
-      active: allCustomers.filter(c => c.subscriptionStatus === 'active').length,
-      trial: allCustomers.filter(c => c.subscriptionStatus === 'trial').length,
-      expired: allCustomers.filter(c => c.subscriptionStatus === 'expired').length,
-      cancelled: allCustomers.filter(c => c.subscriptionStatus === 'cancelled').length,
+      all: customers.length,
+      active: customers.filter(c => c.subscription_status === 'active').length,
+      trial: customers.filter(c => c.subscription_status === 'trial').length,
+      expired: customers.filter(c => c.subscription_status === 'expired').length,
+      cancelled: customers.filter(c => c.subscription_status === 'cancelled').length,
     };
-  }, [allCustomers]);
+  }, [customers]);
 
   // Filter customers
   const filteredCustomers = useMemo(() => {
-    return allCustomers.filter(customer => {
+    return customers.filter(customer => {
       const matchesSearch = 
         customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.company.toLowerCase().includes(searchQuery.toLowerCase());
+        (customer.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (customer.company?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
-      const matchesStatus = statusFilter === 'all' || customer.subscriptionStatus === statusFilter;
+      const matchesStatus = statusFilter === 'all' || customer.subscription_status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, statusFilter, allCustomers]);
-
-  const handleImport = (customers: Customer[]) => {
-    setImportedCustomers(prev => [...prev, ...customers]);
-  };
+  }, [searchQuery, statusFilter, customers]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -68,6 +65,21 @@ const Index = () => {
       maximumFractionDigits: 0,
     }).format(amount);
   };
+
+  // Convert Customer to old format for detail panel
+  const legacyCustomer = selectedCustomer ? {
+    id: selectedCustomer.id,
+    name: selectedCustomer.name,
+    email: selectedCustomer.email || '',
+    phone: selectedCustomer.phone || '',
+    company: selectedCustomer.company || '',
+    subscriptionStatus: (selectedCustomer.subscription_status || 'active') as 'active' | 'trial' | 'expired' | 'cancelled',
+    subscriptionPlan: selectedCustomer.subscription_plan || '',
+    subscriptionStartDate: selectedCustomer.subscription_start_date || '',
+    subscriptionEndDate: selectedCustomer.subscription_end_date || '',
+    lastContactDate: selectedCustomer.last_contact_date || '',
+    totalSpent: selectedCustomer.total_spent || 0,
+  } : null;
 
   return (
     <div className="min-h-screen bg-ghost-gradient">
@@ -88,7 +100,11 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <ImportCustomersDialog onImport={handleImport} />
+            <div className="flex items-center gap-2">
+              <ColumnSettingsDialog />
+              <ImportCustomersDialog />
+              <AddCustomerDialog />
+            </div>
           </div>
         </div>
       </header>
@@ -105,7 +121,7 @@ const Index = () => {
           <MetricCard
             title="Active Subscriptions"
             value={metrics.activeCustomers}
-            subtitle={`${Math.round((metrics.activeCustomers / metrics.totalCustomers) * 100)}% of total`}
+            subtitle={metrics.totalCustomers > 0 ? `${Math.round((metrics.activeCustomers / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
             icon={TrendingUp}
           />
           <MetricCard
@@ -138,23 +154,35 @@ const Index = () => {
         <div className="flex gap-6">
           {/* Customer Table */}
           <div className={selectedCustomer ? 'flex-1' : 'w-full'}>
-            <CustomerTable
-              customers={filteredCustomers}
-              onCustomerClick={setSelectedCustomer}
-            />
-            {filteredCustomers.length === 0 && (
+            {isLoading ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">No customers found matching your criteria.</p>
+                <p className="text-muted-foreground">Loading customers...</p>
               </div>
+            ) : (
+              <>
+                <CustomerTable
+                  customers={filteredCustomers}
+                  onCustomerClick={(c) => setSelectedCustomerId(c.id)}
+                />
+                {filteredCustomers.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">
+                      {customers.length === 0 
+                        ? 'No customers yet. Add your first customer!' 
+                        : 'No customers found matching your criteria.'}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
           {/* Detail Panel */}
-          {selectedCustomer && (
+          {legacyCustomer && (
             <div className="w-96 shrink-0">
               <CustomerDetailPanel
-                customer={selectedCustomer}
-                onClose={() => setSelectedCustomer(null)}
+                customer={legacyCustomer}
+                onClose={() => setSelectedCustomerId(null)}
               />
             </div>
           )}
