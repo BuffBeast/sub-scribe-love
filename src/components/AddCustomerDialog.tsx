@@ -87,12 +87,13 @@ export function AddCustomerDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
-          Add Customer
+          <span className="hidden sm:inline">Add Customer</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Customer</DialogTitle>
         </DialogHeader>

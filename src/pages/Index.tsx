@@ -4,8 +4,11 @@ import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { MetricCard } from '@/components/MetricCard';
 import { CustomerTable } from '@/components/CustomerTable';
+import { MobileCustomerCard } from '@/components/MobileCustomerCard';
+import { MobileHeader } from '@/components/MobileHeader';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterTabs } from '@/components/FilterTabs';
 import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
@@ -21,11 +24,13 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: customers = [], isLoading } = useCustomers();
   const { data: customFields = [] } = useCustomFields();
   const { data: appSettings } = useAppSettings();
   const { signOut } = useAuth();
+  const isMobile = useIsMobile();
 
   const displayName = appSettings?.app_name || 'Customer Tracker';
   const displayLogo = appSettings?.logo_url || letsStreamLogo;
@@ -75,6 +80,106 @@ const Index = () => {
     });
   }, [searchQuery, statusFilter, customers]);
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-ghost-gradient">
+        <MobileHeader
+          displayName={displayName}
+          displayLogo={displayLogo}
+          displayTagline={displayTagline}
+          customers={customers}
+          customFields={customFields}
+          signOut={signOut}
+        />
+
+        <main className="px-4 py-4 space-y-4">
+          {/* Compact Metrics */}
+          <div className="grid grid-cols-2 gap-3">
+            <MetricCard
+              title="Total"
+              value={metrics.totalCustomers}
+              icon={Users}
+            />
+            <MetricCard
+              title="Live"
+              value={metrics.activeLive}
+              icon={Tv}
+            />
+            <MetricCard
+              title="VOD"
+              value={metrics.activeVod}
+              icon={Video}
+            />
+            <MetricCard
+              title="Trial"
+              value={metrics.trialCustomers}
+              icon={Clock}
+            />
+          </div>
+
+          {/* Search and Filters */}
+          <div className="space-y-3">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            <div className="overflow-x-auto -mx-4 px-4">
+              <FilterTabs
+                value={statusFilter}
+                onChange={setStatusFilter}
+                counts={statusCounts}
+              />
+            </div>
+          </div>
+
+          {/* Customer Cards */}
+          <div className="space-y-3">
+            {isLoading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Loading customers...</p>
+              </div>
+            ) : filteredCustomers.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  {customers.length === 0
+                    ? 'No customers yet. Add your first customer!'
+                    : 'No customers found matching your criteria.'}
+                </p>
+              </div>
+            ) : (
+              filteredCustomers.map((customer) => (
+                <MobileCustomerCard
+                  key={customer.id}
+                  customer={customer}
+                  selected={selectedIds.has(customer.id)}
+                  onSelect={toggleSelect}
+                  onClick={(c) => setEditingCustomer(c)}
+                />
+              ))
+            )}
+          </div>
+        </main>
+
+        <EditCustomerDialog
+          customer={editingCustomer}
+          open={!!editingCustomer}
+          onOpenChange={(open) => !open && setEditingCustomer(null)}
+        />
+      </div>
+    );
+  }
+
+  // Desktop layout
   return (
     <div className="min-h-screen bg-ghost-gradient">
       {/* Header */}
