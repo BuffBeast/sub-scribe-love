@@ -7,7 +7,7 @@ import { CustomerTable } from '@/components/CustomerTable';
 import { CustomerDetailPanel } from '@/components/CustomerDetailPanel';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterTabs } from '@/components/FilterTabs';
-import ghostBuffMascot from '@/assets/ghostbuff-mascot.png';
+import ghostBuffLogo from '@/assets/ghostbuff-logo.jpeg';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,9 +66,9 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img 
-                src={ghostBuffMascot} 
-                alt="GhostBuff mascot" 
-                className="h-14 w-14 animate-ghost-float"
+                src={ghostBuffLogo} 
+                alt="GhostBuff logo" 
+                className="h-14 w-14 rounded-full shadow-glow animate-ghost-float object-cover"
               />
               <div>
                 <h1 className="text-2xl font-extrabold tracking-tight text-gradient">GhostBuff</h1>
