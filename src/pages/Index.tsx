@@ -84,7 +84,7 @@ const Index = () => {
               <img 
                 src={displayLogo} 
                 alt={`${displayName} logo`} 
-                className="h-14 w-14 rounded-full shadow-glow animate-ghost-float object-cover"
+                className="h-12 sm:h-14 w-auto object-contain drop-shadow-xl"
               />
               <div>
                 <h1 className="text-2xl font-extrabold tracking-tight text-gradient">{displayName}</h1>
