@@ -19,12 +19,30 @@ export function useAppSettings() {
   return useQuery({
     queryKey: ['app-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // First try to get user-specific settings
+      let { data, error } = await supabase
         .from('app_settings')
         .select('*')
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (error) throw error;
+      
+      // If no user-specific settings, check for legacy settings with null user_id
+      if (!data) {
+        const { data: legacyData, error: legacyError } = await supabase
+          .from('app_settings')
+          .select('*')
+          .is('user_id', null)
+          .maybeSingle();
+        
+        if (legacyError) throw legacyError;
+        data = legacyData;
+      }
+
       return data as AppSettings | null;
     },
   });
@@ -52,13 +70,28 @@ export function useUpdateAppSettings() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: existing } = await supabase
+      // First check for user-specific settings
+      let { data: existing } = await supabase
         .from('app_settings')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const updates: Record<string, unknown> = { app_name: appName, logo_url: logoUrl };
+      // If no user-specific settings, check for legacy settings with null user_id
+      if (!existing) {
+        const { data: legacyData } = await supabase
+          .from('app_settings')
+          .select('id')
+          .is('user_id', null)
+          .maybeSingle();
+        existing = legacyData;
+      }
+
+      const updates: Record<string, unknown> = { 
+        app_name: appName, 
+        logo_url: logoUrl,
+        user_id: user.id, // Always ensure user_id is set
+      };
       if (tagline !== undefined) updates.tagline = tagline;
       if (reminderSubject !== undefined) updates.reminder_subject = reminderSubject;
       if (reminderMessage !== undefined) updates.reminder_message = reminderMessage;
