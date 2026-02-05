@@ -105,7 +105,7 @@ export default function Auth() {
             <img src={letsStreamLogo} alt="Let's Stream logo" className="h-40 w-auto object-contain drop-shadow-xl" />
           </div>
           <CardTitle className="text-2xl text-gradient">Let's Stream Customer Tracker</CardTitle>
-          <CardDescription>Customer Tracker</CardDescription>
+          <CardDescription className="text-blue-900 font-semibold text-lg">Customer Tracker</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
