@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      column_visibility: {
+        Row: {
+          column_name: string
+          id: string
+          is_visible: boolean
+        }
+        Insert: {
+          column_name: string
+          id?: string
+          is_visible?: boolean
+        }
+        Update: {
+          column_name?: string
+          id?: string
+          is_visible?: boolean
+        }
+        Relationships: []
+      }
+      custom_fields: {
+        Row: {
+          created_at: string
+          field_type: string
+          id: string
+          is_visible: boolean
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          field_type?: string
+          id?: string
+          is_visible?: boolean
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          field_type?: string
+          id?: string
+          is_visible?: boolean
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          company: string | null
+          created_at: string
+          custom_data: Json | null
+          email: string | null
+          id: string
+          last_contact_date: string | null
+          name: string
+          phone: string | null
+          subscription_end_date: string | null
+          subscription_plan: string | null
+          subscription_start_date: string | null
+          subscription_status: string | null
+          total_spent: number | null
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          custom_data?: Json | null
+          email?: string | null
+          id?: string
+          last_contact_date?: string | null
+          name: string
+          phone?: string | null
+          subscription_end_date?: string | null
+          subscription_plan?: string | null
+          subscription_start_date?: string | null
+          subscription_status?: string | null
+          total_spent?: number | null
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          custom_data?: Json | null
+          email?: string | null
+          id?: string
+          last_contact_date?: string | null
+          name?: string
+          phone?: string | null
+          subscription_end_date?: string | null
+          subscription_plan?: string | null
+          subscription_start_date?: string | null
+          subscription_status?: string | null
+          total_spent?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
