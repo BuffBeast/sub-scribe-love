@@ -128,12 +128,12 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-company">Company</Label>
+            <Label htmlFor="edit-company">Notes</Label>
             <Input
               id="edit-company"
               value={form.company}
               onChange={(e) => setForm({ ...form, company: e.target.value })}
-              placeholder="Company name"
+              placeholder="Add notes..."
             />
           </div>
 
