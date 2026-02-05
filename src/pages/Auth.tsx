@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Ghost } from 'lucide-react';
+import letsStreamLogo from '@/assets/lets-stream-logo.png';
 import { z } from 'zod';
 
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255);
@@ -102,9 +102,9 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Ghost className="h-12 w-12 text-primary animate-ghost-float" />
+            <img src={letsStreamLogo} alt="Let's Stream logo" className="h-16 w-16 rounded-full object-cover" />
           </div>
-          <CardTitle className="text-2xl text-gradient">Welcome to GhostBuff</CardTitle>
+          <CardTitle className="text-2xl text-gradient">Let's Stream Customer Tracker</CardTitle>
           <CardDescription>Sign in to manage your customers</CardDescription>
         </CardHeader>
         <CardContent>
