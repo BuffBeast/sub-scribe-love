@@ -7,6 +7,7 @@ import { CustomerTable } from '@/components/CustomerTable';
 import { CustomerDetailPanel } from '@/components/CustomerDetailPanel';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterTabs } from '@/components/FilterTabs';
+import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
 import ghostBuffLogo from '@/assets/ghostbuff-logo.jpeg';
 
 const Index = () => {
@@ -63,7 +64,7 @@ const Index = () => {
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img 
                 src={ghostBuffLogo} 
@@ -77,6 +78,7 @@ const Index = () => {
                 </p>
               </div>
             </div>
+            <ImportCustomersDialog />
           </div>
         </div>
       </header>
