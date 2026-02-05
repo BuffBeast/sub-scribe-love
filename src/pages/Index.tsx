@@ -110,7 +110,7 @@ const Index = () => {
 
       <main className="container mx-auto px-6 py-8">
         {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard
             title="Total Customers"
             value={metrics.totalCustomers}
@@ -128,12 +128,6 @@ const Index = () => {
             value={metrics.activeVod}
             subtitle={metrics.totalCustomers > 0 ? `${Math.round((metrics.activeVod / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
             icon={Video}
-          />
-          <MetricCard
-            title="Total Revenue"
-            value={formatCurrency(metrics.totalRevenue)}
-            icon={CreditCard}
-            trend={{ value: 8, isPositive: true }}
           />
           <MetricCard
             title="In Trial"
