@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useAppSettings, useUpdateAppSettings, useUploadLogo } from '@/hooks/useAppSettings';
-import ghostBuffLogo from '@/assets/ghostbuff-logo.jpeg';
+import letsStreamLogo from '@/assets/lets-stream-logo.png';
 
 export function BrandingSettingsDialog() {
   const [open, setOpen] = useState(false);
@@ -67,7 +67,7 @@ export function BrandingSettingsDialog() {
     setOpen(false);
   };
 
-  const currentLogo = logoPreview || ghostBuffLogo;
+  const currentLogo = logoPreview || letsStreamLogo;
   const isLoading = updateSettings.isPending || uploadLogo.isPending;
 
   return (
