@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Users, CreditCard, TrendingUp, Clock, Tv, Video, LogOut } from 'lucide-react';
+import { Users, Clock, Tv, Video, LogOut } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -35,10 +35,9 @@ const Index = () => {
     const totalCustomers = customers.length;
     const activeLive = customers.filter(c => c.subscription_plan).length;
     const activeVod = customers.filter(c => c.vod_plan).length;
-    const totalRevenue = customers.reduce((sum, c) => sum + (c.total_spent || 0), 0);
     const trialCustomers = customers.filter(c => c.has_trial === true).length;
 
-    return { totalCustomers, activeLive, activeVod, totalRevenue, trialCustomers };
+    return { totalCustomers, activeLive, activeVod, trialCustomers };
   }, [customers]);
 
   // Calculate status counts
@@ -65,15 +64,6 @@ const Index = () => {
       return matchesSearch && matchesStatus;
     });
   }, [searchQuery, statusFilter, customers]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   return (
     <div className="min-h-screen bg-ghost-gradient">
