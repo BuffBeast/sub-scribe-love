@@ -8,6 +8,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// HTML escape function to prevent XSS in emails
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
 async function sendEmail(to: string, subject: string, html: string) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -88,16 +100,21 @@ serve(async (req: Request): Promise<Response> => {
         }
       }
 
-      // Replace placeholders
+      // Replace placeholders with escaped values to prevent XSS
       const formattedDate = new Date(customer.subscription_end_date).toLocaleDateString();
+      const escapedName = escapeHtml(customer.name);
+      const escapedPlan = escapeHtml(customer.subscription_plan || 'subscription');
+      const escapedDate = escapeHtml(formattedDate);
+      
       const messageBody = messageTemplate
-        .replace(/\{name\}/g, customer.name)
-        .replace(/\{plan\}/g, customer.subscription_plan || 'subscription')
-        .replace(/\{date\}/g, formattedDate);
+        .replace(/\{name\}/g, escapedName)
+        .replace(/\{plan\}/g, escapedPlan)
+        .replace(/\{date\}/g, escapedDate);
 
+      // Escape each line of the message body for safe HTML rendering
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${messageBody.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}
+          ${messageBody.split('\n').map(line => `<p>${escapeHtml(line) || '&nbsp;'}</p>`).join('')}
         </div>
       `;
 
