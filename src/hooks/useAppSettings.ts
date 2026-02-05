@@ -6,6 +6,7 @@ export interface AppSettings {
   id: string;
   app_name: string;
   logo_url: string | null;
+  tagline: string | null;
   reminder_subject: string | null;
   reminder_message: string | null;
   created_at: string;
@@ -35,11 +36,13 @@ export function useUpdateAppSettings() {
     mutationFn: async ({ 
       appName, 
       logoUrl,
+      tagline,
       reminderSubject,
       reminderMessage,
     }: { 
       appName: string; 
       logoUrl?: string | null;
+      tagline?: string;
       reminderSubject?: string;
       reminderMessage?: string;
     }) => {
@@ -53,6 +56,7 @@ export function useUpdateAppSettings() {
         .maybeSingle();
 
       const updates: Record<string, unknown> = { app_name: appName, logo_url: logoUrl };
+      if (tagline !== undefined) updates.tagline = tagline;
       if (reminderSubject !== undefined) updates.reminder_subject = reminderSubject;
       if (reminderMessage !== undefined) updates.reminder_message = reminderMessage;
 

@@ -20,6 +20,7 @@ import letsStreamLogo from '@/assets/lets-stream-logo.png';
 export function BrandingSettingsDialog() {
   const [open, setOpen] = useState(false);
   const [appName, setAppName] = useState('');
+  const [tagline, setTagline] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
   const [reminderSubject, setReminderSubject] = useState('');
@@ -33,6 +34,7 @@ export function BrandingSettingsDialog() {
   useEffect(() => {
     if (settings && open) {
       setAppName(settings.app_name);
+      setTagline(settings.tagline || 'Your spooky-good customer dashboard 👻');
       setLogoPreview(settings.logo_url);
       setPendingLogoFile(null);
       setReminderSubject(settings.reminder_subject || 'Your subscription expires in 30 days');
@@ -72,6 +74,7 @@ export function BrandingSettingsDialog() {
     await updateSettings.mutateAsync({ 
       appName, 
       logoUrl,
+      tagline,
       reminderSubject,
       reminderMessage,
     });
@@ -110,6 +113,16 @@ export function BrandingSettingsDialog() {
                 value={appName}
                 onChange={(e) => setAppName(e.target.value)}
                 placeholder="Enter app name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tagline">Tagline</Label>
+              <Input
+                id="tagline"
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                placeholder="Enter your tagline"
               />
             </div>
 

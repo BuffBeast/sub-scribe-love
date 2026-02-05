@@ -22,6 +22,7 @@ export type Database = {
           logo_url: string | null
           reminder_message: string | null
           reminder_subject: string | null
+          tagline: string | null
           updated_at: string
           user_id: string | null
         }
@@ -32,6 +33,7 @@ export type Database = {
           logo_url?: string | null
           reminder_message?: string | null
           reminder_subject?: string | null
+          tagline?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -42,6 +44,7 @@ export type Database = {
           logo_url?: string | null
           reminder_message?: string | null
           reminder_subject?: string | null
+          tagline?: string | null
           updated_at?: string
           user_id?: string | null
         }

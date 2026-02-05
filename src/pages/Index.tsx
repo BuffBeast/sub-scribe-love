@@ -29,6 +29,7 @@ const Index = () => {
 
   const displayName = appSettings?.app_name || 'Customer Tracker';
   const displayLogo = appSettings?.logo_url || letsStreamLogo;
+  const displayTagline = appSettings?.tagline || 'Your spooky-good customer dashboard 👻';
 
   // Calculate metrics
   const metrics = useMemo(() => {
@@ -89,7 +90,7 @@ const Index = () => {
               <div>
                 <h1 className="text-2xl font-extrabold tracking-tight text-gradient">{displayName}</h1>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Your spooky-good customer dashboard 👻
+                  {displayTagline}
                 </p>
               </div>
             </div>
