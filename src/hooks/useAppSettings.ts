@@ -140,10 +140,10 @@ export function useUploadLogo() {
 
       if (uploadError) throw uploadError;
 
-      // Use signed URL since bucket is now private (1 year expiry)
+      // Use signed URL since bucket is now private (7 day expiry for security)
       const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('logos')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 365);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7);
 
       if (signedUrlError) throw signedUrlError;
 
