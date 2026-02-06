@@ -136,11 +136,14 @@ export function useUploadLogo() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      // Use signed URL since bucket is now private (1 year expiry)
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('logos')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
-      return publicUrl;
+      if (signedUrlError) throw signedUrlError;
+
+      return signedUrlData.signedUrl;
     },
     onError: (error) => {
       toast.error('Failed to upload logo: ' + error.message);
