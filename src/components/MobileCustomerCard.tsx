@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { Customer, useUpdateCustomer, useDeleteCustomer } from '@/hooks/useCustomers';
 import { StatusBadge } from './StatusBadge';
@@ -8,6 +9,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Check, X, Bell, BellOff, Trash2, ChevronRight, CalendarIcon } from 'lucide-react';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { cn } from '@/lib/utils';
@@ -20,6 +31,7 @@ interface MobileCustomerCardProps {
 }
 
 export function MobileCustomerCard({ customer, selected, onSelect, onClick }: MobileCustomerCardProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const updateCustomer = useUpdateCustomer();
   const deleteCustomer = useDeleteCustomer();
   const deviceOptions = useAllDeviceOptions();
@@ -28,7 +40,32 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
   };
 
+  const handleDelete = () => {
+    deleteCustomer.mutate(customer.id);
+    setShowDeleteConfirm(false);
+  };
+
   return (
+    <>
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{customer.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     <Card className="p-4 space-y-3">
       {/* Header Row: Checkbox, Avatar, Name, Status */}
       <div className="flex items-start gap-3">
@@ -260,7 +297,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
           className="text-destructive hover:text-destructive hover:bg-destructive/10"
           onClick={(e) => {
             e.stopPropagation();
-            deleteCustomer.mutate(customer.id);
+            setShowDeleteConfirm(true);
           }}
         >
           <Trash2 className="h-4 w-4 mr-1" />
@@ -276,5 +313,6 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
         </Button>
       </div>
     </Card>
+    </>
   );
 }
