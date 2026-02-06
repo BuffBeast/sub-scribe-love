@@ -141,10 +141,8 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
               {visibleColumns.includes('name') && <TableHead className="font-semibold">Customer</TableHead>}
               <TableHead className="font-semibold text-center">TRIAL</TableHead>
               {visibleColumns.includes('subscription_plan') && <TableHead className="font-semibold text-center">LIVE</TableHead>}
-              {visibleColumns.includes('subscription_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
               {visibleColumns.includes('subscription_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
               {visibleColumns.includes('vod_plan') && <TableHead className="font-semibold">VOD</TableHead>}
-              {visibleColumns.includes('vod_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
               {visibleColumns.includes('vod_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
               {visibleColumns.includes('company') && <TableHead className="font-semibold">Notes</TableHead>}
               <TableHead className="font-semibold">Device</TableHead>
@@ -237,33 +235,6 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </Button>
                   </TableCell>
                 )}
-                {visibleColumns.includes('subscription_start_date') && (
-                  <TableCell className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
-                          {customer.subscription_start_date
-                            ? format(new Date(customer.subscription_start_date), 'MM/dd/yyyy')
-                            : <span className="text-muted-foreground">-</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={customer.subscription_start_date ? new Date(customer.subscription_start_date) : undefined}
-                          onSelect={(date) => {
-                            updateCustomer.mutate({
-                              id: customer.id,
-                              subscription_start_date: date ? format(date, 'yyyy-MM-dd') : null,
-                            });
-                          }}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </TableCell>
-                )}
                 {visibleColumns.includes('subscription_end_date') && (
                   <TableCell className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
                     <Popover>
@@ -310,33 +281,6 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                         <X className="h-5 w-5 text-destructive" />
                       )}
                     </Button>
-                  </TableCell>
-                )}
-                {visibleColumns.includes('vod_start_date') && (
-                  <TableCell className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
-                          {customer.vod_start_date
-                            ? format(new Date(customer.vod_start_date), 'MM/dd/yyyy')
-                            : <span className="text-muted-foreground">-</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={customer.vod_start_date ? new Date(customer.vod_start_date) : undefined}
-                          onSelect={(date) => {
-                            updateCustomer.mutate({
-                              id: customer.id,
-                              vod_start_date: date ? format(date, 'yyyy-MM-dd') : null,
-                            });
-                          }}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
                   </TableCell>
                 )}
                 {visibleColumns.includes('vod_end_date') && (
