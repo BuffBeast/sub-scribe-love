@@ -27,7 +27,7 @@ export type Database = {
           tagline: string | null
           theme_color: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           app_name?: string
@@ -41,7 +41,7 @@ export type Database = {
           tagline?: string | null
           theme_color?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           app_name?: string
@@ -55,7 +55,7 @@ export type Database = {
           tagline?: string | null
           theme_color?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -64,19 +64,19 @@ export type Database = {
           column_name: string
           id: string
           is_visible: boolean
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           column_name: string
           id?: string
           is_visible?: boolean
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           column_name?: string
           id?: string
           is_visible?: boolean
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -88,7 +88,7 @@ export type Database = {
           is_visible: boolean
           name: string
           sort_order: number
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -97,7 +97,7 @@ export type Database = {
           is_visible?: boolean
           name: string
           sort_order?: number
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -106,7 +106,7 @@ export type Database = {
           is_visible?: boolean
           name?: string
           sort_order?: number
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -130,7 +130,7 @@ export type Database = {
           subscription_status: string | null
           total_spent: number | null
           updated_at: string
-          user_id: string | null
+          user_id: string
           vod_end_date: string | null
           vod_plan: string | null
           vod_start_date: string | null
@@ -154,7 +154,7 @@ export type Database = {
           subscription_status?: string | null
           total_spent?: number | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
           vod_end_date?: string | null
           vod_plan?: string | null
           vod_start_date?: string | null
@@ -178,7 +178,7 @@ export type Database = {
           subscription_status?: string | null
           total_spent?: number | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
           vod_end_date?: string | null
           vod_plan?: string | null
           vod_start_date?: string | null
@@ -191,21 +191,21 @@ export type Database = {
           id: string
           name: string
           sort_order: number
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
           sort_order?: number
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
           sort_order?: number
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
