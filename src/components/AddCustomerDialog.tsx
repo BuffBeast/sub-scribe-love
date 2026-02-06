@@ -26,10 +26,8 @@ export function AddCustomerDialog() {
     company: '',
     subscription_status: 'active',
     has_live: false,
-    subscription_start_date: '',
     subscription_end_date: '',
     has_vod: false,
-    vod_start_date: '',
     vod_end_date: '',
     reminders_enabled: true,
     device: '',
@@ -52,10 +50,8 @@ export function AddCustomerDialog() {
         company: form.company || null,
         subscription_status: form.subscription_status,
         subscription_plan: form.has_live ? 'Active' : null,
-        subscription_start_date: form.has_live ? form.subscription_start_date || null : null,
         subscription_end_date: form.has_live ? form.subscription_end_date || null : null,
         vod_plan: form.has_vod ? 'Active' : null,
-        vod_start_date: form.has_vod ? form.vod_start_date || null : null,
         vod_end_date: form.has_vod ? form.vod_end_date || null : null,
         reminders_enabled: form.reminders_enabled,
         device: form.device || null,
@@ -72,10 +68,8 @@ export function AddCustomerDialog() {
             company: '',
             subscription_status: 'active',
             has_live: false,
-            subscription_start_date: '',
             subscription_end_date: '',
             has_vod: false,
-            vod_start_date: '',
             vod_end_date: '',
             reminders_enabled: true,
             device: '',
@@ -189,16 +183,6 @@ export function AddCustomerDialog() {
             {form.has_live && (
               <div className="space-y-4 ml-6">
                 <div className="space-y-2">
-                  <Label htmlFor="live_start_date">Start Date</Label>
-                  <Input
-                    id="live_start_date"
-                    type="date"
-                    value={form.subscription_start_date}
-                    onChange={(e) => setForm({ ...form, subscription_start_date: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="live_end_date">Expiry Date</Label>
                   <Input
                     id="live_end_date"
@@ -222,16 +206,6 @@ export function AddCustomerDialog() {
             </div>
             {form.has_vod && (
               <div className="space-y-4 ml-6">
-                <div className="space-y-2">
-                  <Label htmlFor="vod_start_date">Start Date</Label>
-                  <Input
-                    id="vod_start_date"
-                    type="date"
-                    value={form.vod_start_date}
-                    onChange={(e) => setForm({ ...form, vod_start_date: e.target.value })}
-                  />
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="vod_end_date">Expiry Date</Label>
                   <Input
