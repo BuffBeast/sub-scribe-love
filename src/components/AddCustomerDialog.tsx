@@ -12,8 +12,17 @@ import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useToast } from '@/hooks/use-toast';
 
-export function AddCustomerDialog() {
+interface AddCustomerDialogProps {
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
   const [open, setOpen] = useState(false);
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    onOpenChange?.(isOpen);
+  };
   const { toast } = useToast();
   const createCustomer = useCreateCustomer();
   const { data: customFields = [] } = useCustomFields();
@@ -90,7 +99,7 @@ export function AddCustomerDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
