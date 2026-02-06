@@ -168,13 +168,14 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-spent">Total Spent</Label>
+            <Label htmlFor="edit-price">Price</Label>
             <Input
-              id="edit-spent"
+              id="edit-price"
               type="number"
+              step="0.01"
               value={form.total_spent}
               onChange={(e) => setForm({ ...form, total_spent: e.target.value })}
-              placeholder="0"
+              placeholder="0.00"
             />
           </div>
 
