@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -29,6 +30,7 @@ export function BrandingSettingsDialog() {
   const [reminderMessage, setReminderMessage] = useState('');
   const [replyToEmail, setReplyToEmail] = useState('');
   const [themeColor, setThemeColor] = useState<ThemeColor>('purple');
+  const [reminderDays, setReminderDays] = useState(30);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: settings } = useAppSettings();
@@ -41,10 +43,11 @@ export function BrandingSettingsDialog() {
       setTagline(settings.tagline || 'Your spooky-good customer dashboard 👻');
       setLogoPreview(settings.logo_url);
       setPendingLogoFile(null);
-      setReminderSubject(settings.reminder_subject || 'Your subscription expires in 30 days');
+      setReminderSubject(settings.reminder_subject || 'Your subscription expires soon');
       setReminderMessage(settings.reminder_message || 'Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!');
-      setReplyToEmail((settings as any).reply_to_email || '');
+      setReplyToEmail(settings.reply_to_email || '');
       setThemeColor((settings.theme_color as ThemeColor) || 'purple');
+      setReminderDays(settings.reminder_days ?? 30);
     }
   }, [settings, open]);
 
@@ -99,6 +102,7 @@ export function BrandingSettingsDialog() {
       reminderMessage,
       replyToEmail: replyToEmail.trim() || null,
       themeColor,
+      reminderDays,
     });
     setOpen(false);
   };
@@ -201,6 +205,24 @@ export function BrandingSettingsDialog() {
           </TabsContent>
 
           <TabsContent value="reminders" className="space-y-6 py-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Days Before Expiry to Send Reminder</Label>
+                <span className="text-sm font-medium text-primary">{reminderDays} days</span>
+              </div>
+              <Slider
+                value={[reminderDays]}
+                onValueChange={(value) => setReminderDays(value[0])}
+                min={1}
+                max={90}
+                step={1}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                Reminders will be sent {reminderDays} day{reminderDays !== 1 ? 's' : ''} before subscription expiry
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="replyToEmail">Reply-To Email (optional)</Label>
               <Input

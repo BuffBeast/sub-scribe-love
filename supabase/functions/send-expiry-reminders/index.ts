@@ -9,6 +9,7 @@ const reminderSettingsSchema = z.object({
   reminder_subject: z.string().max(200).nullable().optional(),
   reminder_message: z.string().max(10000).nullable().optional(),
   reply_to_email: z.string().email().nullable().optional(),
+  reminder_days: z.number().int().min(1).max(90).optional().default(30),
 });
 
 const corsHeaders = {
@@ -109,13 +110,22 @@ serve(async (req: Request): Promise<Response> => {
     // Use service role key for database operations (to send reminders for all qualifying customers)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Calculate the date 30 days from now
-    const today = new Date();
-    const thirtyDaysFromNow = new Date(today);
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
-    const targetDate = thirtyDaysFromNow.toISOString().split('T')[0];
+    // Get user's reminder settings first to determine the days
+    const { data: userSettings } = await supabase
+      .from('app_settings')
+      .select('reminder_days')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-    console.log(`Checking for customers expiring on: ${targetDate}`);
+    const reminderDays = userSettings?.reminder_days ?? 30;
+
+    // Calculate the target date based on user's reminder_days setting
+    const today = new Date();
+    const targetDateObj = new Date(today);
+    targetDateObj.setDate(today.getDate() + reminderDays);
+    const targetDate = targetDateObj.toISOString().split('T')[0];
+
+    console.log(`Checking for customers expiring in ${reminderDays} days (on: ${targetDate})`);
 
     // Get customers expiring in 30 days with reminders enabled - ONLY for the authenticated user
     const { data: customers, error } = await supabase

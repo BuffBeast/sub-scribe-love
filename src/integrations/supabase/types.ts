@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           id: string
           logo_url: string | null
+          reminder_days: number
           reminder_message: string | null
           reminder_subject: string | null
           reply_to_email: string | null
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
+          reminder_days?: number
           reminder_message?: string | null
           reminder_subject?: string | null
           reply_to_email?: string | null
@@ -46,6 +48,7 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
+          reminder_days?: number
           reminder_message?: string | null
           reminder_subject?: string | null
           reply_to_email?: string | null
