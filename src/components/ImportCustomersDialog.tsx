@@ -9,7 +9,12 @@ import Papa from 'papaparse';
 import { useCreateCustomer } from '@/hooks/useCustomers';
 import { z } from 'zod';
 
-// Validation schema for imported customer data
+// Helper for date validation
+const dateStringSchema = z.string().trim()
+  .refine(val => !val || !isNaN(Date.parse(val)), { message: 'Invalid date format' })
+  .transform(val => val || null)
+  .nullable();
+
 const customerImportSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(255, 'Name too long'),
   email: z.string().trim().email('Invalid email').max(255).nullable().or(z.literal('')).transform(val => val || null),
@@ -17,6 +22,11 @@ const customerImportSchema = z.object({
   company: z.string().trim().max(255, 'Company name too long').nullable().or(z.literal('')).transform(val => val || null),
   subscription_status: z.enum(['active', 'trial', 'expired', 'cancelled']).default('active'),
   subscription_plan: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
+  subscription_start_date: dateStringSchema,
+  subscription_end_date: dateStringSchema,
+  vod_plan: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
+  vod_start_date: dateStringSchema,
+  vod_end_date: dateStringSchema,
   total_spent: z.number().min(0, 'Total spent cannot be negative').max(999999999, 'Total spent too large').default(0),
 });
 
@@ -125,7 +135,20 @@ export function ImportCustomersDialog({}: ImportCustomersDialogProps) {
     });
   };
 
-  const mapToCustomer = (row: ParsedCustomer): { name: string; email: string | null; phone: string | null; company: string | null; subscription_status: string; subscription_plan: string | null; total_spent: number } => {
+  const mapToCustomer = (row: ParsedCustomer): { 
+    name: string; 
+    email: string | null; 
+    phone: string | null; 
+    company: string | null; 
+    subscription_status: string; 
+    subscription_plan: string | null;
+    subscription_start_date: string | null;
+    subscription_end_date: string | null;
+    vod_plan: string | null;
+    vod_start_date: string | null;
+    vod_end_date: string | null;
+    total_spent: number;
+  } => {
     // Try to find matching columns (case-insensitive)
     const findValue = (keys: string[]): string => {
       for (const key of keys) {
@@ -141,7 +164,14 @@ export function ImportCustomersDialog({}: ImportCustomersDialogProps) {
       return isNaN(num) ? 0 : Math.max(0, num);
     };
 
-    const status = findValue(['status', 'subscription', 'state']).toLowerCase();
+    const findDate = (keys: string[]): string | null => {
+      const val = findValue(keys);
+      if (!val) return null;
+      const parsed = Date.parse(val);
+      return isNaN(parsed) ? null : new Date(parsed).toISOString().split('T')[0];
+    };
+
+    const status = findValue(['status', 'subscription_status', 'state']).toLowerCase();
     let subscription_status: 'active' | 'trial' | 'expired' | 'cancelled' = 'active';
     if (status.includes('trial')) subscription_status = 'trial';
     else if (status.includes('expired') || status.includes('inactive')) subscription_status = 'expired';
@@ -153,7 +183,12 @@ export function ImportCustomersDialog({}: ImportCustomersDialogProps) {
       phone: findValue(['phone', 'tel', 'mobile', 'contact']) || null,
       company: findValue(['company', 'business', 'organization', 'org']) || null,
       subscription_status,
-      subscription_plan: findValue(['plan', 'package', 'tier', 'subscription']) || null,
+      subscription_plan: findValue(['live_plan', 'subscription_plan', 'plan', 'package', 'tier']) || null,
+      subscription_start_date: findDate(['live_start', 'subscription_start', 'start_date']),
+      subscription_end_date: findDate(['live_end', 'live_expiry', 'subscription_end', 'end_date', 'expiry']),
+      vod_plan: findValue(['vod_plan', 'vod_package', 'vod_tier']) || null,
+      vod_start_date: findDate(['vod_start', 'vod_start_date']),
+      vod_end_date: findDate(['vod_end', 'vod_expiry', 'vod_end_date']),
       total_spent: findNumber(['spent', 'revenue', 'total', 'amount', 'balance', 'credits']),
     };
   };
