@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { LogOut, Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { LogOut, Menu, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ExportCSVButton } from '@/components/ExportCSVButton';
@@ -10,6 +10,10 @@ import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { MassEmailDialog } from '@/components/MassEmailDialog';
 import { Customer } from '@/hooks/useCustomers';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 interface MobileHeaderProps {
   displayName: string;
   displayLogo: string;
@@ -28,6 +32,44 @@ export function MobileHeader({
   signOut,
 }: MobileHeaderProps) {
   const [open, setOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // Check if already installed
+    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+    setIsInstalled(isInStandaloneMode);
+
+    // Capture the install prompt
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    
+    // Listen for app installed event
+    window.addEventListener('appinstalled', () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    
+    await deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setIsInstalled(true);
+    }
+    setDeferredPrompt(null);
+  };
 
   return (
     <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
@@ -72,6 +114,24 @@ export function MobileHeader({
                   <ColumnSettingsDialog />
                   <BrandingSettingsDialog />
                 </div>
+                
+                {/* Install App Button - only show if not installed and prompt available */}
+                {!isInstalled && deferredPrompt && (
+                  <div className="py-2">
+                    <Button
+                      variant="default"
+                      className="w-full justify-start gap-2"
+                      onClick={() => {
+                        handleInstall();
+                        setOpen(false);
+                      }}
+                    >
+                      <Download className="h-4 w-4" />
+                      Install App
+                    </Button>
+                  </div>
+                )}
+
                 <div className="border-t pt-4 mt-2">
                   <Button
                     variant="outline"
