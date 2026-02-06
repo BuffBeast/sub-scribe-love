@@ -60,12 +60,8 @@ export function MobileHeader({
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-2 mt-6">
-                <div onClick={() => setOpen(false)}>
-                  <AddCustomerDialog />
-                </div>
-                <div onClick={() => setOpen(false)}>
-                  <ImportCustomersDialog />
-                </div>
+                <AddCustomerDialog onOpenChange={(isOpen) => { if (!isOpen) setOpen(false); }} />
+                <ImportCustomersDialog onOpenChange={(isOpen) => { if (!isOpen) setOpen(false); }} />
                 <div className="py-2">
                   <MassEmailDialog customers={customers} />
                 </div>

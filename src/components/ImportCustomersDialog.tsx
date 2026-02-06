@@ -48,11 +48,18 @@ interface ParsedCustomer {
   [key: string]: string | number;
 }
 
-interface ImportCustomersDialogProps {}
+interface ImportCustomersDialogProps {
+  onOpenChange?: (open: boolean) => void;
+}
 
-export function ImportCustomersDialog({}: ImportCustomersDialogProps) {
+export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    onOpenChange?.(isOpen);
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedCustomer[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
@@ -260,7 +267,7 @@ export function ImportCustomersDialog({}: ImportCustomersDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Download className="h-4 w-4" />
