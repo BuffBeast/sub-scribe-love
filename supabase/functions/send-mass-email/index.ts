@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -7,6 +8,13 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Input validation schema
+const massEmailSchema = z.object({
+  subject: z.string().min(1, "Subject is required").max(200, "Subject must be 200 characters or less"),
+  message: z.string().min(1, "Message is required").max(10000, "Message must be 10000 characters or less"),
+  customerIds: z.array(z.string().uuid("Invalid customer ID format")).max(1000, "Maximum 1000 customers per request").optional(),
+});
 
 // HTML escape function to prevent XSS in emails
 function escapeHtml(text: string): string {
@@ -104,24 +112,29 @@ serve(async (req: Request): Promise<Response> => {
     const userId = claimsData.claims.sub;
     console.log(`Authenticated user ${userId} triggered send-mass-email`);
 
-    // Parse request body
-    const body: MassEmailRequest = await req.json();
+    // Parse and validate request body using Zod schema
+    let body: MassEmailRequest;
+    try {
+      const rawBody = await req.json();
+      const validationResult = massEmailSchema.safeParse(rawBody);
+      
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map(e => e.message).join(", ");
+        return new Response(
+          JSON.stringify({ error: `Validation failed: ${errors}` }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      
+      body = validationResult.data;
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
     const { subject, message, customerIds } = body;
-
-    // Validate required fields
-    if (!subject || !subject.trim()) {
-      return new Response(
-        JSON.stringify({ error: "Subject is required" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    if (!message || !message.trim()) {
-      return new Response(
-        JSON.stringify({ error: "Message is required" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
 
     // Use service role key for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
