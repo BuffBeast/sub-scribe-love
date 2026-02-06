@@ -7,6 +7,7 @@ import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
 import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
 import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
+import { MassEmailDialog } from '@/components/MassEmailDialog';
 import { Customer } from '@/hooks/useCustomers';
 
 interface MobileHeaderProps {
@@ -64,6 +65,9 @@ export function MobileHeader({
                 </div>
                 <div onClick={() => setOpen(false)}>
                   <ImportCustomersDialog />
+                </div>
+                <div className="py-2">
+                  <MassEmailDialog customers={customers} />
                 </div>
                 <div className="py-2">
                   <ExportCSVButton customers={customers} customFields={customFields} />
