@@ -230,10 +230,13 @@ serve(async (req: Request): Promise<Response> => {
       }
     );
   } catch (error) {
-    console.error("Error:", error);
-    return new Response(JSON.stringify({ error: String(error) }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    console.error("Error in send-mass-email:", error);
+    return new Response(
+      JSON.stringify({ error: "An unexpected error occurred. Please try again." }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   }
 });
