@@ -109,10 +109,11 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Checking for customers expiring on: ${targetDate}`);
 
-    // Get customers expiring in 30 days with reminders enabled
+    // Get customers expiring in 30 days with reminders enabled - ONLY for the authenticated user
     const { data: customers, error } = await supabase
       .from('customers')
       .select('id, name, email, subscription_plan, subscription_end_date, reminders_enabled, user_id')
+      .eq('user_id', userId)  // Security: Only query this user's customers
       .eq('subscription_end_date', targetDate)
       .eq('reminders_enabled', true)
       .not('email', 'is', null);
