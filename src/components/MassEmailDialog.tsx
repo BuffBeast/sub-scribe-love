@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { Mail, Send, Users, Loader2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Mail, Send, Users, Loader2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -36,9 +38,45 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
   const [loading, setLoading] = useState(false);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set());
 
-  const customersWithEmail = customers.filter(c => c.email);
-  const recipientCount = customersWithEmail.length;
+  const customersWithEmail = useMemo(
+    () => customers.filter(c => c.email),
+    [customers]
+  );
+
+  // Initialize selection when dialog opens
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      // Select all customers by default when opening
+      setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
+    }
+  };
+
+  const selectedCount = selectedCustomerIds.size;
+  const allSelected = selectedCount === customersWithEmail.length && customersWithEmail.length > 0;
+  const someSelected = selectedCount > 0 && selectedCount < customersWithEmail.length;
+
+  const toggleCustomer = (id: string) => {
+    setSelectedCustomerIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
+  };
+
+  const deselectAll = () => {
+    setSelectedCustomerIds(new Set());
+  };
 
   const handleSend = async () => {
     // Validate inputs
@@ -48,8 +86,8 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
       return;
     }
 
-    if (recipientCount === 0) {
-      toast.error('No customers with email addresses to send to');
+    if (selectedCount === 0) {
+      toast.error('Please select at least one customer to send to');
       return;
     }
 
@@ -63,7 +101,11 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
       }
 
       const response = await supabase.functions.invoke('send-mass-email', {
-        body: { subject, message },
+        body: { 
+          subject, 
+          message,
+          customerIds: Array.from(selectedCustomerIds)
+        },
       });
 
       if (response.error) {
@@ -87,6 +129,7 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
       // Reset form and close dialog
       setSubject('');
       setMessage('');
+      setSelectedCustomerIds(new Set());
       setOpen(false);
     } catch (error) {
       console.error('Error sending mass email:', error);
@@ -97,31 +140,88 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Mail className="h-4 w-4" />
           <span className="hidden sm:inline">Mass Email</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
             Send Mass Email
           </DialogTitle>
           <DialogDescription>
-            Send an announcement or update to all your customers with email addresses.
+            Select customers and send them an announcement or update.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <Alert>
-            <Users className="h-4 w-4" />
-            <AlertDescription>
-              This email will be sent to <strong>{recipientCount}</strong> customer{recipientCount !== 1 ? 's' : ''} with email addresses.
-            </AlertDescription>
-          </Alert>
+        <div className="space-y-4 py-4 flex-1 overflow-hidden flex flex-col">
+          {/* Recipient Selection */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Recipients</Label>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={selectAll}
+                  disabled={allSelected}
+                  className="h-7 px-2 text-xs"
+                >
+                  <Check className="h-3 w-3 mr-1" />
+                  Select All
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={deselectAll}
+                  disabled={selectedCount === 0}
+                  className="h-7 px-2 text-xs"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Deselect All
+                </Button>
+              </div>
+            </div>
+            
+            {customersWithEmail.length === 0 ? (
+              <Alert>
+                <AlertDescription>
+                  No customers with email addresses found.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <ScrollArea className="h-32 border rounded-md p-2">
+                <div className="space-y-1">
+                  {customersWithEmail.map((customer) => (
+                    <label
+                      key={customer.id}
+                      className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={selectedCustomerIds.has(customer.id)}
+                        onCheckedChange={() => toggleCustomer(customer.id)}
+                      />
+                      <span className="text-sm flex-1 truncate">{customer.name}</span>
+                      <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                        {customer.email}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+
+            <Alert>
+              <Users className="h-4 w-4" />
+              <AlertDescription>
+                <strong>{selectedCount}</strong> of {customersWithEmail.length} customer{customersWithEmail.length !== 1 ? 's' : ''} selected.
+              </AlertDescription>
+            </Alert>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="email-subject">Subject</Label>
@@ -134,14 +234,14 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 flex-1 flex flex-col min-h-0">
             <Label htmlFor="email-message">Message</Label>
             <Textarea
               id="email-message"
               placeholder="Hi {name},&#10;&#10;We have an exciting announcement..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              rows={8}
+              className="flex-1 min-h-[120px]"
               maxLength={5000}
             />
             <p className="text-xs text-muted-foreground">
@@ -155,7 +255,7 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
           <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSend} disabled={loading || recipientCount === 0}>
+          <Button onClick={handleSend} disabled={loading || selectedCount === 0}>
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -164,7 +264,7 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Send to {recipientCount} {recipientCount === 1 ? 'Customer' : 'Customers'}
+                Send to {selectedCount} {selectedCount === 1 ? 'Customer' : 'Customers'}
               </>
             )}
           </Button>
