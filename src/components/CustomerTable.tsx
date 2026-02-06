@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, Check, X, Bell, BellOff, CalendarIcon } from 'lucide-react';
 import { useUpdateCustomer } from '@/hooks/useCustomers';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useDeleteCustomer } from '@/hooks/useCustomers';
+import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useToast } from '@/hooks/use-toast';
 
 interface CustomerTableProps {
@@ -33,6 +35,7 @@ interface CustomerTableProps {
 export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps) {
   const { data: columns = [] } = useColumnVisibility();
   const { data: customFields = [] } = useCustomFields();
+  const deviceOptions = useAllDeviceOptions();
   const deleteCustomer = useDeleteCustomer();
   const updateCustomer = useUpdateCustomer();
   const { toast } = useToast();
@@ -144,6 +147,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
               {visibleColumns.includes('vod_start_date') && <TableHead className="font-semibold">Start Date</TableHead>}
               {visibleColumns.includes('vod_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
               {visibleColumns.includes('company') && <TableHead className="font-semibold">Notes</TableHead>}
+              <TableHead className="font-semibold">Device</TableHead>
               {visibleColumns.includes('subscription_status') && <TableHead className="font-semibold">Status</TableHead>}
               <TableHead className="font-semibold text-center">Reminders</TableHead>
               {visibleCustomFields.map((field) => (
@@ -365,6 +369,29 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 {visibleColumns.includes('company') && (
                   <TableCell className="text-muted-foreground">{customer.company || '-'}</TableCell>
                 )}
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Select
+                    value={customer.device || ''}
+                    onValueChange={(value) => {
+                      updateCustomer.mutate({
+                        id: customer.id,
+                        device: value || null,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[110px]">
+                      <SelectValue placeholder="-" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {deviceOptions.map((device) => (
+                        <SelectItem key={device} value={device}>
+                          {device}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
                 {visibleColumns.includes('subscription_status') && (
                   <TableCell>
                     <StatusBadge status={customer.subscription_status as any || 'active'} />

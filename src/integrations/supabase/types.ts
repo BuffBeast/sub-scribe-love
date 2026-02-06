@@ -112,6 +112,7 @@ export type Database = {
           company: string | null
           created_at: string
           custom_data: Json | null
+          device: string | null
           email: string | null
           has_trial: boolean
           id: string
@@ -134,6 +135,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           custom_data?: Json | null
+          device?: string | null
           email?: string | null
           has_trial?: boolean
           id?: string
@@ -156,6 +158,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           custom_data?: Json | null
+          device?: string | null
           email?: string | null
           has_trial?: boolean
           id?: string
@@ -173,6 +176,30 @@ export type Database = {
           vod_end_date?: string | null
           vod_plan?: string | null
           vod_start_date?: string | null
+        }
+        Relationships: []
+      }
+      device_types: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          user_id?: string | null
         }
         Relationships: []
       }

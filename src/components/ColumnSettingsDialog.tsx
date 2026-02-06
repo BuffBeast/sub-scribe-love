@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Settings, Plus, Trash2 } from 'lucide-react';
 import { useColumnVisibility, useUpdateColumnVisibility } from '@/hooks/useColumnVisibility';
 import { useCustomFields, useCreateCustomField, useDeleteCustomField, useUpdateCustomField } from '@/hooks/useCustomFields';
+import { useDeviceTypes, useCreateDeviceType, useDeleteDeviceType } from '@/hooks/useDeviceTypes';
 import { Separator } from '@/components/ui/separator';
 
 const COLUMN_LABELS: Record<string, string> = {
@@ -21,23 +22,37 @@ const COLUMN_LABELS: Record<string, string> = {
   total_spent: 'Total Spent',
 };
 
+// Default device types that are always available
+const DEFAULT_DEVICES = ['Firestick', 'K8', '8X', 'M9', 'R69'];
+
 export function ColumnSettingsDialog() {
   const [open, setOpen] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldType, setNewFieldType] = useState('text');
+  const [newDeviceName, setNewDeviceName] = useState('');
 
   const { data: columns = [] } = useColumnVisibility();
   const { data: customFields = [] } = useCustomFields();
+  const { data: deviceTypes = [] } = useDeviceTypes();
   const updateColumn = useUpdateColumnVisibility();
   const createField = useCreateCustomField();
   const deleteField = useDeleteCustomField();
   const updateField = useUpdateCustomField();
+  const createDevice = useCreateDeviceType();
+  const deleteDevice = useDeleteDeviceType();
 
   const handleAddField = () => {
     if (newFieldName.trim()) {
       createField.mutate({ name: newFieldName.trim(), field_type: newFieldType });
       setNewFieldName('');
       setNewFieldType('text');
+    }
+  };
+
+  const handleAddDevice = () => {
+    if (newDeviceName.trim()) {
+      createDevice.mutate(newDeviceName.trim());
+      setNewDeviceName('');
     }
   };
 
@@ -48,7 +63,7 @@ export function ColumnSettingsDialog() {
           <Settings className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Column Settings</DialogTitle>
         </DialogHeader>
@@ -131,6 +146,44 @@ export function ColumnSettingsDialog() {
               <Button onClick={handleAddField} size="icon">
                 <Plus className="h-4 w-4" />
               </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <h4 className="text-sm font-medium mb-3">Device Types</h4>
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground mb-2">Default devices: {DEFAULT_DEVICES.join(', ')}</p>
+              {deviceTypes.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Custom devices:</p>
+                  {deviceTypes.map((device) => (
+                    <div key={device.id} className="flex items-center justify-between">
+                      <span className="text-sm">{device.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => deleteDevice.mutate(device.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2 mt-3">
+                <Input
+                  placeholder="New device type..."
+                  value={newDeviceName}
+                  onChange={(e) => setNewDeviceName(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleAddDevice} size="icon">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
