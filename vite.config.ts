@@ -45,7 +45,22 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+
+        // Ensure users don't get stuck on a stale SW/cached shell (common cause of
+        // "works in incognito but not in regular window").
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+
+        // Never treat the OAuth broker endpoints as SPA navigations.
+        navigateFallbackDenylist: [/^\/~oauth\//],
+
         runtimeCaching: [
+          // OAuth initiation must always be handled by the server.
+          {
+            urlPattern: /\/~oauth\/.*/i,
+            handler: "NetworkOnly",
+          },
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: "NetworkFirst",
