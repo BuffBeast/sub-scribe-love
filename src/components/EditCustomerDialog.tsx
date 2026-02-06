@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Customer, useUpdateCustomer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
+import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditCustomerDialogProps {
@@ -19,6 +20,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
   const { toast } = useToast();
   const updateCustomer = useUpdateCustomer();
   const { data: customFields = [] } = useCustomFields();
+  const deviceOptions = useAllDeviceOptions();
 
   const [form, setForm] = useState({
     name: '',
@@ -29,6 +31,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
     subscription_plan: '',
     total_spent: '',
     reminders_enabled: true,
+    device: '',
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -43,6 +46,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         subscription_plan: customer.subscription_plan || '',
         total_spent: customer.total_spent?.toString() || '',
         reminders_enabled: customer.reminders_enabled ?? true,
+        device: customer.device || '',
       });
       const cd = customer.custom_data as Record<string, unknown> || {};
       const mapped: Record<string, string> = {};
@@ -74,6 +78,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         subscription_plan: form.subscription_plan || null,
         total_spent: form.total_spent ? parseFloat(form.total_spent) : 0,
         reminders_enabled: form.reminders_enabled,
+        device: form.device || null,
         custom_data: customData,
       },
       {
@@ -171,6 +176,23 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
               onChange={(e) => setForm({ ...form, total_spent: e.target.value })}
               placeholder="0"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-device">Device</Label>
+            <Select value={form.device} onValueChange={(v) => setForm({ ...form, device: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select device..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {deviceOptions.map((device) => (
+                  <SelectItem key={device} value={device}>
+                    {device}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {customFields.map((field) => (

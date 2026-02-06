@@ -23,6 +23,7 @@ export interface Customer {
   user_id: string | null;
   reminders_enabled: boolean;
   has_trial: boolean;
+  device: string | null;
 }
 
 export function useCustomers() {

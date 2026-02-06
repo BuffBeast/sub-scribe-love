@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
 import { useCreateCustomer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
+import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useToast } from '@/hooks/use-toast';
 
 export function AddCustomerDialog() {
@@ -16,6 +17,7 @@ export function AddCustomerDialog() {
   const { toast } = useToast();
   const createCustomer = useCreateCustomer();
   const { data: customFields = [] } = useCustomFields();
+  const deviceOptions = useAllDeviceOptions();
 
   const [form, setForm] = useState({
     name: '',
@@ -30,6 +32,7 @@ export function AddCustomerDialog() {
     vod_start_date: '',
     vod_end_date: '',
     reminders_enabled: true,
+    device: '',
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -55,6 +58,7 @@ export function AddCustomerDialog() {
         vod_start_date: form.has_vod ? form.vod_start_date || null : null,
         vod_end_date: form.has_vod ? form.vod_end_date || null : null,
         reminders_enabled: form.reminders_enabled,
+        device: form.device || null,
         custom_data: customData,
       } as any,
       {
@@ -74,6 +78,7 @@ export function AddCustomerDialog() {
             vod_start_date: '',
             vod_end_date: '',
             reminders_enabled: true,
+            device: '',
           });
           setCustomData({});
         },
@@ -151,6 +156,23 @@ export function AddCustomerDialog() {
                 <SelectItem value="trial">Trial</SelectItem>
                 <SelectItem value="expired">Expired</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="device">Device</Label>
+            <Select value={form.device} onValueChange={(v) => setForm({ ...form, device: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select device..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {deviceOptions.map((device) => (
+                  <SelectItem key={device} value={device}>
+                    {device}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
