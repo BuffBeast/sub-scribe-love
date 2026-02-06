@@ -1,7 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
+// Validation schemas for settings
+const reminderSettingsSchema = z.object({
+  reminder_subject: z.string().max(200).nullable().optional(),
+  reminder_message: z.string().max(10000).nullable().optional(),
+  reply_to_email: z.string().email().nullable().optional(),
+});
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -140,14 +148,24 @@ serve(async (req: Request): Promise<Response> => {
           .eq('user_id', customer.user_id)
           .maybeSingle();
 
-        if (settings?.reminder_subject) {
-          subject = sanitizeEmailSubject(settings.reminder_subject);
-        }
-        if (settings?.reminder_message) {
-          messageTemplate = settings.reminder_message;
-        }
-        if (settings?.reply_to_email) {
-          replyToEmail = settings.reply_to_email;
+        // Validate settings before using
+        if (settings) {
+          const validatedSettings = reminderSettingsSchema.safeParse(settings);
+          if (validatedSettings.success) {
+            const safeSettings = validatedSettings.data;
+            if (safeSettings.reminder_subject) {
+              subject = sanitizeEmailSubject(safeSettings.reminder_subject);
+            }
+            if (safeSettings.reminder_message) {
+              // Enforce max length on message template
+              messageTemplate = safeSettings.reminder_message.slice(0, 10000);
+            }
+            if (safeSettings.reply_to_email) {
+              replyToEmail = safeSettings.reply_to_email;
+            }
+          } else {
+            console.warn(`Invalid settings for user ${customer.user_id}:`, validatedSettings.error);
+          }
         }
       }
 
