@@ -156,12 +156,12 @@ export function AddCustomerDialog() {
 
           <div className="space-y-2">
             <Label htmlFor="device">Device</Label>
-            <Select value={form.device} onValueChange={(v) => setForm({ ...form, device: v })}>
+            <Select value={form.device || 'none'} onValueChange={(v) => setForm({ ...form, device: v === 'none' ? '' : v })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select device..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {deviceOptions.map((device) => (
                   <SelectItem key={device} value={device}>
                     {device}

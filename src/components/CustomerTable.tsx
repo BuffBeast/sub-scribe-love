@@ -315,11 +315,11 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 )}
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Select
-                    value={customer.device || ''}
+                    value={customer.device || 'none'}
                     onValueChange={(value) => {
                       updateCustomer.mutate({
                         id: customer.id,
-                        device: value || null,
+                        device: value === 'none' ? null : value,
                       });
                     }}
                   >
@@ -327,7 +327,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {deviceOptions.map((device) => (
                         <SelectItem key={device} value={device}>
                           {device}
