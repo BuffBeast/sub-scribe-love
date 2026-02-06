@@ -31,6 +31,8 @@ export function AddCustomerDialog() {
     vod_end_date: '',
     reminders_enabled: true,
     device: '',
+    service: '',
+    has_trial: false,
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -55,6 +57,8 @@ export function AddCustomerDialog() {
         vod_end_date: form.has_vod ? form.vod_end_date || null : null,
         reminders_enabled: form.reminders_enabled,
         device: form.device || null,
+        service: form.service || null,
+        has_trial: form.has_trial,
         custom_data: customData,
       } as any,
       {
@@ -73,6 +77,8 @@ export function AddCustomerDialog() {
             vod_end_date: '',
             reminders_enabled: true,
             device: '',
+            service: '',
+            has_trial: false,
           });
           setCustomData({});
         },
@@ -98,8 +104,9 @@ export function AddCustomerDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          {/* Customer Name */}
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name">Customer Name *</Label>
             <Input
               id="name"
               value={form.name}
@@ -108,52 +115,79 @@ export function AddCustomerDialog() {
             />
           </div>
 
+          {/* Service */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="email@example.com"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              placeholder="+1 (555) 123-4567"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="company">Notes</Label>
-            <Input
-              id="company"
-              value={form.company}
-              onChange={(e) => setForm({ ...form, company: e.target.value })}
-              placeholder="Add notes..."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={form.subscription_status} onValueChange={(v) => setForm({ ...form, subscription_status: v })}>
+            <Label htmlFor="service">Service</Label>
+            <Select value={form.service || 'none'} onValueChange={(v) => setForm({ ...form, service: v === 'none' ? '' : v })}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select service..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="trial">Trial</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="Spectra">Spectra</SelectItem>
+                <SelectItem value="Phantomflix">Phantomflix</SelectItem>
+                <SelectItem value="ExPat">ExPat</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+          {/* Trial */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="has_trial"
+              checked={form.has_trial}
+              onCheckedChange={(checked) => setForm({ ...form, has_trial: checked as boolean })}
+            />
+            <Label htmlFor="has_trial">Trial</Label>
+          </div>
+
+          {/* LIVE Subscription */}
+          <div className="border rounded-lg p-3 space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="has_live"
+                checked={form.has_live}
+                onCheckedChange={(checked) => setForm({ ...form, has_live: checked as boolean })}
+              />
+              <Label htmlFor="has_live" className="font-medium">LIVE</Label>
+            </div>
+            {form.has_live && (
+              <div className="space-y-2 ml-6">
+                <Label htmlFor="live_end_date">Expiry Date</Label>
+                <Input
+                  id="live_end_date"
+                  type="date"
+                  value={form.subscription_end_date}
+                  onChange={(e) => setForm({ ...form, subscription_end_date: e.target.value })}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* VOD Subscription */}
+          <div className="border rounded-lg p-3 space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="has_vod"
+                checked={form.has_vod}
+                onCheckedChange={(checked) => setForm({ ...form, has_vod: checked as boolean })}
+              />
+              <Label htmlFor="has_vod" className="font-medium">VOD</Label>
+            </div>
+            {form.has_vod && (
+              <div className="space-y-2 ml-6">
+                <Label htmlFor="vod_end_date">Expiry Date</Label>
+                <Input
+                  id="vod_end_date"
+                  type="date"
+                  value={form.vod_end_date}
+                  onChange={(e) => setForm({ ...form, vod_end_date: e.target.value })}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Device */}
           <div className="space-y-2">
             <Label htmlFor="device">Device</Label>
             <Select value={form.device || 'none'} onValueChange={(v) => setForm({ ...form, device: v === 'none' ? '' : v })}>
@@ -171,68 +205,71 @@ export function AddCustomerDialog() {
             </Select>
           </div>
 
-          <div className="border-t pt-4 mt-4">
-            <div className="flex items-center space-x-2 mb-3">
-              <Checkbox
-                id="has_live"
-                checked={form.has_live}
-                onCheckedChange={(checked) => setForm({ ...form, has_live: checked as boolean })}
-              />
-              <Label htmlFor="has_live" className="font-medium">LIVE Subscription</Label>
-            </div>
-            {form.has_live && (
-              <div className="space-y-4 ml-6">
-                <div className="space-y-2">
-                  <Label htmlFor="live_end_date">Expiry Date</Label>
-                  <Input
-                    id="live_end_date"
-                    type="date"
-                    value={form.subscription_end_date}
-                    onChange={(e) => setForm({ ...form, subscription_end_date: e.target.value })}
-                  />
-                </div>
-              </div>
-            )}
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="company">Notes</Label>
+            <Input
+              id="company"
+              value={form.company}
+              onChange={(e) => setForm({ ...form, company: e.target.value })}
+              placeholder="Add notes..."
+            />
           </div>
 
-          <div className="border-t pt-4 mt-4">
-            <div className="flex items-center space-x-2 mb-3">
-              <Checkbox
-                id="has_vod"
-                checked={form.has_vod}
-                onCheckedChange={(checked) => setForm({ ...form, has_vod: checked as boolean })}
-              />
-              <Label htmlFor="has_vod" className="font-medium">VOD Subscription</Label>
+          {/* Reminders */}
+          <div className="flex items-center justify-between border rounded-lg p-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="reminders_enabled" className="font-medium">Reminders</Label>
+              <p className="text-sm text-muted-foreground">Send automatic expiry reminders</p>
             </div>
-            {form.has_vod && (
-              <div className="space-y-4 ml-6">
-                <div className="space-y-2">
-                  <Label htmlFor="vod_end_date">Expiry Date</Label>
-                  <Input
-                    id="vod_end_date"
-                    type="date"
-                    value={form.vod_end_date}
-                    onChange={(e) => setForm({ ...form, vod_end_date: e.target.value })}
-                  />
-                </div>
-              </div>
-            )}
+            <Switch
+              id="reminders_enabled"
+              checked={form.reminders_enabled}
+              onCheckedChange={(checked) => setForm({ ...form, reminders_enabled: checked })}
+            />
           </div>
 
-          <div className="border-t pt-4 mt-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="reminders_enabled" className="font-medium">Email Reminders</Label>
-                <p className="text-sm text-muted-foreground">Send automatic expiry reminders</p>
-              </div>
-              <Switch
-                id="reminders_enabled"
-                checked={form.reminders_enabled}
-                onCheckedChange={(checked) => setForm({ ...form, reminders_enabled: checked })}
+          {/* Status */}
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select value={form.subscription_status} onValueChange={(v) => setForm({ ...form, subscription_status: v })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="trial">Trial</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Email & Phone (collapsed section) */}
+          <div className="border-t pt-4 space-y-4">
+            <p className="text-sm text-muted-foreground">Contact Info (Optional)</p>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="email@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="+1 (555) 123-4567"
               />
             </div>
           </div>
 
+          {/* Custom Fields */}
           {customFields.map((field) => (
             <div key={field.id} className="space-y-2">
               <Label htmlFor={field.id}>{field.name}</Label>
