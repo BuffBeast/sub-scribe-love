@@ -139,6 +139,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 />
               </TableHead>
               {visibleColumns.includes('name') && <TableHead className="font-semibold">Customer</TableHead>}
+              <TableHead className="font-semibold">Service</TableHead>
               <TableHead className="font-semibold text-center">TRIAL</TableHead>
               {visibleColumns.includes('subscription_plan') && <TableHead className="font-semibold text-center">LIVE</TableHead>}
               {visibleColumns.includes('subscription_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
@@ -195,6 +196,27 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </div>
                   </TableCell>
                 )}
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Select
+                    value={customer.service || 'none'}
+                    onValueChange={(value) => {
+                      updateCustomer.mutate({
+                        id: customer.id,
+                        service: value === 'none' ? null : value,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[120px]">
+                      <SelectValue placeholder="-" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="Spectra">Spectra</SelectItem>
+                      <SelectItem value="Phantomflix">Phantomflix</SelectItem>
+                      <SelectItem value="ExPat">ExPat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
                 <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="ghost"
