@@ -24,6 +24,7 @@ export interface Customer {
   reminders_enabled: boolean;
   has_trial: boolean;
   device: string | null;
+  service: string | null;
 }
 
 export function useCustomers() {
