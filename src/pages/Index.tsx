@@ -19,6 +19,7 @@ import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { ExportCSVButton } from '@/components/ExportCSVButton';
 import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
+import { MassEmailDialog } from '@/components/MassEmailDialog';
 import { Button } from '@/components/ui/button';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
 
@@ -209,6 +210,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <MassEmailDialog customers={customers} />
               <ExportCSVButton customers={customers} customFields={customFields} />
               <ColumnSettingsDialog />
               <BrandingSettingsDialog />
