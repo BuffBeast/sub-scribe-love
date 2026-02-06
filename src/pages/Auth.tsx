@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable/index';
+import { createLovableAuth } from "@lovable.dev/cloud-auth-js";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from 'sonner';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
 import { z } from 'zod';
+
+const PUBLISHED_OAUTH_FALLBACK_ORIGIN = "https://sub-scribe-love.lovable.app";
 
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255);
 
@@ -62,7 +64,23 @@ export default function Auth() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    const { error } = await lovable.auth.signInWithOAuth('google', {
+
+    // On some custom-domain setups, the special server endpoint `/<tilde>oauth/initiate` may 404.
+    // Fallback to the published `.lovable.app` origin for initiating OAuth, but still redirect back
+    // to the current origin after the handshake.
+    const hostname = window.location.hostname.toLowerCase();
+    const isLovableHosted = hostname.endsWith('.lovable.app') || hostname.endsWith('.lovableproject.com');
+
+    const oauthBrokerUrl = isLovableHosted
+      ? '/~oauth/initiate'
+      : `${PUBLISHED_OAUTH_FALLBACK_ORIGIN}/~oauth/initiate`;
+
+    const auth = createLovableAuth({
+      oauthBrokerUrl,
+      supportedOAuthOrigins: ['https://oauth.lovable.app'],
+    });
+
+    const { error } = await auth.signInWithOAuth('google', {
       redirect_uri: window.location.origin,
     });
 
