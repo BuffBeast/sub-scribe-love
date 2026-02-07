@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Check, X, Bell, BellOff, Trash2, ChevronRight, CalendarIcon, Mail } from 'lucide-react';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
+import { useAllServiceOptions } from '@/hooks/useServiceTypes';
 import { cn } from '@/lib/utils';
 
 interface MobileCustomerCardProps {
@@ -37,6 +38,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
   const updateCustomer = useUpdateCustomer();
   const deleteCustomer = useDeleteCustomer();
   const deviceOptions = useAllDeviceOptions();
+  const serviceOptions = useAllServiceOptions();
 
   const getInitials = (name: string) => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
@@ -114,9 +116,11 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">None</SelectItem>
-              <SelectItem value="Spectra">Spectra</SelectItem>
-              <SelectItem value="Phantomflix">Phantomflix</SelectItem>
-              <SelectItem value="ExPat">ExPat</SelectItem>
+              {serviceOptions.map((service) => (
+                <SelectItem key={service} value={service}>
+                  {service}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

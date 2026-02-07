@@ -26,6 +26,7 @@ import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useDeleteCustomer } from '@/hooks/useCustomers';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
+import { useAllServiceOptions } from '@/hooks/useServiceTypes';
 import { useToast } from '@/hooks/use-toast';
 
 interface CustomerTableProps {
@@ -37,6 +38,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const { data: columns = [] } = useColumnVisibility();
   const { data: customFields = [] } = useCustomFields();
   const deviceOptions = useAllDeviceOptions();
+  const serviceOptions = useAllServiceOptions();
   const deleteCustomer = useDeleteCustomer();
   const updateCustomer = useUpdateCustomer();
   const { toast } = useToast();
@@ -220,9 +222,11 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="Spectra">Spectra</SelectItem>
-                      <SelectItem value="Phantomflix">Phantomflix</SelectItem>
-                      <SelectItem value="ExPat">ExPat</SelectItem>
+                      {serviceOptions.map((service) => (
+                        <SelectItem key={service} value={service}>
+                          {service}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </TableCell>

@@ -13,6 +13,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Customer, useUpdateCustomer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
+import { useAllServiceOptions } from '@/hooks/useServiceTypes';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
   const updateCustomer = useUpdateCustomer();
   const { data: customFields = [] } = useCustomFields();
   const deviceOptions = useAllDeviceOptions();
+  const serviceOptions = useAllServiceOptions();
 
   const [form, setForm] = useState({
     name: '',
@@ -139,9 +141,11 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
-                <SelectItem value="Spectra">Spectra</SelectItem>
-                <SelectItem value="Phantomflix">Phantomflix</SelectItem>
-                <SelectItem value="ExPat">ExPat</SelectItem>
+                {serviceOptions.map((service) => (
+                  <SelectItem key={service} value={service}>
+                    {service}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
