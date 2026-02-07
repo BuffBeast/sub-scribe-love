@@ -10,6 +10,7 @@ import { Plus } from 'lucide-react';
 import { useCreateCustomer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
+import { useAllServiceOptions } from '@/hooks/useServiceTypes';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddCustomerDialogProps {
@@ -27,6 +28,7 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
   const createCustomer = useCreateCustomer();
   const { data: customFields = [] } = useCustomFields();
   const deviceOptions = useAllDeviceOptions();
+  const serviceOptions = useAllServiceOptions();
 
   const [form, setForm] = useState({
     name: '',
@@ -133,9 +135,11 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
-                <SelectItem value="Spectra">Spectra</SelectItem>
-                <SelectItem value="Phantomflix">Phantomflix</SelectItem>
-                <SelectItem value="ExPat">ExPat</SelectItem>
+                {serviceOptions.map((service) => (
+                  <SelectItem key={service} value={service}>
+                    {service}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
