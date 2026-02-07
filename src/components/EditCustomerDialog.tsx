@@ -9,12 +9,13 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Send } from 'lucide-react';
 import { Customer, useUpdateCustomer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { SendEmailDialog } from './SendEmailDialog';
 
 interface EditCustomerDialogProps {
   customer: Customer | null;
@@ -27,6 +28,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
   const updateCustomer = useUpdateCustomer();
   const { data: customFields = [] } = useCustomFields();
   const deviceOptions = useAllDeviceOptions();
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -112,11 +114,18 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Customer</DialogTitle>
-        </DialogHeader>
+    <>
+      <SendEmailDialog 
+        customer={customer} 
+        open={emailDialogOpen} 
+        onOpenChange={setEmailDialogOpen} 
+      />
+      
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Customer</DialogTitle>
+          </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           {/* Customer Name */}
@@ -333,11 +342,25 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
             </div>
           </div>
 
+          {/* Send Email Button */}
+          {customer?.email && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full gap-2" 
+              onClick={() => setEmailDialogOpen(true)}
+            >
+              <Send className="h-4 w-4" />
+              Send Email
+            </Button>
+          )}
+
           <Button type="submit" className="w-full" disabled={updateCustomer.isPending}>
             {updateCustomer.isPending ? 'Saving...' : 'Save Changes'}
           </Button>
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
