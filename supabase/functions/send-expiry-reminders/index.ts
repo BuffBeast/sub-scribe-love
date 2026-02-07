@@ -61,14 +61,17 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
   return response.json();
 }
 
-interface CustomerReminder {
+interface CustomerExpiry {
   id: string;
   name: string;
   email: string;
   user_id: string;
-  planName: string;
-  expiryDate: string;
-  subscriptionType: 'LIVE' | 'VOD';
+  liveExpiring: boolean;
+  livePlan: string | null;
+  liveDate: string | null;
+  vodExpiring: boolean;
+  vodPlan: string | null;
+  vodDate: string | null;
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -135,65 +138,50 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Checking for customers expiring in ${reminderDays} days (on: ${targetDate})`);
 
-    // Get customers with LIVE subscriptions expiring on target date
-    const { data: liveCustomers, error: liveError } = await supabase
+    // Get all customers with reminders enabled who have EITHER LIVE or VOD expiring on target date
+    const { data: customers, error } = await supabase
       .from('customers')
-      .select('id, name, email, subscription_plan, subscription_end_date, reminders_enabled, user_id')
+      .select('id, name, email, subscription_plan, subscription_end_date, vod_plan, vod_end_date, reminders_enabled, user_id')
       .eq('user_id', userId)
-      .eq('subscription_end_date', targetDate)
       .eq('reminders_enabled', true)
       .not('email', 'is', null)
-      .not('subscription_plan', 'is', null);
+      .or(`subscription_end_date.eq.${targetDate},vod_end_date.eq.${targetDate}`);
 
-    if (liveError) throw liveError;
+    if (error) throw error;
 
-    // Get customers with VOD subscriptions expiring on target date
-    const { data: vodCustomers, error: vodError } = await supabase
-      .from('customers')
-      .select('id, name, email, vod_plan, vod_end_date, reminders_enabled, user_id')
-      .eq('user_id', userId)
-      .eq('vod_end_date', targetDate)
-      .eq('reminders_enabled', true)
-      .not('email', 'is', null)
-      .not('vod_plan', 'is', null);
+    // Build list of customers with their expiring subscriptions
+    const customersToNotify: CustomerExpiry[] = [];
 
-    if (vodError) throw vodError;
-
-    // Build combined list of reminders to send
-    const remindersToSend: CustomerReminder[] = [];
-
-    for (const customer of liveCustomers || []) {
+    for (const customer of customers || []) {
       if (!customer.email) continue;
-      remindersToSend.push({
-        id: customer.id,
-        name: customer.name,
-        email: customer.email,
-        user_id: customer.user_id,
-        planName: customer.subscription_plan || 'LIVE',
-        expiryDate: customer.subscription_end_date,
-        subscriptionType: 'LIVE',
-      });
+
+      const liveExpiring = customer.subscription_end_date === targetDate && customer.subscription_plan;
+      const vodExpiring = customer.vod_end_date === targetDate && customer.vod_plan;
+
+      if (liveExpiring || vodExpiring) {
+        customersToNotify.push({
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          user_id: customer.user_id,
+          liveExpiring: !!liveExpiring,
+          livePlan: customer.subscription_plan,
+          liveDate: customer.subscription_end_date,
+          vodExpiring: !!vodExpiring,
+          vodPlan: customer.vod_plan,
+          vodDate: customer.vod_end_date,
+        });
+      }
     }
 
-    for (const customer of vodCustomers || []) {
-      if (!customer.email) continue;
-      remindersToSend.push({
-        id: customer.id,
-        name: customer.name,
-        email: customer.email,
-        user_id: customer.user_id,
-        planName: customer.vod_plan || 'VOD',
-        expiryDate: customer.vod_end_date,
-        subscriptionType: 'VOD',
-      });
-    }
+    const liveCount = customersToNotify.filter(c => c.liveExpiring).length;
+    const vodCount = customersToNotify.filter(c => c.vodExpiring).length;
+    const bothCount = customersToNotify.filter(c => c.liveExpiring && c.vodExpiring).length;
 
-    console.log(`Found ${liveCustomers?.length || 0} LIVE and ${vodCustomers?.length || 0} VOD subscriptions expiring`);
-
-    const emailResults = [];
+    console.log(`Found ${customersToNotify.length} customers: ${liveCount} LIVE, ${vodCount} VOD, ${bothCount} both`);
 
     // Validate settings once
-    let subject = "Your subscription expires soon";
+    let subjectTemplate = "Your subscription expires soon";
     let messageTemplate = `Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!`;
     let replyToEmail: string | null = null;
 
@@ -202,7 +190,7 @@ serve(async (req: Request): Promise<Response> => {
       if (validatedSettings.success) {
         const safeSettings = validatedSettings.data;
         if (safeSettings.reminder_subject) {
-          subject = sanitizeEmailSubject(safeSettings.reminder_subject);
+          subjectTemplate = sanitizeEmailSubject(safeSettings.reminder_subject);
         }
         if (safeSettings.reminder_message) {
           messageTemplate = safeSettings.reminder_message.slice(0, 10000);
@@ -213,13 +201,28 @@ serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    for (const reminder of remindersToSend) {
-      // Replace placeholders with escaped values
-      const formattedDate = new Date(reminder.expiryDate).toLocaleDateString();
-      const escapedName = escapeHtml(reminder.name);
-      // Include subscription type in plan name for clarity
-      const planDescription = `${reminder.subscriptionType} (${escapeHtml(reminder.planName)})`;
-      const escapedDate = escapeHtml(formattedDate);
+    const emailResults = [];
+
+    for (const customer of customersToNotify) {
+      const escapedName = escapeHtml(customer.name);
+      
+      // Build plan description based on what's expiring
+      let planDescription: string;
+      let expiryDate: string;
+
+      if (customer.liveExpiring && customer.vodExpiring) {
+        // Both expiring on same date
+        planDescription = "LIVE and VOD";
+        expiryDate = new Date(customer.liveDate!).toLocaleDateString();
+      } else if (customer.liveExpiring) {
+        planDescription = "LIVE";
+        expiryDate = new Date(customer.liveDate!).toLocaleDateString();
+      } else {
+        planDescription = "VOD";
+        expiryDate = new Date(customer.vodDate!).toLocaleDateString();
+      }
+
+      const escapedDate = escapeHtml(expiryDate);
       
       const messageBody = messageTemplate
         .replace(/\{name\}/g, escapedName)
@@ -233,17 +236,17 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(reminder.email, subject, html, replyToEmail);
+        const result = await sendEmail(customer.email, subjectTemplate, html, replyToEmail);
         emailResults.push({ 
-          email: reminder.email, 
-          type: reminder.subscriptionType,
+          email: customer.email, 
+          types: customer.liveExpiring && customer.vodExpiring ? 'LIVE+VOD' : (customer.liveExpiring ? 'LIVE' : 'VOD'),
           success: true, 
           result 
         });
       } catch (e) {
         emailResults.push({ 
-          email: reminder.email, 
-          type: reminder.subscriptionType,
+          email: customer.email, 
+          types: customer.liveExpiring && customer.vodExpiring ? 'LIVE+VOD' : (customer.liveExpiring ? 'LIVE' : 'VOD'),
           success: false, 
           error: String(e) 
         });
@@ -251,9 +254,10 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     return new Response(JSON.stringify({ 
-      processed: remindersToSend.length,
-      live: liveCustomers?.length || 0,
-      vod: vodCustomers?.length || 0, 
+      processed: customersToNotify.length,
+      live: liveCount,
+      vod: vodCount,
+      both: bothCount,
       results: emailResults 
     }), {
       status: 200,
