@@ -168,7 +168,7 @@ serve(async (req: Request): Promise<Response> => {
     if (!response.ok) {
       console.error("Resend API error:", result);
       return new Response(
-        JSON.stringify({ error: "Failed to send email", details: result }),
+        JSON.stringify({ error: "Failed to send email. Please try again later." }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
