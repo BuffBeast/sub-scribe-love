@@ -226,22 +226,40 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
 
   // Find existing customer by email first, then by name
   const findExistingCustomer = (customer: ValidatedCustomer) => {
+    console.log('[Import Debug] Looking for match:', { 
+      importName: customer.name, 
+      importEmail: customer.email,
+      existingCount: existingCustomers.length 
+    });
+    
     // First try to match by email (if email exists)
     if (customer.email) {
       const emailMatch = existingCustomers.find(
         existing => existing.email?.toLowerCase() === customer.email?.toLowerCase()
       );
-      if (emailMatch) return emailMatch;
+      if (emailMatch) {
+        console.log('[Import Debug] ✓ Email match found:', emailMatch.name, emailMatch.email);
+        return emailMatch;
+      }
     }
     
     // Fall back to matching by name
     const nameMatch = existingCustomers.find(
       existing => existing.name.toLowerCase().trim() === customer.name.toLowerCase().trim()
     );
+    if (nameMatch) {
+      console.log('[Import Debug] ✓ Name match found:', nameMatch.name);
+    } else {
+      console.log('[Import Debug] ✗ No match found for:', customer.name);
+    }
     return nameMatch || null;
   };
 
   const handleImport = async () => {
+    console.log('[Import Debug] Starting import...');
+    console.log('[Import Debug] Existing customers loaded:', existingCustomers.length);
+    console.log('[Import Debug] Existing customers:', existingCustomers.map(c => ({ name: c.name, email: c.email })));
+    
     const errors: string[] = [];
     const validCustomers: ValidatedCustomer[] = [];
 
