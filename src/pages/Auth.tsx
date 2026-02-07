@@ -109,7 +109,7 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center p-4 sm:p-6">
           <div className="flex justify-center mb-2 sm:mb-4">
-            <img src={letsStreamLogo} alt="Let's Stream logo" className="h-28 sm:h-40 w-auto object-contain drop-shadow-xl" />
+            <img src={letsStreamLogo} alt="Let's Stream logo" className="h-28 sm:h-40 w-auto object-contain drop-shadow-xl bg-card rounded-lg p-2" />
           </div>
           <CardDescription className="text-blue-900 font-semibold text-base sm:text-lg">Customer Tracker</CardDescription>
         </CardHeader>
