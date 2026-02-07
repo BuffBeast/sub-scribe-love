@@ -38,9 +38,9 @@ function sanitizeEmailSubject(subject: string): string {
     .slice(0, 200);
 }
 
-async function sendEmail(to: string, subject: string, html: string, replyTo?: string | null) {
+async function sendEmail(to: string, subject: string, html: string, fromName: string, replyTo?: string | null) {
   const emailPayload: Record<string, unknown> = {
-    from: "Let's Stream <noreply@letsstreamtracker.ca>",
+    from: `${fromName} <noreply@letsstreamtracker.ca>`,
     to: [to],
     subject,
     html,
@@ -124,7 +124,7 @@ serve(async (req: Request): Promise<Response> => {
     // Get user's reminder settings
     const { data: userSettings } = await supabase
       .from('app_settings')
-      .select('reminder_days, reminder_subject, reminder_message, reply_to_email')
+      .select('reminder_days, reminder_subject, reminder_message, reply_to_email, app_name')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -184,6 +184,7 @@ serve(async (req: Request): Promise<Response> => {
     let subjectTemplate = "Your subscription expires soon";
     let messageTemplate = `Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!`;
     let replyToEmail: string | null = null;
+    let fromName = "Let's Stream"; // Default fallback
 
     if (userSettings) {
       const validatedSettings = reminderSettingsSchema.safeParse(userSettings);
@@ -198,6 +199,10 @@ serve(async (req: Request): Promise<Response> => {
         if (safeSettings.reply_to_email) {
           replyToEmail = safeSettings.reply_to_email;
         }
+      }
+      // Get app_name outside of zod validation (it's not in the schema)
+      if (userSettings.app_name) {
+        fromName = userSettings.app_name;
       }
     }
 
@@ -236,7 +241,7 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(customer.email, subjectTemplate, html, replyToEmail);
+        const result = await sendEmail(customer.email, subjectTemplate, html, fromName, replyToEmail);
         emailResults.push({ 
           email: customer.email, 
           types: customer.liveExpiring && customer.vodExpiring ? 'LIVE+VOD' : (customer.liveExpiring ? 'LIVE' : 'VOD'),

@@ -62,11 +62,12 @@ async function sendEmail(
   to: string, 
   subject: string, 
   html: string, 
+  fromName: string,
   replyTo?: string | null,
   attachments?: Attachment[]
 ) {
   const emailPayload: Record<string, unknown> = {
-    from: "Let's Stream <noreply@letsstreamtracker.ca>",
+    from: `${fromName} <noreply@letsstreamtracker.ca>`,
     to: [to],
     subject,
     html,
@@ -194,16 +195,20 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Fetch user's reply-to setting
+    // Fetch user's settings (app name and reply-to email)
     let replyToEmail: string | null = null;
+    let fromName = "Let's Stream"; // Default fallback
     const { data: settings } = await supabase
       .from('app_settings')
-      .select('reply_to_email')
+      .select('reply_to_email, app_name')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (settings?.reply_to_email) {
       replyToEmail = settings.reply_to_email;
+    }
+    if (settings?.app_name) {
+      fromName = settings.app_name;
     }
 
     const sanitizedSubject = sanitizeEmailSubject(subject);
@@ -230,7 +235,7 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(customer.email, sanitizedSubject, html, replyToEmail, attachments);
+        const result = await sendEmail(customer.email, sanitizedSubject, html, fromName, replyToEmail, attachments);
         if (result.error) {
           emailResults.push({ email: customer.email, success: false, error: result.error.message || result.error });
           failCount++;
