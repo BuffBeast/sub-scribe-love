@@ -115,14 +115,15 @@ serve(async (req: Request): Promise<Response> => {
     // Use service role key for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user's reply-to email from settings
+    // Get user's settings (app name and reply-to email)
     const { data: settings } = await supabase
       .from('app_settings')
-      .select('reply_to_email')
+      .select('reply_to_email, app_name')
       .eq('user_id', userId)
       .maybeSingle();
 
     const replyToEmail = settings?.reply_to_email || null;
+    const fromName = settings?.app_name || "Let's Stream";
 
     // Build HTML email
     const escapedMessage = message.split('\n').map(line => `<p>${escapeHtml(line) || '&nbsp;'}</p>`).join('');
@@ -134,7 +135,7 @@ serve(async (req: Request): Promise<Response> => {
 
     // Build email payload
     const emailPayload: Record<string, unknown> = {
-      from: "Let's Stream <noreply@letsstreamtracker.ca>",
+      from: `${fromName} <noreply@letsstreamtracker.ca>`,
       to: [email],
       subject: sanitizeEmailSubject(subject),
       html,
