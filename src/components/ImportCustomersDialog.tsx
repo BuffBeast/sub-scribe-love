@@ -28,6 +28,9 @@ const customerImportSchema = z.object({
   vod_start_date: dateStringSchema,
   vod_end_date: dateStringSchema,
   total_spent: z.number().min(0, 'Total spent cannot be negative').max(999999999, 'Total spent too large').default(0),
+  service: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
+  device: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
+  has_trial: z.boolean().default(false),
 });
 
 type ValidatedCustomer = z.infer<typeof customerImportSchema>;
@@ -155,6 +158,9 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     vod_start_date: string | null;
     vod_end_date: string | null;
     total_spent: number;
+    service: string | null;
+    device: string | null;
+    has_trial: boolean;
   } => {
     // Try to find matching columns (case-insensitive)
     const findValue = (keys: string[]): string => {
@@ -184,19 +190,26 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     else if (status.includes('expired') || status.includes('inactive')) subscription_status = 'expired';
     else if (status.includes('cancel')) subscription_status = 'cancelled';
 
+    // Check for trial field
+    const trialValue = findValue(['trial', 'has_trial']).toLowerCase();
+    const has_trial = trialValue === 'yes' || trialValue === 'true' || trialValue === '1';
+
     return {
       name: findValue(['name', 'customer', 'user', 'username']) || 'Unknown',
       email: findValue(['email', 'mail', 'e-mail']) || null,
       phone: findValue(['phone', 'tel', 'mobile', 'contact']) || null,
       company: findValue(['company', 'business', 'organization', 'org']) || null,
       subscription_status,
-      subscription_plan: findValue(['live_plan', 'subscription_plan', 'plan', 'package', 'tier']) || null,
+      subscription_plan: findValue(['live_plan', 'live plan', 'subscription_plan', 'plan', 'package', 'tier']) || null,
       subscription_start_date: findDate(['live_start', 'subscription_start', 'start_date']),
-      subscription_end_date: findDate(['live_end', 'live_expiry', 'subscription_end', 'end_date', 'expiry']),
-      vod_plan: findValue(['vod_plan', 'vod_package', 'vod_tier']) || null,
+      subscription_end_date: findDate(['live_end', 'live_expiry', 'live expiry', 'subscription_end', 'end_date', 'expiry']),
+      vod_plan: findValue(['vod_plan', 'vod plan', 'vod_package', 'vod_tier']) || null,
       vod_start_date: findDate(['vod_start', 'vod_start_date']),
-      vod_end_date: findDate(['vod_end', 'vod_expiry', 'vod_end_date']),
-      total_spent: findNumber(['spent', 'revenue', 'total', 'amount', 'balance', 'credits']),
+      vod_end_date: findDate(['vod_end', 'vod_expiry', 'vod expiry', 'vod_end_date']),
+      total_spent: findNumber(['price', 'spent', 'revenue', 'total', 'amount', 'balance', 'credits']),
+      service: findValue(['service']) || null,
+      device: findValue(['device']) || null,
+      has_trial,
     };
   };
 
