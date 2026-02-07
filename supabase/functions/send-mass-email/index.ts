@@ -9,11 +9,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Validation schema for attachments
+const attachmentSchema = z.object({
+  filename: z.string().min(1).max(255),
+  content: z.string().min(1), // base64 content
+  contentType: z.string().min(1).max(255),
+});
+
 // Input validation schema
 const massEmailSchema = z.object({
   subject: z.string().min(1, "Subject is required").max(200, "Subject must be 200 characters or less"),
   message: z.string().min(1, "Message is required").max(10000, "Message must be 10000 characters or less"),
   customerIds: z.array(z.string().uuid("Invalid customer ID format")).max(1000, "Maximum 1000 customers per request").optional(),
+  attachments: z.array(attachmentSchema).max(5, "Maximum 5 attachments allowed").optional(),
 });
 
 // HTML escape function to prevent XSS in emails
@@ -37,13 +45,26 @@ function sanitizeEmailSubject(subject: string): string {
     .slice(0, 200); // Limit length
 }
 
+interface Attachment {
+  filename: string;
+  content: string;
+  contentType: string;
+}
+
 interface MassEmailRequest {
   subject: string;
   message: string;
   customerIds?: string[]; // Optional: send to specific customers, otherwise all with email
+  attachments?: Attachment[];
 }
 
-async function sendEmail(to: string, subject: string, html: string, replyTo?: string | null) {
+async function sendEmail(
+  to: string, 
+  subject: string, 
+  html: string, 
+  replyTo?: string | null,
+  attachments?: Attachment[]
+) {
   const emailPayload: Record<string, unknown> = {
     from: "Let's Stream <noreply@letsstreamtracker.ca>",
     to: [to],
@@ -53,6 +74,14 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
 
   if (replyTo) {
     emailPayload.reply_to = replyTo;
+  }
+
+  if (attachments && attachments.length > 0) {
+    emailPayload.attachments = attachments.map(att => ({
+      filename: att.filename,
+      content: att.content,
+      type: att.contentType,
+    }));
   }
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -135,7 +164,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
     
-    const { subject, message, customerIds } = body;
+    const { subject, message, customerIds, attachments } = body;
 
     // Use service role key for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -156,7 +185,7 @@ serve(async (req: Request): Promise<Response> => {
 
     if (error) throw error;
 
-    console.log(`Sending mass email to ${customers?.length || 0} customers`);
+    console.log(`Sending mass email to ${customers?.length || 0} customers with ${attachments?.length || 0} attachment(s)`);
 
     if (!customers || customers.length === 0) {
       return new Response(
@@ -201,7 +230,7 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(customer.email, sanitizedSubject, html, replyToEmail);
+        const result = await sendEmail(customer.email, sanitizedSubject, html, replyToEmail, attachments);
         if (result.error) {
           emailResults.push({ email: customer.email, success: false, error: result.error.message || result.error });
           failCount++;
