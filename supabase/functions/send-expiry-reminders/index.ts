@@ -32,10 +32,10 @@ function escapeHtml(text: string): string {
 // Sanitize email subject to prevent header injection attacks
 function sanitizeEmailSubject(subject: string): string {
   return subject
-    .replace(/[\r\n]/g, '') // Remove newlines to prevent header injection
-    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+    .replace(/[\r\n]/g, '')
+    .replace(/[\x00-\x1F\x7F]/g, '')
     .trim()
-    .slice(0, 200); // Limit length
+    .slice(0, 200);
 }
 
 async function sendEmail(to: string, subject: string, html: string, replyTo?: string | null) {
@@ -59,6 +59,16 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
     body: JSON.stringify(emailPayload),
   });
   return response.json();
+}
+
+interface CustomerReminder {
+  id: string;
+  name: string;
+  email: string;
+  user_id: string;
+  planName: string;
+  expiryDate: string;
+  subscriptionType: 'LIVE' | 'VOD';
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -88,7 +98,6 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create client with anon key to verify the user's token
     const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
@@ -107,19 +116,18 @@ serve(async (req: Request): Promise<Response> => {
     const userId = claimsData.claims.sub;
     console.log(`Authenticated user ${userId} triggered send-expiry-reminders`);
 
-    // Use service role key for database operations (to send reminders for all qualifying customers)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user's reminder settings first to determine the days
+    // Get user's reminder settings
     const { data: userSettings } = await supabase
       .from('app_settings')
-      .select('reminder_days')
+      .select('reminder_days, reminder_subject, reminder_message, reply_to_email')
       .eq('user_id', userId)
       .maybeSingle();
 
     const reminderDays = userSettings?.reminder_days ?? 30;
 
-    // Calculate the target date based on user's reminder_days setting
+    // Calculate the target date
     const today = new Date();
     const targetDateObj = new Date(today);
     targetDateObj.setDate(today.getDate() + reminderDays);
@@ -127,70 +135,97 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Checking for customers expiring in ${reminderDays} days (on: ${targetDate})`);
 
-    // Get customers expiring in 30 days with reminders enabled - ONLY for the authenticated user
-    const { data: customers, error } = await supabase
+    // Get customers with LIVE subscriptions expiring on target date
+    const { data: liveCustomers, error: liveError } = await supabase
       .from('customers')
       .select('id, name, email, subscription_plan, subscription_end_date, reminders_enabled, user_id')
-      .eq('user_id', userId)  // Security: Only query this user's customers
+      .eq('user_id', userId)
       .eq('subscription_end_date', targetDate)
       .eq('reminders_enabled', true)
-      .not('email', 'is', null);
+      .not('email', 'is', null)
+      .not('subscription_plan', 'is', null);
 
-    if (error) throw error;
+    if (liveError) throw liveError;
 
-    console.log(`Found ${customers?.length || 0} customers expiring in 30 days`);
+    // Get customers with VOD subscriptions expiring on target date
+    const { data: vodCustomers, error: vodError } = await supabase
+      .from('customers')
+      .select('id, name, email, vod_plan, vod_end_date, reminders_enabled, user_id')
+      .eq('user_id', userId)
+      .eq('vod_end_date', targetDate)
+      .eq('reminders_enabled', true)
+      .not('email', 'is', null)
+      .not('vod_plan', 'is', null);
+
+    if (vodError) throw vodError;
+
+    // Build combined list of reminders to send
+    const remindersToSend: CustomerReminder[] = [];
+
+    for (const customer of liveCustomers || []) {
+      if (!customer.email) continue;
+      remindersToSend.push({
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        user_id: customer.user_id,
+        planName: customer.subscription_plan || 'LIVE',
+        expiryDate: customer.subscription_end_date,
+        subscriptionType: 'LIVE',
+      });
+    }
+
+    for (const customer of vodCustomers || []) {
+      if (!customer.email) continue;
+      remindersToSend.push({
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        user_id: customer.user_id,
+        planName: customer.vod_plan || 'VOD',
+        expiryDate: customer.vod_end_date,
+        subscriptionType: 'VOD',
+      });
+    }
+
+    console.log(`Found ${liveCustomers?.length || 0} LIVE and ${vodCustomers?.length || 0} VOD subscriptions expiring`);
 
     const emailResults = [];
 
-    for (const customer of customers || []) {
-      if (!customer.email) continue;
+    // Validate settings once
+    let subject = "Your subscription expires soon";
+    let messageTemplate = `Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!`;
+    let replyToEmail: string | null = null;
 
-      // Fetch user's custom reminder settings
-      let subject = "Your subscription expires in 30 days";
-      let messageTemplate = `Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!`;
-
-      let replyToEmail: string | null = null;
-
-      if (customer.user_id) {
-        const { data: settings } = await supabase
-          .from('app_settings')
-          .select('reminder_subject, reminder_message, reply_to_email')
-          .eq('user_id', customer.user_id)
-          .maybeSingle();
-
-        // Validate settings before using
-        if (settings) {
-          const validatedSettings = reminderSettingsSchema.safeParse(settings);
-          if (validatedSettings.success) {
-            const safeSettings = validatedSettings.data;
-            if (safeSettings.reminder_subject) {
-              subject = sanitizeEmailSubject(safeSettings.reminder_subject);
-            }
-            if (safeSettings.reminder_message) {
-              // Enforce max length on message template
-              messageTemplate = safeSettings.reminder_message.slice(0, 10000);
-            }
-            if (safeSettings.reply_to_email) {
-              replyToEmail = safeSettings.reply_to_email;
-            }
-          } else {
-            console.warn(`Invalid settings for user ${customer.user_id}:`, validatedSettings.error);
-          }
+    if (userSettings) {
+      const validatedSettings = reminderSettingsSchema.safeParse(userSettings);
+      if (validatedSettings.success) {
+        const safeSettings = validatedSettings.data;
+        if (safeSettings.reminder_subject) {
+          subject = sanitizeEmailSubject(safeSettings.reminder_subject);
+        }
+        if (safeSettings.reminder_message) {
+          messageTemplate = safeSettings.reminder_message.slice(0, 10000);
+        }
+        if (safeSettings.reply_to_email) {
+          replyToEmail = safeSettings.reply_to_email;
         }
       }
+    }
 
-      // Replace placeholders with escaped values to prevent XSS
-      const formattedDate = new Date(customer.subscription_end_date).toLocaleDateString();
-      const escapedName = escapeHtml(customer.name);
-      const escapedPlan = escapeHtml(customer.subscription_plan || 'subscription');
+    for (const reminder of remindersToSend) {
+      // Replace placeholders with escaped values
+      const formattedDate = new Date(reminder.expiryDate).toLocaleDateString();
+      const escapedName = escapeHtml(reminder.name);
+      // Include subscription type in plan name for clarity
+      const planDescription = `${reminder.subscriptionType} (${escapeHtml(reminder.planName)})`;
       const escapedDate = escapeHtml(formattedDate);
       
       const messageBody = messageTemplate
         .replace(/\{name\}/g, escapedName)
-        .replace(/\{plan\}/g, escapedPlan)
+        .replace(/\{plan\}/g, planDescription)
         .replace(/\{date\}/g, escapedDate);
 
-      // Escape each line of the message body for safe HTML rendering
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           ${messageBody.split('\n').map(line => `<p>${escapeHtml(line) || '&nbsp;'}</p>`).join('')}
@@ -198,14 +233,29 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(customer.email, subject, html, replyToEmail);
-        emailResults.push({ email: customer.email, success: true, result });
+        const result = await sendEmail(reminder.email, subject, html, replyToEmail);
+        emailResults.push({ 
+          email: reminder.email, 
+          type: reminder.subscriptionType,
+          success: true, 
+          result 
+        });
       } catch (e) {
-        emailResults.push({ email: customer.email, success: false, error: String(e) });
+        emailResults.push({ 
+          email: reminder.email, 
+          type: reminder.subscriptionType,
+          success: false, 
+          error: String(e) 
+        });
       }
     }
 
-    return new Response(JSON.stringify({ processed: customers?.length || 0, results: emailResults }), {
+    return new Response(JSON.stringify({ 
+      processed: remindersToSend.length,
+      live: liveCustomers?.length || 0,
+      vod: vodCustomers?.length || 0, 
+      results: emailResults 
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
