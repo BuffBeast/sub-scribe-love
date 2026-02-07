@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { Customer, useUpdateCustomer, useDeleteCustomer } from '@/hooks/useCustomers';
 import { StatusBadge } from './StatusBadge';
+import { SendEmailDialog } from './SendEmailDialog';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -19,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Check, X, Bell, BellOff, Trash2, ChevronRight, CalendarIcon } from 'lucide-react';
+import { Check, X, Bell, BellOff, Trash2, ChevronRight, CalendarIcon, Mail } from 'lucide-react';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +33,7 @@ interface MobileCustomerCardProps {
 
 export function MobileCustomerCard({ customer, selected, onSelect, onClick }: MobileCustomerCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const updateCustomer = useUpdateCustomer();
   const deleteCustomer = useDeleteCustomer();
   const deviceOptions = useAllDeviceOptions();
@@ -47,6 +49,12 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
 
   return (
     <>
+      <SendEmailDialog 
+        customer={customer} 
+        open={emailDialogOpen} 
+        onOpenChange={setEmailDialogOpen} 
+      />
+      
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
@@ -289,7 +297,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
         </div>
       )}
 
-      {/* Footer: Delete & Edit buttons */}
+      {/* Footer: Delete, Email & Edit buttons */}
       <div className="flex items-center justify-between pt-2 border-t">
         <Button
           variant="ghost"
@@ -303,14 +311,29 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
           <Trash2 className="h-4 w-4 mr-1" />
           Delete
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onClick(customer)}
-        >
-          Edit
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {customer.email && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEmailDialogOpen(true);
+              }}
+            >
+              <Mail className="h-4 w-4 mr-1" />
+              Email
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onClick(customer)}
+          >
+            Edit
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
       </div>
     </Card>
     </>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { Customer } from '@/hooks/useCustomers';
 import { StatusBadge } from './StatusBadge';
+import { SendEmailDialog } from './SendEmailDialog';
 import {
   Table,
   TableBody,
@@ -17,7 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Check, X, Bell, BellOff, CalendarIcon } from 'lucide-react';
+import { Trash2, Check, X, Bell, BellOff, CalendarIcon, Mail } from 'lucide-react';
 import { useUpdateCustomer } from '@/hooks/useCustomers';
 import { cn } from '@/lib/utils';
 
@@ -40,6 +41,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const updateCustomer = useUpdateCustomer();
   const { toast } = useToast();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null);
 
   // Default columns to show when no visibility settings exist
   const defaultColumns = ['name', 'email', 'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'vod_plan', 'vod_start_date', 'vod_end_date', 'company', 'subscription_status'];
@@ -102,7 +104,14 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   };
 
   return (
-    <div className="space-y-4">
+    <>
+      <SendEmailDialog 
+        customer={emailCustomer} 
+        open={!!emailCustomer} 
+        onOpenChange={(open) => !open && setEmailCustomer(null)} 
+      />
+      
+      <div className="space-y-4">
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
@@ -387,15 +396,28 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     {(customer.custom_data as Record<string, unknown>)?.[field.name]?.toString() || '-'}
                   </TableCell>
                 ))}
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => handleDelete(e, customer.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-1">
+                    {customer.email && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setEmailCustomer(customer)}
+                        title="Send email"
+                      >
+                        <Mail className="h-4 w-4 text-primary" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => handleDelete(e, customer.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -404,5 +426,6 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
         </div>
       </Card>
     </div>
+    </>
   );
 }
