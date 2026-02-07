@@ -13,6 +13,7 @@ import { MobileHeader } from '@/components/MobileHeader';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterTabs } from '@/components/FilterTabs';
+import { SortSelect, SortOption } from '@/components/SortSelect';
 import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
@@ -26,6 +27,7 @@ import letsStreamLogo from '@/assets/lets-stream-logo.png';
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortOption, setSortOption] = useState<SortOption>('expiry-asc');
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -61,9 +63,9 @@ const Index = () => {
     };
   }, [customers]);
 
-  // Filter customers
+  // Filter and sort customers
   const filteredCustomers = useMemo(() => {
-    return customers.filter(customer => {
+    const filtered = customers.filter(customer => {
       const matchesSearch = 
         customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (customer.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -82,7 +84,38 @@ const Index = () => {
 
       return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, statusFilter, customers]);
+
+    // Sort customers
+    return [...filtered].sort((a, b) => {
+      switch (sortOption) {
+        case 'alpha-asc':
+          return a.name.localeCompare(b.name);
+        case 'alpha-desc':
+          return b.name.localeCompare(a.name);
+        case 'expiry-asc': {
+          // Get soonest expiry date (LIVE or VOD, whichever is sooner)
+          const aLive = a.subscription_end_date ? new Date(a.subscription_end_date).getTime() : Infinity;
+          const aVod = a.vod_end_date ? new Date(a.vod_end_date).getTime() : Infinity;
+          const bLive = b.subscription_end_date ? new Date(b.subscription_end_date).getTime() : Infinity;
+          const bVod = b.vod_end_date ? new Date(b.vod_end_date).getTime() : Infinity;
+          const aMin = Math.min(aLive, aVod);
+          const bMin = Math.min(bLive, bVod);
+          return aMin - bMin;
+        }
+        case 'expiry-desc': {
+          const aLive = a.subscription_end_date ? new Date(a.subscription_end_date).getTime() : -Infinity;
+          const aVod = a.vod_end_date ? new Date(a.vod_end_date).getTime() : -Infinity;
+          const bLive = b.subscription_end_date ? new Date(b.subscription_end_date).getTime() : -Infinity;
+          const bVod = b.vod_end_date ? new Date(b.vod_end_date).getTime() : -Infinity;
+          const aMax = Math.max(aLive, aVod);
+          const bMax = Math.max(bLive, bVod);
+          return bMax - aMax;
+        }
+        default:
+          return 0;
+      }
+    });
+  }, [searchQuery, statusFilter, sortOption, customers]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -139,9 +172,14 @@ const Index = () => {
               />
             </div>
 
-            {/* Search and Filters */}
+            {/* Search, Filters, and Sort */}
             <div className="space-y-3">
-              <SearchBar value={searchQuery} onChange={setSearchQuery} />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <SearchBar value={searchQuery} onChange={setSearchQuery} />
+                </div>
+                <SortSelect value={sortOption} onChange={setSortOption} />
+              </div>
               <div className="overflow-x-auto -mx-4 px-4">
                 <FilterTabs
                   value={statusFilter}
@@ -253,15 +291,18 @@ const Index = () => {
           />
         </div>
 
-        {/* Filters and Search */}
+        {/* Filters, Search, and Sort */}
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
           <FilterTabs
             value={statusFilter}
             onChange={setStatusFilter}
             counts={statusCounts}
           />
-          <div className="w-full md:w-72">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          <div className="flex items-center gap-3">
+            <SortSelect value={sortOption} onChange={setSortOption} />
+            <div className="w-full md:w-72">
+              <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            </div>
           </div>
         </div>
 
