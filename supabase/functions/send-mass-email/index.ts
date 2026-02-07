@@ -55,9 +55,6 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
     emailPayload.reply_to = replyTo;
   }
 
-  console.log("Sending email to:", to);
-  console.log("Email payload:", JSON.stringify(emailPayload));
-
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -67,10 +64,7 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
     body: JSON.stringify(emailPayload),
   });
   
-  const result = await response.json();
-  console.log("Resend API response:", JSON.stringify(result));
-  
-  return result;
+  return response.json();
 }
 
 serve(async (req: Request): Promise<Response> => {
