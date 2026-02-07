@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Mail, Send, Users, Loader2, Check, X } from 'lucide-react';
+import { useState, useMemo, useRef } from 'react';
+import { Mail, Send, Users, Loader2, Check, X, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,6 +29,15 @@ const emailSchema = z.object({
   message: z.string().trim().min(1, 'Message is required').max(5000, 'Message must be less than 5000 characters'),
 });
 
+interface Attachment {
+  filename: string;
+  content: string; // base64
+  contentType: string;
+}
+
+// Max file size: 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 interface MassEmailDialogProps {
   customers: Customer[];
 }
@@ -39,6 +48,8 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set());
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const customersWithEmail = useMemo(
     () => customers.filter(c => c.email),
@@ -51,7 +62,44 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
     if (isOpen) {
       // Select all customers by default when opening
       setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
+      setAttachments([]);
     }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name} exceeds 5MB limit`);
+        continue;
+      }
+
+      if (attachments.some(a => a.filename === file.name)) {
+        toast.error(`${file.name} is already attached`);
+        continue;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        setAttachments(prev => [...prev, {
+          filename: file.name,
+          content: base64,
+          contentType: file.type || 'application/octet-stream',
+        }]);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeAttachment = (filename: string) => {
+    setAttachments(prev => prev.filter(a => a.filename !== filename));
   };
 
   const selectedCount = selectedCustomerIds.size;
@@ -104,7 +152,8 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
         body: { 
           subject, 
           message,
-          customerIds: Array.from(selectedCustomerIds)
+          customerIds: Array.from(selectedCustomerIds),
+          attachments: attachments.length > 0 ? attachments : undefined,
         },
       });
 
@@ -130,6 +179,7 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
       setSubject('');
       setMessage('');
       setSelectedCustomerIds(new Set());
+      setAttachments([]);
       setOpen(false);
     } catch (error) {
       console.error('Error sending mass email:', error);
@@ -249,6 +299,55 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
               <code className="bg-muted px-1 rounded ml-1">{'{plan}'}</code> for their subscription plan.
             </p>
           </div>
+
+          {/* Attachments Section */}
+          <div className="space-y-2">
+            <Label>Attachments (optional)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+              accept="*/*"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="gap-2"
+            >
+              <Paperclip className="h-4 w-4" />
+              Attach File
+            </Button>
+            <p className="text-xs text-muted-foreground">Max 5MB per file. Same attachments sent to all recipients.</p>
+
+            {attachments.length > 0 && (
+              <div className="space-y-2 mt-2">
+                {attachments.map((attachment) => (
+                  <div 
+                    key={attachment.filename}
+                    className="flex items-center justify-between p-2 bg-muted rounded-md text-sm"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{attachment.filename}</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0"
+                      onClick={() => removeAttachment(attachment.filename)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <DialogFooter>
@@ -265,6 +364,7 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
               <>
                 <Send className="h-4 w-4 mr-2" />
                 Send to {selectedCount} {selectedCount === 1 ? 'Customer' : 'Customers'}
+                {attachments.length > 0 && ` (${attachments.length} file${attachments.length > 1 ? 's' : ''})`}
               </>
             )}
           </Button>
