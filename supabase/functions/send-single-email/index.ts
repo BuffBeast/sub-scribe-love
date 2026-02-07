@@ -4,12 +4,20 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
+// Validation schema for attachments
+const attachmentSchema = z.object({
+  filename: z.string().min(1).max(255),
+  content: z.string().min(1), // base64 content
+  contentType: z.string().min(1).max(255),
+});
+
 // Validation schema for request body
 const emailRequestSchema = z.object({
   email: z.string().email("Invalid email address"),
   subject: z.string().min(1).max(200, "Subject must be 200 characters or less"),
   message: z.string().min(1).max(10000, "Message must be 10000 characters or less"),
   customerName: z.string().optional(),
+  attachments: z.array(attachmentSchema).max(5, "Maximum 5 attachments allowed").optional(),
 });
 
 const corsHeaders = {
@@ -32,10 +40,10 @@ function escapeHtml(text: string): string {
 // Sanitize email subject to prevent header injection attacks
 function sanitizeEmailSubject(subject: string): string {
   return subject
-    .replace(/[\r\n]/g, '') // Remove newlines to prevent header injection
-    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+    .replace(/[\r\n]/g, '')
+    .replace(/[\x00-\x1F\x7F]/g, '')
     .trim()
-    .slice(0, 200); // Limit length
+    .slice(0, 200);
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -65,7 +73,6 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create client with anon key to verify the user's token
     const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
@@ -103,7 +110,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email, subject, message, customerName } = validationResult.data;
+    const { email, subject, message, customerName, attachments } = validationResult.data;
 
     // Use service role key for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -137,6 +144,15 @@ serve(async (req: Request): Promise<Response> => {
       emailPayload.reply_to = replyToEmail;
     }
 
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      emailPayload.attachments = attachments.map(att => ({
+        filename: att.filename,
+        content: att.content,
+        type: att.contentType,
+      }));
+    }
+
     // Send email via Resend
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -157,7 +173,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Email sent successfully to ${email}:`, result);
+    console.log(`Email sent successfully to ${email} with ${attachments?.length || 0} attachment(s)`);
 
     return new Response(JSON.stringify({ success: true, result }), {
       status: 200,
