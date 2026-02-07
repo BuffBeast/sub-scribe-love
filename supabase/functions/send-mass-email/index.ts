@@ -45,7 +45,7 @@ interface MassEmailRequest {
 
 async function sendEmail(to: string, subject: string, html: string, replyTo?: string | null) {
   const emailPayload: Record<string, unknown> = {
-    from: "Announcement <noreply@yourdomain.com>", // Update with your verified domain
+    from: "Let's Stream <noreply@letsstreamtracker.ca>",
     to: [to],
     subject,
     html,
