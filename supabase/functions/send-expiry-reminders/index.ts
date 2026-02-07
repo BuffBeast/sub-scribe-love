@@ -229,10 +229,14 @@ serve(async (req: Request): Promise<Response> => {
 
       const escapedDate = escapeHtml(expiryDate);
       
+      // Replace {app_name} in subject
+      const finalSubject = subjectTemplate.replace(/\{app_name\}/g, fromName);
+      
       const messageBody = messageTemplate
         .replace(/\{name\}/g, escapedName)
         .replace(/\{plan\}/g, planDescription)
-        .replace(/\{date\}/g, escapedDate);
+        .replace(/\{date\}/g, escapedDate)
+        .replace(/\{app_name\}/g, fromName);
 
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -241,7 +245,7 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(customer.email, subjectTemplate, html, fromName, replyToEmail);
+        const result = await sendEmail(customer.email, finalSubject, html, fromName, replyToEmail);
         emailResults.push({ 
           email: customer.email, 
           types: customer.liveExpiring && customer.vodExpiring ? 'LIVE+VOD' : (customer.liveExpiring ? 'LIVE' : 'VOD'),

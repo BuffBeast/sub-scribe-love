@@ -245,6 +245,9 @@ export function BrandingSettingsDialog() {
                 onChange={(e) => setReminderSubject(e.target.value)}
                 placeholder="Your subscription expires in 30 days"
               />
+              <p className="text-xs text-muted-foreground">
+                Available placeholder: {'{app_name}'}
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -257,7 +260,7 @@ export function BrandingSettingsDialog() {
                 rows={8}
               />
               <p className="text-xs text-muted-foreground">
-                Available placeholders: {'{name}'}, {'{plan}'}, {'{date}'}
+                Available placeholders: {'{name}'}, {'{plan}'}, {'{date}'}, {'{app_name}'}
               </p>
             </div>
           </TabsContent>
