@@ -154,7 +154,8 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
       }
 
       // Use reminder template from settings
-      const reminderSubject = settings?.reminder_subject || 'Your subscription expires soon';
+      const appName = settings?.app_name || "Let's Stream";
+      let reminderSubject = settings?.reminder_subject || 'Your subscription expires soon';
       let reminderMessage = settings?.reminder_message || 
         'Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!';
       
@@ -163,11 +164,13 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
         ? format(new Date(customer.subscription_end_date), 'MMMM d, yyyy')
         : 'N/A';
       
-      // Replace placeholders
+      // Replace placeholders in subject and message
+      reminderSubject = reminderSubject.replace(/\{app_name\}/g, appName);
       reminderMessage = reminderMessage
         .replace(/\{name\}/g, customer.name)
         .replace(/\{plan\}/g, customer.subscription_plan || 'subscription')
-        .replace(/\{date\}/g, formattedDate);
+        .replace(/\{date\}/g, formattedDate)
+        .replace(/\{app_name\}/g, appName);
 
       const response = await supabase.functions.invoke('send-single-email', {
         body: {
@@ -328,7 +331,8 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
                 <div>
                   <p className="text-sm font-medium">Subject:</p>
                   <p className="text-sm text-muted-foreground">
-                    {settings?.reminder_subject || 'Your subscription expires soon'}
+                    {(settings?.reminder_subject || 'Your subscription expires soon')
+                      .replace(/\{app_name\}/g, settings?.app_name || "Let's Stream")}
                   </p>
                 </div>
                 <div>
@@ -340,7 +344,8 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
                       .replace(/\{date\}/g, customer.subscription_end_date 
                         ? format(new Date(customer.subscription_end_date), 'MMMM d, yyyy')
                         : 'N/A'
-                      )}
+                      )
+                      .replace(/\{app_name\}/g, settings?.app_name || "Let's Stream")}
                   </p>
                 </div>
               </div>
