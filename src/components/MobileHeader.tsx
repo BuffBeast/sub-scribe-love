@@ -74,15 +74,15 @@ export function MobileHeader({
   return (
     <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
       <div className="px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
             <img
               src={displayLogo}
               alt={`${displayName} logo`}
-              className="h-10 w-auto object-contain drop-shadow-xl shrink-0"
+              className="h-10 w-10 object-contain drop-shadow-xl shrink-0"
             />
-            <div className="min-w-0">
-              <h1 className="text-lg font-extrabold tracking-tight text-gradient truncate">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base font-extrabold tracking-tight text-gradient truncate">
                 {displayName}
               </h1>
               <p className="text-xs text-muted-foreground truncate">
