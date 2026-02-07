@@ -175,6 +175,7 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
           subject: reminderSubject,
           message: reminderMessage,
           customerName: customer.name,
+          attachments: attachments.length > 0 ? attachments : undefined,
         },
       });
 
@@ -183,6 +184,7 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
       }
 
       toast({ title: 'Reminder sent!', description: `Reminder sent to ${customer.email}` });
+      setAttachments([]);
       onOpenChange(false);
     } catch (error) {
       toast({ 
@@ -347,13 +349,54 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
                 This uses your configured reminder template from Branding Settings.
               </p>
 
+              {/* Attachments Section */}
+              <div className="space-y-2">
+                <Label>Attachments (optional)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  <Paperclip className="h-4 w-4" />
+                  Attach File
+                </Button>
+                <p className="text-xs text-muted-foreground">Max 5MB per file</p>
+
+                {attachments.length > 0 && (
+                  <div className="space-y-2 mt-2">
+                    {attachments.map((attachment) => (
+                      <div 
+                        key={attachment.filename}
+                        className="flex items-center justify-between p-2 bg-muted rounded-md text-sm"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{attachment.filename}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => removeAttachment(attachment.filename)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <Button 
                 onClick={handleSendReminder} 
                 disabled={sending}
                 className="w-full gap-2"
               >
                 <Bell className="h-4 w-4" />
-                {sending ? 'Sending...' : 'Send Reminder'}
+                {sending ? 'Sending...' : `Send Reminder${attachments.length > 0 ? ` (${attachments.length} attachment${attachments.length > 1 ? 's' : ''})` : ''}`}
               </Button>
             </TabsContent>
           </Tabs>
