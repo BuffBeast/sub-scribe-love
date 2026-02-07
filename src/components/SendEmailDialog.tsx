@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Send, Bell } from 'lucide-react';
+import { Mail, Send, Bell, Paperclip, X } from 'lucide-react';
 import { Customer } from '@/hooks/useCustomers';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useToast } from '@/hooks/use-toast';
@@ -18,14 +18,72 @@ interface SendEmailDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface Attachment {
+  filename: string;
+  content: string; // base64
+  contentType: string;
+}
+
+// Max file size: 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialogProps) {
   const { toast } = useToast();
   const { data: settings } = useAppSettings();
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState<'compose' | 'reminder'>('compose');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({ 
+          title: 'File too large', 
+          description: `${file.name} exceeds 5MB limit`,
+          variant: 'destructive' 
+        });
+        continue;
+      }
+
+      // Check if already attached
+      if (attachments.some(a => a.filename === file.name)) {
+        toast({ 
+          title: 'Already attached', 
+          description: `${file.name} is already attached`,
+          variant: 'destructive' 
+        });
+        continue;
+      }
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        setAttachments(prev => [...prev, {
+          filename: file.name,
+          content: base64,
+          contentType: file.type || 'application/octet-stream',
+        }]);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeAttachment = (filename: string) => {
+    setAttachments(prev => prev.filter(a => a.filename !== filename));
+  };
 
   const handleSendCompose = async () => {
     if (!customer?.email) {
@@ -57,6 +115,7 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
           subject: subject.trim(),
           message: message.trim(),
           customerName: customer.name,
+          attachments: attachments.length > 0 ? attachments : undefined,
         },
       });
 
@@ -67,6 +126,7 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
       toast({ title: 'Email sent!', description: `Email sent to ${customer.email}` });
       setSubject('');
       setMessage('');
+      setAttachments([]);
       onOpenChange(false);
     } catch (error) {
       toast({ 
@@ -135,6 +195,12 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
     }
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   if (!customer) return null;
 
   return (
@@ -196,13 +262,62 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
                 </p>
               </div>
 
+              {/* Attachments Section */}
+              <div className="space-y-2">
+                <Label>Attachments</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept="*/*"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  <Paperclip className="h-4 w-4" />
+                  Attach File
+                </Button>
+                <p className="text-xs text-muted-foreground">Max 5MB per file</p>
+
+                {attachments.length > 0 && (
+                  <div className="space-y-2 mt-2">
+                    {attachments.map((attachment) => (
+                      <div 
+                        key={attachment.filename}
+                        className="flex items-center justify-between p-2 bg-muted rounded-md text-sm"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{attachment.filename}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => removeAttachment(attachment.filename)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <Button 
                 onClick={handleSendCompose} 
                 disabled={sending || !subject.trim() || !message.trim()}
                 className="w-full gap-2"
               >
                 <Send className="h-4 w-4" />
-                {sending ? 'Sending...' : 'Send Email'}
+                {sending ? 'Sending...' : `Send Email${attachments.length > 0 ? ` (${attachments.length} attachment${attachments.length > 1 ? 's' : ''})` : ''}`}
               </Button>
             </TabsContent>
 
