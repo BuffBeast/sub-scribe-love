@@ -6,7 +6,7 @@ import { Download, Loader2, FileSpreadsheet, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Papa from 'papaparse';
-import { useCreateCustomer } from '@/hooks/useCustomers';
+import { useCreateCustomer, useUpdateCustomer, useCustomers } from '@/hooks/useCustomers';
 import { z } from 'zod';
 
 // Helper for date validation
@@ -69,6 +69,8 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createCustomer = useCreateCustomer();
+  const updateCustomer = useUpdateCustomer();
+  const { data: existingCustomers = [] } = useCustomers();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -222,6 +224,23 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     return result.data;
   };
 
+  // Find existing customer by email first, then by name
+  const findExistingCustomer = (customer: ValidatedCustomer) => {
+    // First try to match by email (if email exists)
+    if (customer.email) {
+      const emailMatch = existingCustomers.find(
+        existing => existing.email?.toLowerCase() === customer.email?.toLowerCase()
+      );
+      if (emailMatch) return emailMatch;
+    }
+    
+    // Fall back to matching by name
+    const nameMatch = existingCustomers.find(
+      existing => existing.name.toLowerCase().trim() === customer.name.toLowerCase().trim()
+    );
+    return nameMatch || null;
+  };
+
   const handleImport = async () => {
     const errors: string[] = [];
     const validCustomers: ValidatedCustomer[] = [];
@@ -258,11 +277,25 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
       return;
     }
     
-    let imported = 0;
+    let created = 0;
+    let updated = 0;
+    
     for (const customer of validCustomers) {
       try {
-        await createCustomer.mutateAsync(customer);
-        imported++;
+        const existing = findExistingCustomer(customer);
+        
+        if (existing) {
+          // Update existing customer
+          await updateCustomer.mutateAsync({
+            id: existing.id,
+            ...customer,
+          });
+          updated++;
+        } else {
+          // Create new customer
+          await createCustomer.mutateAsync(customer);
+          created++;
+        }
       } catch (e) {
         console.error('Failed to import customer:', e);
       }
@@ -270,7 +303,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     
     toast({
       title: 'Import Complete',
-      description: `Imported ${imported} of ${validCustomers.length} customers`,
+      description: `Created ${created} new, updated ${updated} existing customers`,
     });
     
     setOpen(false);
