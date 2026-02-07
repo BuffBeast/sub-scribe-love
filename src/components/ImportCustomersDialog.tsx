@@ -200,7 +200,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
       name: findValue(['name', 'customer', 'user', 'username']) || 'Unknown',
       email: findValue(['email', 'mail', 'e-mail']) || null,
       phone: findValue(['phone', 'tel', 'mobile', 'contact']) || null,
-      company: findValue(['company', 'business', 'organization', 'org']) || null,
+      company: findValue(['notes', 'note', 'company', 'business', 'organization', 'org']) || null,
       subscription_status,
       subscription_plan: findValue(['live_plan', 'live plan', 'subscription_plan', 'plan', 'package', 'tier']) || null,
       subscription_start_date: findDate(['live_start', 'subscription_start', 'start_date']),
