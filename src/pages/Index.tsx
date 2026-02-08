@@ -1,11 +1,13 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Users, Clock, Tv, Video, LogOut } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Users, Clock, Tv, Video, LogOut, BarChart3 } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { usePageTracking } from '@/hooks/useAnalytics';
 import { MetricCard } from '@/components/MetricCard';
 import { CustomerTable } from '@/components/CustomerTable';
 import { MobileCustomerCard } from '@/components/MobileCustomerCard';
@@ -39,6 +41,7 @@ const Index = () => {
   const { signOut } = useAuth();
   const isMobile = useIsMobile();
   useThemeColor(); // Apply theme color
+  usePageTracking(); // Track page views
 
   const displayName = appSettings?.app_name || 'Customer Tracker';
   const displayLogo = appSettings?.logo_url || letsStreamLogo;
@@ -285,6 +288,11 @@ const Index = () => {
               <BrandingSettingsDialog />
               <ImportCustomersDialog />
               <AddCustomerDialog />
+              <Link to="/analytics">
+                <Button variant="outline" size="icon" title="Analytics">
+                  <BarChart3 className="h-4 w-4" />
+                </Button>
+              </Link>
               <Button variant="outline" size="icon" onClick={signOut} title="Sign Out">
                 <LogOut className="h-4 w-4" />
               </Button>
