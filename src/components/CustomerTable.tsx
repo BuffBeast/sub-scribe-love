@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Customer } from '@/hooks/useCustomers';
 import { StatusBadge } from './StatusBadge';
 import { SendEmailDialog } from './SendEmailDialog';
@@ -276,14 +276,14 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
                           {customer.subscription_end_date
-                            ? format(new Date(customer.subscription_end_date), 'MM/dd/yyyy')
+                            ? format(parseISO(customer.subscription_end_date), 'MM/dd/yyyy')
                             : <span className="text-muted-foreground">-</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={customer.subscription_end_date ? new Date(customer.subscription_end_date) : undefined}
+                          selected={customer.subscription_end_date ? parseISO(customer.subscription_end_date) : undefined}
                           onSelect={(date) => {
                             updateCustomer.mutate({
                               id: customer.id,
@@ -324,14 +324,14 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
                           {customer.vod_end_date
-                            ? format(new Date(customer.vod_end_date), 'MM/dd/yyyy')
+                            ? format(parseISO(customer.vod_end_date), 'MM/dd/yyyy')
                             : <span className="text-muted-foreground">-</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={customer.vod_end_date ? new Date(customer.vod_end_date) : undefined}
+                          selected={customer.vod_end_date ? parseISO(customer.vod_end_date) : undefined}
                           onSelect={(date) => {
                             updateCustomer.mutate({
                               id: customer.id,
