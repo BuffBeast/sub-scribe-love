@@ -87,6 +87,7 @@ export type Database = {
           id: string
           is_visible: boolean
           name: string
+          options: Json | null
           sort_order: number
           user_id: string
         }
@@ -96,6 +97,7 @@ export type Database = {
           id?: string
           is_visible?: boolean
           name: string
+          options?: Json | null
           sort_order?: number
           user_id: string
         }
@@ -105,6 +107,7 @@ export type Database = {
           id?: string
           is_visible?: boolean
           name?: string
+          options?: Json | null
           sort_order?: number
           user_id?: string
         }
