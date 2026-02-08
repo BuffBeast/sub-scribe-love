@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { LogOut, Menu, Download } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { LogOut, Menu, Download, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ExportCSVButton } from '@/components/ExportCSVButton';
@@ -132,7 +133,16 @@ export function MobileHeader({
                   </div>
                 )}
 
-                <div className="border-t pt-4 mt-2">
+                <div className="border-t pt-4 mt-2 space-y-2">
+                  <Link to="/analytics" onClick={() => setOpen(false)}>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Analytics
+                    </Button>
+                  </Link>
                   <Button
                     variant="outline"
                     className="w-full justify-start"
