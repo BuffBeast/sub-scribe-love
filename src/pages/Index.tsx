@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Users, Clock, Tv, Video, LogOut } from 'lucide-react';
+import { Users, Clock, Tv, Video, LogOut, Tag } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
-import { useCustomFields } from '@/hooks/useCustomFields';
+import { useCustomFields, CustomField } from '@/hooks/useCustomFields';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -63,6 +63,49 @@ const Index = () => {
     };
   }, [customers]);
 
+  // Get dropdown custom fields and compute counts for each option
+  const dropdownFields = useMemo(() => {
+    return customFields.filter(
+      (field): field is CustomField & { options: string[] } => 
+        field.field_type === 'select' && 
+        field.is_visible && 
+        Array.isArray(field.options) && 
+        field.options.length > 0
+    );
+  }, [customFields]);
+
+  // Compute custom field filter data for tabs
+  const customFieldFilters = useMemo(() => {
+    return dropdownFields.map(field => {
+      const counts: Record<string, number> = {};
+      field.options.forEach(option => {
+        counts[option] = customers.filter(c => {
+          const customData = c.custom_data as Record<string, unknown> | null;
+          return customData?.[field.name] === option;
+        }).length;
+      });
+      return {
+        fieldName: field.name,
+        options: field.options,
+        counts,
+      };
+    });
+  }, [dropdownFields, customers]);
+
+  // Compute custom field metrics (counts per option)
+  const customFieldMetrics = useMemo(() => {
+    return dropdownFields.flatMap(field => 
+      field.options.map(option => ({
+        fieldName: field.name,
+        option,
+        count: customers.filter(c => {
+          const customData = c.custom_data as Record<string, unknown> | null;
+          return customData?.[field.name] === option;
+        }).length,
+      }))
+    );
+  }, [dropdownFields, customers]);
+
   // Filter and sort customers
   const filteredCustomers = useMemo(() => {
     const filtered = customers.filter(customer => {
@@ -72,7 +115,15 @@ const Index = () => {
         (customer.company?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
       let matchesStatus = false;
-      if (statusFilter === 'all') {
+      
+      // Check if it's a custom field filter
+      if (statusFilter.startsWith('custom:')) {
+        const parts = statusFilter.split(':');
+        const fieldName = parts[1];
+        const optionValue = parts.slice(2).join(':'); // Handle colons in option values
+        const customData = customer.custom_data as Record<string, unknown> | null;
+        matchesStatus = customData?.[fieldName] === optionValue;
+      } else if (statusFilter === 'all') {
         matchesStatus = true;
       } else if (statusFilter === 'trial') {
         matchesStatus = customer.has_trial === true;
@@ -170,6 +221,15 @@ const Index = () => {
                 value={metrics.trialCustomers}
                 icon={Clock}
               />
+              {/* Custom field metrics */}
+              {customFieldMetrics.map((cfm) => (
+                <MetricCard
+                  key={`${cfm.fieldName}-${cfm.option}`}
+                  title={`${cfm.fieldName}: ${cfm.option}`}
+                  value={cfm.count}
+                  icon={Tag}
+                />
+              ))}
             </div>
 
             {/* Search, Filters, and Sort */}
@@ -185,6 +245,7 @@ const Index = () => {
                   value={statusFilter}
                   onChange={setStatusFilter}
                   counts={statusCounts}
+                  customFieldFilters={customFieldFilters}
                 />
               </div>
             </div>
@@ -289,6 +350,16 @@ const Index = () => {
             subtitle="Potential conversions"
             icon={Clock}
           />
+          {/* Custom field metrics */}
+          {customFieldMetrics.map((cfm) => (
+            <MetricCard
+              key={`${cfm.fieldName}-${cfm.option}`}
+              title={`${cfm.fieldName}: ${cfm.option}`}
+              value={cfm.count}
+              subtitle={metrics.totalCustomers > 0 ? `${Math.round((cfm.count / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
+              icon={Tag}
+            />
+          ))}
         </div>
 
         {/* Filters, Search, and Sort */}
@@ -297,6 +368,7 @@ const Index = () => {
             value={statusFilter}
             onChange={setStatusFilter}
             counts={statusCounts}
+            customFieldFilters={customFieldFilters}
           />
           <div className="flex items-center gap-3">
             <SortSelect value={sortOption} onChange={setSortOption} />
