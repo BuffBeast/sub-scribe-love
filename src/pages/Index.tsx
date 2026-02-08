@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Users, Clock, Tv, Video, LogOut } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
@@ -13,6 +13,7 @@ import { MobileHeader } from '@/components/MobileHeader';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterTabs } from '@/components/FilterTabs';
+import { CustomFieldFilters } from '@/components/CustomFieldFilters';
 import { SortSelect, SortOption } from '@/components/SortSelect';
 import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
@@ -27,6 +28,7 @@ import letsStreamLogo from '@/assets/lets-stream-logo.png';
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [customFieldFilters, setCustomFieldFilters] = useState<Record<string, string>>({});
   const [sortOption, setSortOption] = useState<SortOption>('expiry-asc');
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -63,6 +65,22 @@ const Index = () => {
     };
   }, [customers]);
 
+  // Custom field filter handlers
+  const handleCustomFieldFilterChange = useCallback((fieldName: string, value: string) => {
+    setCustomFieldFilters((prev) => ({
+      ...prev,
+      [fieldName]: value === '__all__' ? '' : value,
+    }));
+  }, []);
+
+  const handleCustomFieldFilterClear = useCallback((fieldName: string) => {
+    setCustomFieldFilters((prev) => {
+      const next = { ...prev };
+      delete next[fieldName];
+      return next;
+    });
+  }, []);
+
   // Filter and sort customers
   const filteredCustomers = useMemo(() => {
     const filtered = customers.filter(customer => {
@@ -82,7 +100,14 @@ const Index = () => {
         matchesStatus = customer.subscription_status === statusFilter;
       }
 
-      return matchesSearch && matchesStatus;
+      // Check custom field filters
+      const matchesCustomFields = Object.entries(customFieldFilters).every(([fieldName, filterValue]) => {
+        if (!filterValue) return true;
+        const customData = (customer.custom_data as Record<string, unknown>) || {};
+        return customData[fieldName] === filterValue;
+      });
+
+      return matchesSearch && matchesStatus && matchesCustomFields;
     });
 
     // Sort customers
@@ -115,7 +140,7 @@ const Index = () => {
           return 0;
       }
     });
-  }, [searchQuery, statusFilter, sortOption, customers]);
+  }, [searchQuery, statusFilter, customFieldFilters, sortOption, customers]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -187,6 +212,12 @@ const Index = () => {
                   counts={statusCounts}
                 />
               </div>
+              <CustomFieldFilters
+                customFields={customFields}
+                filters={customFieldFilters}
+                onChange={handleCustomFieldFilterChange}
+                onClear={handleCustomFieldFilterClear}
+              />
             </div>
 
             {/* Customer Cards */}
@@ -292,18 +323,26 @@ const Index = () => {
         </div>
 
         {/* Filters, Search, and Sort */}
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
-          <FilterTabs
-            value={statusFilter}
-            onChange={setStatusFilter}
-            counts={statusCounts}
-          />
-          <div className="flex items-center gap-3">
-            <SortSelect value={sortOption} onChange={setSortOption} />
-            <div className="w-full md:w-72">
-              <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <FilterTabs
+              value={statusFilter}
+              onChange={setStatusFilter}
+              counts={statusCounts}
+            />
+            <div className="flex items-center gap-3">
+              <SortSelect value={sortOption} onChange={setSortOption} />
+              <div className="w-full md:w-72">
+                <SearchBar value={searchQuery} onChange={setSearchQuery} />
+              </div>
             </div>
           </div>
+          <CustomFieldFilters
+            customFields={customFields}
+            filters={customFieldFilters}
+            onChange={handleCustomFieldFilterChange}
+            onClear={handleCustomFieldFilterClear}
+          />
         </div>
 
         {/* Content */}
