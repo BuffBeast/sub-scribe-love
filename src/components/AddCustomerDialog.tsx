@@ -286,12 +286,31 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
           {customFields.map((field) => (
             <div key={field.id} className="space-y-2">
               <Label htmlFor={field.id}>{field.name}</Label>
-              <Input
-                id={field.id}
-                type={field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text'}
-                value={customData[field.name] || ''}
-                onChange={(e) => setCustomData({ ...customData, [field.name]: e.target.value })}
-              />
+              {field.field_type === 'select' && field.options ? (
+                <Select 
+                  value={customData[field.name] || 'none'} 
+                  onValueChange={(v) => setCustomData({ ...customData, [field.name]: v === 'none' ? '' : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {field.options.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id={field.id}
+                  type={field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text'}
+                  value={customData[field.name] || ''}
+                  onChange={(e) => setCustomData({ ...customData, [field.name]: e.target.value })}
+                />
+              )}
             </div>
           ))}
 

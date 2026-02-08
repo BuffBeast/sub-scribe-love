@@ -30,6 +30,7 @@ export function ColumnSettingsDialog() {
   const [open, setOpen] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldType, setNewFieldType] = useState('text');
+  const [newFieldOptions, setNewFieldOptions] = useState('');
   const [newDeviceName, setNewDeviceName] = useState('');
   const [newServiceName, setNewServiceName] = useState('');
 
@@ -48,9 +49,13 @@ export function ColumnSettingsDialog() {
 
   const handleAddField = () => {
     if (newFieldName.trim()) {
-      createField.mutate({ name: newFieldName.trim(), field_type: newFieldType });
+      const options = newFieldType === 'select' && newFieldOptions.trim()
+        ? newFieldOptions.split(',').map(o => o.trim()).filter(o => o)
+        : undefined;
+      createField.mutate({ name: newFieldName.trim(), field_type: newFieldType, options });
       setNewFieldName('');
       setNewFieldType('text');
+      setNewFieldOptions('');
     }
   };
 
@@ -106,25 +111,30 @@ export function ColumnSettingsDialog() {
             <h4 className="text-sm font-medium mb-3">Custom Fields</h4>
             <div className="space-y-3">
               {customFields.map((field) => (
-                <div key={field.id} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-1">
-                    <span className="text-sm">{field.name}</span>
-                    <span className="text-xs text-muted-foreground">({field.field_type})</span>
+                <div key={field.id} className="space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="text-sm">{field.name}</span>
+                      <span className="text-xs text-muted-foreground">({field.field_type})</span>
+                    </div>
+                    <Switch
+                      checked={field.is_visible}
+                      onCheckedChange={(checked) => 
+                        updateField.mutate({ id: field.id, is_visible: checked })
+                      }
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => deleteField.mutate(field.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
-                  <Switch
-                    checked={field.is_visible}
-                    onCheckedChange={(checked) => 
-                      updateField.mutate({ id: field.id, is_visible: checked })
-                    }
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => deleteField.mutate(field.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  {field.field_type === 'select' && field.options && (
+                    <p className="text-xs text-muted-foreground ml-1">Options: {field.options.join(', ')}</p>
+                  )}
                 </div>
               ))}
 
@@ -138,26 +148,36 @@ export function ColumnSettingsDialog() {
 
           <div>
             <h4 className="text-sm font-medium mb-3">Add Custom Field</h4>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Field name"
-                value={newFieldName}
-                onChange={(e) => setNewFieldName(e.target.value)}
-                className="flex-1"
-              />
-              <Select value={newFieldType} onValueChange={setNewFieldType}>
-                <SelectTrigger className="w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="text">Text</SelectItem>
-                  <SelectItem value="number">Number</SelectItem>
-                  <SelectItem value="date">Date</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={handleAddField} size="icon">
-                <Plus className="h-4 w-4" />
-              </Button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Field name"
+                  value={newFieldName}
+                  onChange={(e) => setNewFieldName(e.target.value)}
+                  className="flex-1"
+                />
+                <Select value={newFieldType} onValueChange={setNewFieldType}>
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Text</SelectItem>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="date">Date</SelectItem>
+                    <SelectItem value="select">Dropdown</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleAddField} size="icon">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {newFieldType === 'select' && (
+                <Input
+                  placeholder="Options (comma-separated, e.g., Option 1, Option 2)"
+                  value={newFieldOptions}
+                  onChange={(e) => setNewFieldOptions(e.target.value)}
+                />
+              )}
             </div>
           </div>
 

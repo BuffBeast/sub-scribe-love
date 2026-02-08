@@ -8,6 +8,7 @@ export interface CustomField {
   is_visible: boolean;
   sort_order: number;
   created_at: string;
+  options: string[] | null;
 }
 
 export function useCustomFields() {
@@ -27,7 +28,7 @@ export function useCustomFields() {
 export function useCreateCustomField() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (field: { name: string; field_type: string }) => {
+    mutationFn: async (field: { name: string; field_type: string; options?: string[] }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       
@@ -36,7 +37,13 @@ export function useCreateCustomField() {
       
       const { data, error } = await supabase
         .from('custom_fields')
-        .insert({ ...field, sort_order: nextOrder, user_id: user.id })
+        .insert({ 
+          name: field.name, 
+          field_type: field.field_type, 
+          options: field.options || null,
+          sort_order: nextOrder, 
+          user_id: user.id 
+        })
         .select()
         .single();
       if (error) throw error;
