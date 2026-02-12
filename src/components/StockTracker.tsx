@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { toast } from 'sonner';
 
 export function StockTracker() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newCategory, setNewCategory] = useState<string>('box');
   const [newQty, setNewQty] = useState('');
