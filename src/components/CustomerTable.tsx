@@ -48,10 +48,10 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   // Default columns to show when no visibility settings exist
   const defaultColumns = ['name', 'email', 'service', 'has_trial', 'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'vod_plan', 'vod_start_date', 'vod_end_date', 'company', 'device', 'subscription_status', 'reminders_enabled'];
   
-  // If no column visibility settings exist, show all default columns
-  const visibleColumns = columns.length > 0 
-    ? columns.filter((c) => c.is_visible).map((c) => c.column_name)
-    : defaultColumns;
+  // Build visible columns: use DB settings where available, default to visible for columns not in DB
+  const columnsInDb = new Set(columns.map((c) => c.column_name));
+  const hiddenInDb = new Set(columns.filter((c) => !c.is_visible).map((c) => c.column_name));
+  const visibleColumns = defaultColumns.filter((col) => !hiddenInDb.has(col));
   const visibleCustomFields = customFields.filter((f) => f.is_visible);
 
   const allSelected = customers.length > 0 && selectedIds.size === customers.length;
