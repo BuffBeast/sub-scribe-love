@@ -19,8 +19,11 @@ const ALLOWED_ORIGINS = [
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("Origin") || "";
+  if (!ALLOWED_ORIGINS.includes(origin)) {
+    return null;
+  }
   return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   };
 }
@@ -84,6 +87,12 @@ interface CustomerExpiry {
 
 serve(async (req: Request): Promise<Response> => {
   const corsHeaders = getCorsHeaders(req);
+  if (!corsHeaders) {
+    return new Response(JSON.stringify({ error: "Origin not allowed" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -156,7 +165,13 @@ serve(async (req: Request): Promise<Response> => {
       .not('email', 'is', null)
       .or(`subscription_end_date.eq.${targetDate},vod_end_date.eq.${targetDate}`);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Database query failed:", error);
+      return new Response(
+        JSON.stringify({ error: "Unable to process request" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Build list of customers with their expiring subscriptions
     const customersToNotify: CustomerExpiry[] = [];
