@@ -42,9 +42,13 @@ export function ExportCSVButton({ customers, customFields }: ExportCSVButtonProp
   const [exportOnlyVisible, setExportOnlyVisible] = useState(false);
   const { data: columns = [] } = useColumnVisibility();
 
-  const visibleColumnNames = columns.length > 0
-    ? columns.filter((c) => c.is_visible).map((c) => c.column_name)
-    : ALL_COLUMN_ORDER;
+  // Columns without a record default to visible
+  const hiddenColumnNames = columns
+    .filter((c) => !c.is_visible)
+    .map((c) => c.column_name);
+  const visibleColumnNames = ALL_COLUMN_ORDER.filter(
+    (col) => !hiddenColumnNames.includes(col)
+  );
 
   const visibleCustomFields = customFields.filter((f) => f.is_visible);
 
