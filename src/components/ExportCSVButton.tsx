@@ -25,7 +25,7 @@ const COLUMN_CSV_MAP: Record<string, { header: string; getValue: (c: Customer, c
   vod_plan: { header: 'VOD Plan', getValue: (c) => c.vod_plan || '' },
   vod_end_date: { header: 'VOD Expiry', getValue: (c) => c.vod_end_date || '' },
   device: { header: 'Device', getValue: (c) => c.device || '' },
-  company: { header: 'Notes', getValue: (c, cd) => (cd['Notes'] as string) || '' },
+  company: { header: 'Notes', getValue: (c) => c.company || '' },
   subscription_status: { header: 'Status', getValue: (c) => c.subscription_status || '' },
   total_spent: { header: 'Price', getValue: (c) => c.total_spent?.toString() || '0' },
   reminders_enabled: { header: 'Reminders', getValue: (c) => c.reminders_enabled ? 'Yes' : 'No' },
