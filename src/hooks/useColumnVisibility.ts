@@ -11,9 +11,12 @@ export function useColumnVisibility() {
   return useQuery({
     queryKey: ['column_visibility'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [] as ColumnVisibility[];
       const { data, error } = await supabase
         .from('column_visibility')
-        .select('*');
+        .select('*')
+        .eq('user_id', user.id);
       if (error) throw error;
       return data as ColumnVisibility[];
     },
