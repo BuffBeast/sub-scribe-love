@@ -266,6 +266,36 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_items: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
