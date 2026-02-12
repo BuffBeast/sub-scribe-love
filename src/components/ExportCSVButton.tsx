@@ -1,51 +1,72 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Customer } from '@/hooks/useCustomers';
 import { CustomField } from '@/hooks/useCustomFields';
+import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 
 interface ExportCSVButtonProps {
   customers: Customer[];
   customFields: CustomField[];
 }
 
+// Maps column visibility keys to CSV header names and customer data extractors
+const COLUMN_CSV_MAP: Record<string, { header: string; getValue: (c: Customer, customData: Record<string, unknown>) => string }> = {
+  name: { header: 'Name', getValue: (c) => c.name },
+  email: { header: 'Email', getValue: (c) => c.email || '' },
+  phone: { header: 'Phone', getValue: (c) => c.phone || '' },
+  service: { header: 'Service', getValue: (c) => c.service || '' },
+  has_trial: { header: 'Trial', getValue: (c) => c.has_trial ? 'Yes' : 'No' },
+  subscription_plan: { header: 'LIVE Plan', getValue: (c) => c.subscription_plan || '' },
+  subscription_end_date: { header: 'LIVE Expiry', getValue: (c) => c.subscription_end_date || '' },
+  vod_plan: { header: 'VOD Plan', getValue: (c) => c.vod_plan || '' },
+  vod_end_date: { header: 'VOD Expiry', getValue: (c) => c.vod_end_date || '' },
+  device: { header: 'Device', getValue: (c) => c.device || '' },
+  company: { header: 'Notes', getValue: (c, cd) => (cd['Notes'] as string) || '' },
+  subscription_status: { header: 'Status', getValue: (c) => c.subscription_status || '' },
+  total_spent: { header: 'Price', getValue: (c) => c.total_spent?.toString() || '0' },
+  reminders_enabled: { header: 'Reminders', getValue: (c) => c.reminders_enabled ? 'Yes' : 'No' },
+};
+
+const ALL_COLUMN_ORDER = [
+  'name', 'email', 'phone', 'service', 'has_trial',
+  'subscription_plan', 'subscription_end_date',
+  'vod_plan', 'vod_end_date',
+  'device', 'company', 'subscription_status', 'total_spent', 'reminders_enabled',
+];
+
 export function ExportCSVButton({ customers, customFields }: ExportCSVButtonProps) {
+  const [exportOnlyVisible, setExportOnlyVisible] = useState(false);
+  const { data: columns = [] } = useColumnVisibility();
+
+  const visibleColumnNames = columns.length > 0
+    ? columns.filter((c) => c.is_visible).map((c) => c.column_name)
+    : ALL_COLUMN_ORDER;
+
+  const visibleCustomFields = customFields.filter((f) => f.is_visible);
+
   const handleExport = () => {
     if (customers.length === 0) return;
 
+    const columnsToExport = exportOnlyVisible
+      ? ALL_COLUMN_ORDER.filter((col) => visibleColumnNames.includes(col))
+      : ALL_COLUMN_ORDER;
+
+    const customFieldsToExport = exportOnlyVisible ? visibleCustomFields : customFields;
+
     const headers = [
-      'Name',
-      'Email',
-      'Phone',
-      'Service',
-      'Trial',
-      'LIVE Plan',
-      'LIVE Expiry',
-      'VOD Plan',
-      'VOD Expiry',
-      'Device',
-      'Notes',
-      'Status',
-      'Price',
-      ...customFields.map((f) => f.name),
+      ...columnsToExport.map((col) => COLUMN_CSV_MAP[col]?.header || col),
+      ...customFieldsToExport.map((f) => f.name),
     ];
 
     const rows = customers.map((c) => {
       const customData = c.custom_data as Record<string, unknown> || {};
       return [
-        c.name,
-        c.email || '',
-        c.phone || '',
-        c.service || '',
-        c.has_trial ? 'Yes' : 'No',
-        c.subscription_plan || '',
-        c.subscription_end_date || '',
-        c.vod_plan || '',
-        c.vod_end_date || '',
-        c.device || '',
-        (customData['Notes'] as string) || '',
-        c.subscription_status || '',
-        c.total_spent?.toString() || '0',
-        ...customFields.map((f) => String(customData[f.name] || '')),
+        ...columnsToExport.map((col) => COLUMN_CSV_MAP[col]?.getValue(c, customData) || ''),
+        ...customFieldsToExport.map((f) => String(customData[f.name] || '')),
       ];
     });
 
@@ -73,9 +94,34 @@ export function ExportCSVButton({ customers, customFields }: ExportCSVButtonProp
   };
 
   return (
-    <Button variant="outline" onClick={handleExport} disabled={customers.length === 0}>
-      <Download className="h-4 w-4 mr-2" />
-      Export CSV
-    </Button>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" disabled={customers.length === 0}>
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64" align="end">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="export-visible" className="text-sm">Only visible columns</Label>
+            <Switch
+              id="export-visible"
+              checked={exportOnlyVisible}
+              onCheckedChange={setExportOnlyVisible}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {exportOnlyVisible
+              ? 'Export will match your dashboard view'
+              : 'All columns will be included'}
+          </p>
+          <Button onClick={handleExport} className="w-full" disabled={customers.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Download CSV
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -46,7 +46,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null);
 
   // Default columns to show when no visibility settings exist
-  const defaultColumns = ['name', 'email', 'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'vod_plan', 'vod_start_date', 'vod_end_date', 'company', 'subscription_status'];
+  const defaultColumns = ['name', 'email', 'service', 'has_trial', 'subscription_plan', 'subscription_start_date', 'subscription_end_date', 'vod_plan', 'vod_start_date', 'vod_end_date', 'company', 'device', 'subscription_status', 'reminders_enabled'];
   
   // If no column visibility settings exist, show all default columns
   const visibleColumns = columns.length > 0 
@@ -150,16 +150,16 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 />
               </TableHead>
               {visibleColumns.includes('name') && <TableHead className="font-semibold">Customer</TableHead>}
-              <TableHead className="font-semibold">Service</TableHead>
-              <TableHead className="font-semibold text-center">TRIAL</TableHead>
+              {visibleColumns.includes('service') && <TableHead className="font-semibold">Service</TableHead>}
+              {visibleColumns.includes('has_trial') && <TableHead className="font-semibold text-center">TRIAL</TableHead>}
               {visibleColumns.includes('subscription_plan') && <TableHead className="font-semibold text-center">LIVE</TableHead>}
               {visibleColumns.includes('subscription_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
               {visibleColumns.includes('vod_plan') && <TableHead className="font-semibold">VOD</TableHead>}
               {visibleColumns.includes('vod_end_date') && <TableHead className="font-semibold">Expiry</TableHead>}
               {visibleColumns.includes('company') && <TableHead className="font-semibold">Notes</TableHead>}
-              <TableHead className="font-semibold">Device</TableHead>
+              {visibleColumns.includes('device') && <TableHead className="font-semibold">Device</TableHead>}
               {visibleColumns.includes('subscription_status') && <TableHead className="font-semibold">Status</TableHead>}
-              <TableHead className="font-semibold text-center">Reminders</TableHead>
+              {visibleColumns.includes('reminders_enabled') && <TableHead className="font-semibold text-center">Reminders</TableHead>}
               {visibleCustomFields.map((field) => (
                 <TableHead key={field.id} className="font-semibold">{field.name}</TableHead>
               ))}
@@ -207,6 +207,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </div>
                   </TableCell>
                 )}
+                {visibleColumns.includes('service') && (
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Select
                     value={customer.service || 'none'}
@@ -230,6 +231,8 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </SelectContent>
                   </Select>
                 </TableCell>
+                )}
+                {visibleColumns.includes('has_trial') && (
                 <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="ghost"
@@ -249,6 +252,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     )}
                   </Button>
                 </TableCell>
+                )}
                 {visibleColumns.includes('subscription_plan') && (
                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                     <Button
@@ -348,6 +352,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 {visibleColumns.includes('company') && (
                   <TableCell className="text-muted-foreground">{customer.company || '-'}</TableCell>
                 )}
+                {visibleColumns.includes('device') && (
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Select
                     value={customer.device || 'none'}
@@ -371,11 +376,13 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </SelectContent>
                   </Select>
                 </TableCell>
+                )}
                 {visibleColumns.includes('subscription_status') && (
                   <TableCell>
                     <StatusBadge status={customer.subscription_status as any || 'active'} />
                   </TableCell>
                 )}
+                {visibleColumns.includes('reminders_enabled') && (
                 <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="ghost"
@@ -395,6 +402,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     )}
                   </Button>
                 </TableCell>
+                )}
                 {visibleCustomFields.map((field) => (
                   <TableCell key={field.id}>
                     {(customer.custom_data as Record<string, unknown>)?.[field.name]?.toString() || '-'}
