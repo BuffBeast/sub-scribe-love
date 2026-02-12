@@ -12,15 +12,28 @@ const reminderSettingsSchema = z.object({
   reminder_days: z.number().int().min(1).max(90).optional().default(30),
 });
 
-const ALLOWED_ORIGINS = [
+const ALLOWED_EXACT_ORIGINS = [
   "https://sub-scribe-love.lovable.app",
-  "https://id-preview--5885fea3-49d8-471e-834f-5918a0347d87.lovable.app",
-  "https://5885fea3-49d8-471e-834f-5918a0347d87.lovableproject.com",
 ];
+
+const ALLOWED_ORIGIN_SUFFIXES = [
+  ".lovable.app",
+  ".lovableproject.com",
+];
+
+function isOriginAllowed(origin: string): boolean {
+  if (ALLOWED_EXACT_ORIGINS.includes(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return ALLOWED_ORIGIN_SUFFIXES.some(suffix => url.hostname.endsWith(suffix));
+  } catch {
+    return false;
+  }
+}
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("Origin") || "";
-  if (!ALLOWED_ORIGINS.includes(origin)) {
+  if (!isOriginAllowed(origin)) {
     return null;
   }
   return {
