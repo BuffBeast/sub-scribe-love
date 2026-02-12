@@ -24,6 +24,7 @@ import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { ExportCSVButton } from '@/components/ExportCSVButton';
 import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
 import { MassEmailDialog } from '@/components/MassEmailDialog';
+import { StockTracker } from '@/components/StockTracker';
 import { Button } from '@/components/ui/button';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
 
@@ -200,6 +201,9 @@ const Index = () => {
               />
             </div>
 
+            {/* Stock Tracker */}
+            <StockTracker />
+
             {/* Search, Filters, and Sort */}
             <div className="space-y-3">
               <div className="flex gap-2">
@@ -328,6 +332,11 @@ const Index = () => {
             subtitle="Potential conversions"
             icon={Clock}
           />
+        </div>
+
+        {/* Stock Tracker */}
+        <div className="mb-8">
+          <StockTracker />
         </div>
 
         {/* Filters, Search, and Sort */}
