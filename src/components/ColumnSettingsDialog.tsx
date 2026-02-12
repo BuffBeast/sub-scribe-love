@@ -42,6 +42,13 @@ export function ColumnSettingsDialog() {
   const [newServiceName, setNewServiceName] = useState('');
 
   const { data: columns = [] } = useColumnVisibility();
+
+  // Ensure all built-in columns appear in the list, even if no DB record exists yet
+  const allBuiltInColumns = Object.keys(COLUMN_LABELS);
+  const mergedColumns = allBuiltInColumns.map((col) => {
+    const existing = columns.find((c) => c.column_name === col);
+    return existing || { id: `default-${col}`, column_name: col, is_visible: true };
+  });
   const { data: customFields = [] } = useCustomFields();
   const { data: deviceTypes = [] } = useDeviceTypes();
   const { data: serviceTypes = [] } = useServiceTypes();
@@ -96,8 +103,8 @@ export function ColumnSettingsDialog() {
           <div>
             <h4 className="text-sm font-medium mb-3">Built-in Columns</h4>
             <div className="space-y-3">
-              {columns.map((col) => (
-                <div key={col.id} className="flex items-center justify-between">
+              {mergedColumns.map((col) => (
+                <div key={col.column_name} className="flex items-center justify-between">
                   <Label htmlFor={col.column_name}>{COLUMN_LABELS[col.column_name] || col.column_name}</Label>
                   <Switch
                     id={col.column_name}
