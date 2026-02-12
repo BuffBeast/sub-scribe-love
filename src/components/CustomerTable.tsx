@@ -276,7 +276,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 )}
                 {visibleColumns.includes('subscription_end_date') && (
                   <TableCell className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                    <Popover>
+                    <Popover modal>
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
                           {customer.subscription_end_date
@@ -324,7 +324,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 )}
                 {visibleColumns.includes('vod_end_date') && (
                   <TableCell className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                    <Popover>
+                    <Popover modal>
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
                           {customer.vod_end_date

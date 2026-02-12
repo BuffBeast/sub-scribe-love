@@ -239,7 +239,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
       <div className="flex flex-wrap gap-2">
         <div className="flex items-center gap-1">
           <span className="text-xs text-muted-foreground">LIVE Exp:</span>
-          <Popover>
+          <Popover modal>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-6 px-2 text-xs font-normal">
                 {customer.subscription_end_date
@@ -266,7 +266,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
         </div>
         <div className="flex items-center gap-1">
           <span className="text-xs text-muted-foreground">VOD Exp:</span>
-          <Popover>
+          <Popover modal>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-6 px-2 text-xs font-normal">
                 {customer.vod_end_date
