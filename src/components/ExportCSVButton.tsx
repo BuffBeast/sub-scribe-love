@@ -116,6 +116,11 @@ export function ExportCSVButton({ customers, customFields }: ExportCSVButtonProp
               ? 'Export will match your dashboard view'
               : 'All columns will be included'}
           </p>
+          {exportOnlyVisible && (
+            <p className="text-xs text-destructive font-medium">
+              ⚠️ Hidden column data will not be included in this export.
+            </p>
+          )}
           <Button onClick={handleExport} className="w-full" disabled={customers.length === 0}>
             <Download className="h-4 w-4 mr-2" />
             Download CSV
