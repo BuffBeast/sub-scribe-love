@@ -21,6 +21,8 @@ export function StockTracker() {
 
   const boxes = items.filter(i => i.category === 'box');
   const remotes = items.filter(i => i.category === 'remote');
+  const totalBoxes = boxes.reduce((sum, i) => sum + i.quantity, 0);
+  const totalRemotes = remotes.reduce((sum, i) => sum + i.quantity, 0);
 
   const handleAdd = () => {
     const trimmed = newName.trim();
@@ -100,9 +102,16 @@ export function StockTracker() {
         <CardHeader className="pb-3">
           <CollapsibleTrigger asChild>
             <button className="flex items-center justify-between w-full text-left">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Package className="h-5 w-5" /> Device Stock
-              </CardTitle>
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Package className="h-5 w-5" /> Device Stock
+                </CardTitle>
+                {!isLoading && items.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1 ml-7">
+                    Boxes: {totalBoxes} · Remotes: {totalRemotes}
+                  </p>
+                )}
+              </div>
               {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
             </button>
           </CollapsibleTrigger>
