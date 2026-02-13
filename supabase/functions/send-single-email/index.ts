@@ -20,35 +20,10 @@ const emailRequestSchema = z.object({
   attachments: z.array(attachmentSchema).max(5, "Maximum 5 attachments allowed").optional(),
 });
 
-const ALLOWED_EXACT_ORIGINS = [
-  "https://sub-scribe-love.lovable.app",
-];
-
-const ALLOWED_ORIGIN_SUFFIXES = [
-  ".lovable.app",
-  ".lovableproject.com",
-];
-
-function isOriginAllowed(origin: string): boolean {
-  if (ALLOWED_EXACT_ORIGINS.includes(origin)) return true;
-  try {
-    const url = new URL(origin);
-    return ALLOWED_ORIGIN_SUFFIXES.some(suffix => url.hostname.endsWith(suffix));
-  } catch {
-    return false;
-  }
-}
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("Origin") || "";
-  if (!isOriginAllowed(origin)) {
-    return null;
-  }
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  };
-}
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
 // HTML escape function to prevent XSS in emails
 function escapeHtml(text: string): string {
@@ -72,13 +47,6 @@ function sanitizeEmailSubject(subject: string): string {
 }
 
 serve(async (req: Request): Promise<Response> => {
-  const corsHeaders = getCorsHeaders(req);
-  if (!corsHeaders) {
-    return new Response(JSON.stringify({ error: "Origin not allowed" }), {
-      status: 403,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
