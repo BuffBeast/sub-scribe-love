@@ -137,10 +137,9 @@ serve(async (req: Request): Promise<Response> => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await authClient.auth.getClaims(token);
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
 
-    if (authError || !claimsData?.claims) {
+    if (authError || !user) {
       console.error("Authentication error:", authError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
@@ -148,7 +147,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
     console.log(`Authenticated user ${userId} triggered send-expiry-reminders`);
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
