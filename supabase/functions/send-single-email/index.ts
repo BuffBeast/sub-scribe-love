@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -77,9 +77,10 @@ serve(async (req: Request): Promise<Response> => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: authError } = await authClient.auth.getClaims(token);
 
-    if (authError || !user) {
+    if (authError || !claimsData?.claims) {
       console.error("Authentication error:", authError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
@@ -87,7 +88,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const userId = user.id;
+    const userId = claimsData.claims.sub;
     console.log(`Authenticated user ${userId} sending single email`);
 
     // Parse and validate request body
