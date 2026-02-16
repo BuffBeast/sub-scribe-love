@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, Plus, Trash2, GripVertical } from 'lucide-react';
+import { Settings, Plus, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react';
 import { useOrderedColumns, useUpdateColumnVisibility, useUpdateColumnOrder, UnifiedColumn } from '@/hooks/useColumnVisibility';
 import { useCustomFields, useCreateCustomField, useDeleteCustomField, useUpdateCustomField } from '@/hooks/useCustomFields';
 import { useDeviceTypes, useCreateDeviceType, useDeleteDeviceType } from '@/hooks/useDeviceTypes';
@@ -35,13 +35,22 @@ function SortableColumnItem({
   col,
   onToggle,
   onDelete,
+  onEdit,
   disabled,
 }: {
   col: UnifiedColumn;
   onToggle: (column_name: string, checked: boolean) => void;
   onDelete?: () => void;
+  onEdit?: (updates: { name?: string; field_type?: string; options?: string[] | null }) => void;
   disabled: boolean;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(col.label);
+  const [editType, setEditType] = useState(col.customField?.field_type || 'text');
+  const [editOptions, setEditOptions] = useState(
+    (col.customField?.options as string[] | null)?.join(', ') || ''
+  );
+
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: col.id,
   });
@@ -51,32 +60,94 @@ function SortableColumnItem({
     transition,
   };
 
+  const handleSave = () => {
+    if (!onEdit || !editName.trim()) return;
+    const options = editType === 'select' && editOptions.trim()
+      ? editOptions.split(',').map(o => o.trim()).filter(o => o)
+      : null;
+    onEdit({ name: editName.trim(), field_type: editType, options });
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditName(col.label);
+    setEditType(col.customField?.field_type || 'text');
+    setEditOptions((col.customField?.options as string[] | null)?.join(', ') || '');
+    setEditing(false);
+  };
+
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center justify-between gap-2 py-1">
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <button {...attributes} {...listeners} className="cursor-grab touch-none text-muted-foreground hover:text-foreground shrink-0">
-          <GripVertical className="h-4 w-4" />
-        </button>
-        <Label htmlFor={col.id} className="truncate">
-          {col.label}
-          {col.type === 'custom' && col.customField && (
-            <span className="text-xs text-muted-foreground ml-1">({col.customField.field_type})</span>
+    <div ref={setNodeRef} style={style} className="py-1">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <button {...attributes} {...listeners} className="cursor-grab touch-none text-muted-foreground hover:text-foreground shrink-0">
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <Label htmlFor={col.id} className="truncate">
+            {col.label}
+            {col.type === 'custom' && col.customField && (
+              <span className="text-xs text-muted-foreground ml-1">({col.customField.field_type})</span>
+            )}
+          </Label>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {onEdit && !editing && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(true)}>
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
           )}
-        </Label>
+          <Switch
+            id={col.id}
+            checked={col.is_visible}
+            onCheckedChange={(checked) => onToggle(col.column_name, checked)}
+            disabled={disabled}
+          />
+          {onDelete && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-1 shrink-0">
-        <Switch
-          id={col.id}
-          checked={col.is_visible}
-          onCheckedChange={(checked) => onToggle(col.column_name, checked)}
-          disabled={disabled}
-        />
-        {onDelete && (
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-          </Button>
-        )}
-      </div>
+      {editing && (
+        <div className="ml-6 mt-2 space-y-2 p-2 rounded-md border border-border bg-muted/30">
+          <div className="flex gap-2">
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Field name"
+              className="flex-1 h-8 text-sm"
+            />
+            <Select value={editType} onValueChange={setEditType}>
+              <SelectTrigger className="w-28 h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="text">Text</SelectItem>
+                <SelectItem value="number">Number</SelectItem>
+                <SelectItem value="date">Date</SelectItem>
+                <SelectItem value="select">Dropdown</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {editType === 'select' && (
+            <Input
+              value={editOptions}
+              onChange={(e) => setEditOptions(e.target.value)}
+              placeholder="Options (comma-separated)"
+              className="h-8 text-sm"
+            />
+          )}
+          <div className="flex gap-1 justify-end">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCancel}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSave}>
+              <Check className="h-3.5 w-3.5 text-primary" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -96,6 +167,7 @@ export function ColumnSettingsDialog() {
   const updateOrder = useUpdateColumnOrder();
   const createField = useCreateCustomField();
   const deleteField = useDeleteCustomField();
+  const updateField = useUpdateCustomField();
   const createDevice = useCreateDeviceType();
   const deleteDevice = useDeleteDeviceType();
   const createService = useCreateServiceType();
@@ -174,6 +246,7 @@ export function ColumnSettingsDialog() {
                       col={col}
                       onToggle={handleToggle}
                       onDelete={col.type === 'custom' && col.customField ? () => deleteField.mutate(col.customField!.id) : undefined}
+                      onEdit={col.type === 'custom' && col.customField ? (updates) => updateField.mutate({ id: col.customField!.id, ...updates }) : undefined}
                       disabled={col.column_name === 'name'}
                     />
                   ))}
