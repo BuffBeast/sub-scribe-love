@@ -5,33 +5,68 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, Plus, Trash2 } from 'lucide-react';
-import { useColumnVisibility, useUpdateColumnVisibility } from '@/hooks/useColumnVisibility';
+import { Settings, Plus, Trash2, GripVertical } from 'lucide-react';
+import { useOrderedColumns, useUpdateColumnVisibility, useUpdateColumnOrder, COLUMN_LABELS } from '@/hooks/useColumnVisibility';
 import { useCustomFields, useCreateCustomField, useDeleteCustomField, useUpdateCustomField } from '@/hooks/useCustomFields';
 import { useDeviceTypes, useCreateDeviceType, useDeleteDeviceType } from '@/hooks/useDeviceTypes';
 import { useServiceTypes, useCreateServiceType, useDeleteServiceType, DEFAULT_SERVICES } from '@/hooks/useServiceTypes';
 import { Separator } from '@/components/ui/separator';
-
-const COLUMN_LABELS: Record<string, string> = {
-  name: 'Name',
-  email: 'Email',
-  phone: 'Phone',
-  service: 'Service',
-  has_trial: 'Trial',
-  company: 'Notes',
-  subscription_status: 'Status',
-  subscription_plan: 'LIVE',
-  subscription_end_date: 'LIVE Expiry',
-  vod_plan: 'VOD',
-  vod_end_date: 'VOD Expiry',
-  device: 'Device',
-  reminders_enabled: 'Reminders',
-  last_contact_date: 'Last Contact',
-  total_spent: 'Total Spent',
-};
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Default device types that are always available
 const DEFAULT_DEVICES = ['Firestick', 'K8', '8X', 'M9', 'R69'];
+
+function SortableColumnItem({
+  col,
+  onToggle,
+  disabled,
+}: {
+  col: { column_name: string; is_visible: boolean; label: string };
+  onToggle: (column_name: string, checked: boolean) => void;
+  disabled: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: col.column_name,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center justify-between gap-2 py-1">
+      <div className="flex items-center gap-2">
+        <button {...attributes} {...listeners} className="cursor-grab touch-none text-muted-foreground hover:text-foreground">
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <Label htmlFor={col.column_name}>{col.label}</Label>
+      </div>
+      <Switch
+        id={col.column_name}
+        checked={col.is_visible}
+        onCheckedChange={(checked) => onToggle(col.column_name, checked)}
+        disabled={disabled}
+      />
+    </div>
+  );
+}
 
 export function ColumnSettingsDialog() {
   const [open, setOpen] = useState(false);
@@ -41,18 +76,12 @@ export function ColumnSettingsDialog() {
   const [newDeviceName, setNewDeviceName] = useState('');
   const [newServiceName, setNewServiceName] = useState('');
 
-  const { data: columns = [] } = useColumnVisibility();
-
-  // Ensure all built-in columns appear in the list, even if no DB record exists yet
-  const allBuiltInColumns = Object.keys(COLUMN_LABELS);
-  const mergedColumns = allBuiltInColumns.map((col) => {
-    const existing = columns.find((c) => c.column_name === col);
-    return existing || { id: `default-${col}`, column_name: col, is_visible: true };
-  });
+  const orderedColumns = useOrderedColumns();
   const { data: customFields = [] } = useCustomFields();
   const { data: deviceTypes = [] } = useDeviceTypes();
   const { data: serviceTypes = [] } = useServiceTypes();
   const updateColumn = useUpdateColumnVisibility();
+  const updateOrder = useUpdateColumnOrder();
   const createField = useCreateCustomField();
   const deleteField = useDeleteCustomField();
   const updateField = useUpdateCustomField();
@@ -60,6 +89,24 @@ export function ColumnSettingsDialog() {
   const deleteDevice = useDeleteDeviceType();
   const createService = useCreateServiceType();
   const deleteService = useDeleteServiceType();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = orderedColumns.findIndex((c) => c.column_name === active.id);
+    const newIndex = orderedColumns.findIndex((c) => c.column_name === over.id);
+    const reordered = arrayMove(orderedColumns, oldIndex, newIndex);
+
+    updateOrder.mutate(
+      reordered.map((col, idx) => ({ column_name: col.column_name, sort_order: idx }))
+    );
+  };
 
   const handleAddField = () => {
     if (newFieldName.trim()) {
@@ -101,22 +148,22 @@ export function ColumnSettingsDialog() {
 
         <div className="space-y-4 py-4">
           <div>
-            <h4 className="text-sm font-medium mb-3">Built-in Columns</h4>
-            <div className="space-y-3">
-              {mergedColumns.map((col) => (
-                <div key={col.column_name} className="flex items-center justify-between">
-                  <Label htmlFor={col.column_name}>{COLUMN_LABELS[col.column_name] || col.column_name}</Label>
-                  <Switch
-                    id={col.column_name}
-                    checked={col.is_visible}
-                    onCheckedChange={(checked) => 
-                      updateColumn.mutate({ column_name: col.column_name, is_visible: checked })
-                    }
-                    disabled={col.column_name === 'name'}
-                  />
+            <h4 className="text-sm font-medium mb-1">Built-in Columns</h4>
+            <p className="text-xs text-muted-foreground mb-3">Drag to reorder, toggle to show/hide</p>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={orderedColumns.map((c) => c.column_name)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1">
+                  {orderedColumns.map((col) => (
+                    <SortableColumnItem
+                      key={col.column_name}
+                      col={col}
+                      onToggle={(name, checked) => updateColumn.mutate({ column_name: name, is_visible: checked })}
+                      disabled={col.column_name === 'name'}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
 
           <Separator />
