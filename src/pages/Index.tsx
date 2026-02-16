@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Clock, Tv, Video, LogOut, BarChart3 } from 'lucide-react';
+import { Users, Clock, Tv, Video, LogOut, BarChart3, AlertTriangle } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -54,8 +54,9 @@ const Index = () => {
     const activeLive = customers.filter(c => c.subscription_plan).length;
     const activeVod = customers.filter(c => c.vod_plan).length;
     const trialCustomers = customers.filter(c => c.has_trial === true).length;
+    const expiredCustomers = customers.filter(c => c.subscription_status === 'expired').length;
 
-    return { totalCustomers, activeLive, activeVod, trialCustomers };
+    return { totalCustomers, activeLive, activeVod, trialCustomers, expiredCustomers };
   }, [customers]);
 
   // Calculate status counts
@@ -199,6 +200,12 @@ const Index = () => {
                 value={metrics.trialCustomers}
                 icon={Clock}
               />
+              <MetricCard
+                title="Expired"
+                value={metrics.expiredCustomers}
+                icon={AlertTriangle}
+                className="col-span-2"
+              />
             </div>
 
             {/* Stock Tracker */}
@@ -307,7 +314,7 @@ const Index = () => {
 
       <main className="container mx-auto px-6 py-8">
         {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <MetricCard
             title="Total Customers"
             value={metrics.totalCustomers}
@@ -331,6 +338,12 @@ const Index = () => {
             value={metrics.trialCustomers}
             subtitle="Potential conversions"
             icon={Clock}
+          />
+          <MetricCard
+            title="Expired"
+            value={metrics.expiredCustomers}
+            subtitle={metrics.totalCustomers > 0 ? `${Math.round((metrics.expiredCustomers / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
+            icon={AlertTriangle}
           />
         </div>
 
