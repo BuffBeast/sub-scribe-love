@@ -94,18 +94,21 @@ export type Database = {
           column_name: string
           id: string
           is_visible: boolean
+          sort_order: number
           user_id: string
         }
         Insert: {
           column_name: string
           id?: string
           is_visible?: boolean
+          sort_order?: number
           user_id: string
         }
         Update: {
           column_name?: string
           id?: string
           is_visible?: boolean
+          sort_order?: number
           user_id?: string
         }
         Relationships: []
