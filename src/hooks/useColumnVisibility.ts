@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useCustomFields, CustomField } from '@/hooks/useCustomFields';
 
 export interface ColumnVisibility {
   id: string;
@@ -34,6 +35,18 @@ export const DEFAULT_COLUMN_ORDER = [
   'last_contact_date', 'total_spent',
 ];
 
+export interface UnifiedColumn {
+  /** For built-in: column key. For custom: `custom_${id}` */
+  id: string;
+  column_name: string;
+  label: string;
+  is_visible: boolean;
+  sort_order: number;
+  type: 'builtin' | 'custom';
+  /** Only for custom fields */
+  customField?: CustomField;
+}
+
 export function useColumnVisibility() {
   return useQuery({
     queryKey: ['column_visibility'],
@@ -50,26 +63,48 @@ export function useColumnVisibility() {
   });
 }
 
-/** Returns columns in the user's preferred order, merging DB records with defaults. */
-export function useOrderedColumns() {
+/**
+ * Returns a unified, ordered list of ALL columns (built-in + custom fields).
+ * Custom fields are interleaved with built-in columns based on sort_order.
+ */
+export function useOrderedColumns(): UnifiedColumn[] {
   const { data: columns = [] } = useColumnVisibility();
+  const { data: customFields = [] } = useCustomFields();
 
   const colMap = new Map(columns.map((c) => [c.column_name, c]));
 
-  // Build merged list with sort_order
-  const merged = DEFAULT_COLUMN_ORDER.map((col, idx) => {
+  // Built-in columns
+  const builtinCols: UnifiedColumn[] = DEFAULT_COLUMN_ORDER.map((col, idx) => {
     const existing = colMap.get(col);
     return {
+      id: col,
       column_name: col,
+      label: COLUMN_LABELS[col] || col,
       is_visible: existing ? existing.is_visible : true,
       sort_order: existing?.sort_order ?? idx,
-      label: COLUMN_LABELS[col] || col,
+      type: 'builtin',
     };
   });
 
-  // Sort by sort_order
-  merged.sort((a, b) => a.sort_order - b.sort_order);
-  return merged;
+  // Custom field columns - use column_visibility for sort_order if available,
+  // otherwise place after built-in columns
+  const customCols: UnifiedColumn[] = customFields.map((field, idx) => {
+    const colKey = `custom_${field.id}`;
+    const existing = colMap.get(colKey);
+    return {
+      id: colKey,
+      column_name: colKey,
+      label: field.name,
+      is_visible: existing ? existing.is_visible : field.is_visible,
+      sort_order: existing?.sort_order ?? (DEFAULT_COLUMN_ORDER.length + field.sort_order),
+      type: 'custom',
+      customField: field,
+    };
+  });
+
+  const all = [...builtinCols, ...customCols];
+  all.sort((a, b) => a.sort_order - b.sort_order);
+  return all;
 }
 
 export function useUpdateColumnVisibility() {
@@ -118,15 +153,6 @@ export function useUpdateColumnOrder() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Upsert all column orders
-      const upserts = orderedColumns.map((col) => ({
-        column_name: col.column_name,
-        sort_order: col.sort_order,
-        user_id: user.id,
-        is_visible: true, // default, will be overridden by existing
-      }));
-
-      // We need to handle this carefully: update existing, insert new
       for (const col of orderedColumns) {
         const { data: existing } = await supabase
           .from('column_visibility')
