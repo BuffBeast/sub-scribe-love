@@ -23,6 +23,9 @@ export function FilterTabs({ value, onChange, counts }: FilterTabsProps) {
         <TabsTrigger value="expired" className="data-[state=active]:bg-background shrink-0 text-xs sm:text-sm">
           Expired <span className="ml-1 text-muted-foreground">({counts.expired})</span>
         </TabsTrigger>
+        <TabsTrigger value="expiring" className="data-[state=active]:bg-background shrink-0 text-xs sm:text-sm">
+          Expiring <span className="ml-1 text-muted-foreground">({counts.expiring})</span>
+        </TabsTrigger>
         <TabsTrigger value="cancelled" className="data-[state=active]:bg-background shrink-0 text-xs sm:text-sm">
           Cancelled <span className="ml-1 text-muted-foreground">({counts.cancelled})</span>
         </TabsTrigger>

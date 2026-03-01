@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { isExpiringSoon } from '@/lib/dateUtils';
 import { Users, Clock, Tv, Video, LogOut, BarChart3, AlertTriangle } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
@@ -69,6 +70,7 @@ const Index = () => {
       all: customers.length,
       active: customers.filter(c => c.subscription_status === 'active' && !c.has_trial && !c.has_live_trial && !c.has_vod_trial).length,
       trial: customers.filter(c => c.has_trial === true || c.has_live_trial === true || c.has_vod_trial === true).length,
+      expiring: customers.filter(c => c.subscription_status === 'active' && (isExpiringSoon(c.subscription_end_date) || isExpiringSoon(c.vod_end_date))).length,
       expired: customers.filter(c => c.subscription_status === 'expired').length,
       cancelled: customers.filter(c => c.subscription_status === 'cancelled').length,
     };
@@ -105,6 +107,8 @@ const Index = () => {
         matchesStatus = customer.has_trial === true || customer.has_live_trial === true || customer.has_vod_trial === true;
       } else if (statusFilter === 'active') {
         matchesStatus = customer.subscription_status === 'active' && !customer.has_trial && !customer.has_live_trial && !customer.has_vod_trial;
+      } else if (statusFilter === 'expiring') {
+        matchesStatus = customer.subscription_status === 'active' && (isExpiringSoon(customer.subscription_end_date) || isExpiringSoon(customer.vod_end_date));
       } else {
         matchesStatus = customer.subscription_status === statusFilter;
       }
