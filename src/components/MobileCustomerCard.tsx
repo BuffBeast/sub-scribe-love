@@ -162,26 +162,8 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
         </div>
       </div>
 
-      {/* Toggle Buttons: Trial, LIVE, VOD, Reminders */}
-      <div className="grid grid-cols-4 gap-2 text-sm">
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-xs text-muted-foreground">Trial</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              updateCustomer.mutate({ id: customer.id, has_trial: !customer.has_trial });
-            }}
-          >
-            {customer.has_trial ? (
-              <Check className="h-5 w-5 text-success" />
-            ) : (
-              <X className="h-5 w-5 text-muted-foreground" />
-            )}
-          </Button>
-        </div>
+      {/* Toggle Buttons: LIVE, LIVE Trial, VOD, VOD Trial, Reminders */}
+      <div className="grid grid-cols-5 gap-1 text-sm">
         <div className="flex flex-col items-center gap-1">
           <span className="text-xs text-muted-foreground">LIVE</span>
           <Button
@@ -204,6 +186,24 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
           </Button>
         </div>
         <div className="flex flex-col items-center gap-1">
+          <span className="text-xs text-muted-foreground">L Trial</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              updateCustomer.mutate({ id: customer.id, has_live_trial: !customer.has_live_trial });
+            }}
+          >
+            {customer.has_live_trial ? (
+              <Check className="h-5 w-5 text-success" />
+            ) : (
+              <X className="h-5 w-5 text-muted-foreground" />
+            )}
+          </Button>
+        </div>
+        <div className="flex flex-col items-center gap-1">
           <span className="text-xs text-muted-foreground">VOD</span>
           <Button
             variant="ghost"
@@ -221,6 +221,24 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
               <Check className="h-5 w-5 text-success" />
             ) : (
               <X className="h-5 w-5 text-destructive" />
+            )}
+          </Button>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-xs text-muted-foreground">V Trial</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              updateCustomer.mutate({ id: customer.id, has_vod_trial: !customer.has_vod_trial });
+            }}
+          >
+            {customer.has_vod_trial ? (
+              <Check className="h-5 w-5 text-success" />
+            ) : (
+              <X className="h-5 w-5 text-muted-foreground" />
             )}
           </Button>
         </div>

@@ -31,6 +31,8 @@ const customerImportSchema = z.object({
   service: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
   device: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
   has_trial: z.boolean().default(false),
+  has_live_trial: z.boolean().default(false),
+  has_vod_trial: z.boolean().default(false),
 });
 
 type ValidatedCustomer = z.infer<typeof customerImportSchema>;
@@ -163,6 +165,8 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     service: string | null;
     device: string | null;
     has_trial: boolean;
+    has_live_trial: boolean;
+    has_vod_trial: boolean;
   } => {
     // Try to find matching columns (case-insensitive)
     const findValue = (keys: string[]): string => {
@@ -195,6 +199,10 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     // Check for trial field
     const trialValue = findValue(['trial', 'has_trial']).toLowerCase();
     const has_trial = trialValue === 'yes' || trialValue === 'true' || trialValue === '1';
+    const liveTrial = findValue(['live_trial', 'has_live_trial']).toLowerCase();
+    const has_live_trial = liveTrial === 'yes' || liveTrial === 'true' || liveTrial === '1';
+    const vodTrial = findValue(['vod_trial', 'has_vod_trial']).toLowerCase();
+    const has_vod_trial = vodTrial === 'yes' || vodTrial === 'true' || vodTrial === '1';
 
     return {
       name: findValue(['name', 'customer', 'user', 'username']) || 'Unknown',
@@ -212,6 +220,8 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
       service: findValue(['service']) || null,
       device: findValue(['device']) || null,
       has_trial,
+      has_live_trial,
+      has_vod_trial,
     };
   };
 

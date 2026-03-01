@@ -24,6 +24,8 @@ export interface Customer {
   user_id: string | null;
   reminders_enabled: boolean;
   has_trial: boolean;
+  has_live_trial: boolean;
+  has_vod_trial: boolean;
   device: string | null;
   service: string | null;
 }

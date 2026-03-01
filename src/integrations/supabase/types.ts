@@ -153,7 +153,9 @@ export type Database = {
           custom_data: Json | null
           device: string | null
           email: string | null
+          has_live_trial: boolean
           has_trial: boolean
+          has_vod_trial: boolean
           id: string
           last_contact_date: string | null
           name: string
@@ -177,7 +179,9 @@ export type Database = {
           custom_data?: Json | null
           device?: string | null
           email?: string | null
+          has_live_trial?: boolean
           has_trial?: boolean
+          has_vod_trial?: boolean
           id?: string
           last_contact_date?: string | null
           name: string
@@ -201,7 +205,9 @@ export type Database = {
           custom_data?: Json | null
           device?: string | null
           email?: string | null
+          has_live_trial?: boolean
           has_trial?: boolean
+          has_vod_trial?: boolean
           id?: string
           last_contact_date?: string | null
           name?: string

@@ -105,18 +105,6 @@ export function CustomerDetailPanel({ customer, onClose }: CustomerDetailPanelPr
               Subscriptions
             </h3>
             <div className="space-y-3">
-              {/* Trial */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Trial</span>
-                <span className="flex items-center gap-1">
-                  {customer.has_trial ? (
-                    <CheckCircle className="h-4 w-4 text-success" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </span>
-              </div>
-              
               {/* LIVE */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">LIVE</span>
@@ -124,6 +112,9 @@ export function CustomerDetailPanel({ customer, onClose }: CustomerDetailPanelPr
                   {customer.subscription_plan ? (
                     <>
                       <CheckCircle className="h-4 w-4 text-success" />
+                      {customer.has_live_trial && (
+                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded">Trial</span>
+                      )}
                       {customer.subscription_end_date && (
                         <span className="text-xs text-muted-foreground">
                           exp. {format(new Date(customer.subscription_end_date), 'MM/dd/yy')}
@@ -143,6 +134,9 @@ export function CustomerDetailPanel({ customer, onClose }: CustomerDetailPanelPr
                   {customer.vod_plan ? (
                     <>
                       <CheckCircle className="h-4 w-4 text-success" />
+                      {customer.has_vod_trial && (
+                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded">Trial</span>
+                      )}
                       {customer.vod_end_date && (
                         <span className="text-xs text-muted-foreground">
                           exp. {format(new Date(customer.vod_end_date), 'MM/dd/yy')}

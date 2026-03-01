@@ -44,6 +44,8 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
     device: '',
     service: '',
     has_trial: false,
+    has_live_trial: false,
+    has_vod_trial: false,
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -70,6 +72,8 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
         device: form.device || null,
         service: form.service || null,
         has_trial: form.has_trial,
+        has_live_trial: form.has_live_trial,
+        has_vod_trial: form.has_vod_trial,
         custom_data: customData,
       } as any,
       {
@@ -90,6 +94,8 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
             device: '',
             service: '',
             has_trial: false,
+            has_live_trial: false,
+            has_vod_trial: false,
           });
           setCustomData({});
         },
@@ -144,25 +150,25 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
             </Select>
           </div>
 
-          {/* Trial */}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="has_trial"
-              checked={form.has_trial}
-              onCheckedChange={(checked) => setForm({ ...form, has_trial: checked as boolean })}
-            />
-            <Label htmlFor="has_trial">Trial</Label>
-          </div>
-
           {/* LIVE Subscription */}
           <div className="border rounded-lg p-3 space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="has_live"
-                checked={form.has_live}
-                onCheckedChange={(checked) => setForm({ ...form, has_live: checked as boolean })}
-              />
-              <Label htmlFor="has_live" className="font-medium">LIVE</Label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="has_live"
+                  checked={form.has_live}
+                  onCheckedChange={(checked) => setForm({ ...form, has_live: checked as boolean })}
+                />
+                <Label htmlFor="has_live" className="font-medium">LIVE</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="has_live_trial"
+                  checked={form.has_live_trial}
+                  onCheckedChange={(checked) => setForm({ ...form, has_live_trial: checked as boolean })}
+                />
+                <Label htmlFor="has_live_trial" className="text-sm text-muted-foreground">Trial</Label>
+              </div>
             </div>
             {form.has_live && (
               <div className="space-y-2 ml-6">
@@ -179,13 +185,23 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
 
           {/* VOD Subscription */}
           <div className="border rounded-lg p-3 space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="has_vod"
-                checked={form.has_vod}
-                onCheckedChange={(checked) => setForm({ ...form, has_vod: checked as boolean })}
-              />
-              <Label htmlFor="has_vod" className="font-medium">VOD</Label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="has_vod"
+                  checked={form.has_vod}
+                  onCheckedChange={(checked) => setForm({ ...form, has_vod: checked as boolean })}
+                />
+                <Label htmlFor="has_vod" className="font-medium">VOD</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="has_vod_trial"
+                  checked={form.has_vod_trial}
+                  onCheckedChange={(checked) => setForm({ ...form, has_vod_trial: checked as boolean })}
+                />
+                <Label htmlFor="has_vod_trial" className="text-sm text-muted-foreground">Trial</Label>
+              </div>
             </div>
             {form.has_vod && (
               <div className="space-y-2 ml-6">
