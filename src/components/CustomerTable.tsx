@@ -55,7 +55,7 @@ import {
   useSortable,
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+// CSS transform removed - table cells don't support transform-based drag
 
 interface CustomerTableProps {
   customers: Customer[];
@@ -74,17 +74,20 @@ const HEADER_LABELS: Record<string, string> = {
 };
 
 function SortableHeader({ id, children, className }: { id: string; children: ReactNode; className?: string }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const { attributes, listeners, setNodeRef, isDragging, isSorting, over } = useSortable({ id });
 
   return (
-    <TableHead ref={setNodeRef} style={style} className={cn("font-semibold", className)}>
+    <TableHead
+      ref={setNodeRef}
+      className={cn(
+        "font-semibold transition-colors",
+        isDragging && "bg-primary/15 opacity-70",
+        !isDragging && isSorting && over?.id === id && "bg-accent",
+        className
+      )}
+    >
       <div className="flex items-center gap-1">
-        <button {...attributes} {...listeners} className="cursor-grab touch-none text-muted-foreground hover:text-foreground shrink-0">
+        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground shrink-0">
           <GripVertical className="h-3 w-3" />
         </button>
         {children}
@@ -108,16 +111,18 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const visibleColumns = orderedColumns.filter((c) => c.is_visible && c.column_name !== 'email');
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 10 } })
   );
 
   const handleHeaderDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const allCols = orderedColumns.map((c) => c.id);
-    const oldIndex = allCols.indexOf(active.id as string);
-    const newIndex = allCols.indexOf(over.id as string);
+    // Work with ALL columns (including hidden) to preserve their positions
+    const allIds = orderedColumns.map((c) => c.id);
+    const oldIndex = allIds.indexOf(active.id as string);
+    const newIndex = allIds.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
     const reordered = arrayMove(orderedColumns, oldIndex, newIndex);
 
     updateOrder.mutate(reordered.map((col, idx) => ({ column_name: col.column_name, sort_order: idx })));
