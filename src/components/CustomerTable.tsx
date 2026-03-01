@@ -64,9 +64,8 @@ const HEADER_LABELS: Record<string, string> = {
   name: 'Customer',
   subscription_plan: 'LIVE',
   subscription_end_date: 'Expiry',
-  has_trial: 'TRIAL',
-  has_live_trial: 'LIVE Trial',
-  has_vod_trial: 'VOD Trial',
+  has_live_trial: 'L Trial',
+  has_vod_trial: 'V Trial',
   vod_end_date: 'Expiry',
   company: 'Notes',
   subscription_status: 'Status',
@@ -152,7 +151,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   };
 
   const getHeaderClassName = (col: UnifiedColumn) => {
-    if (['has_trial', 'has_live_trial', 'has_vod_trial', 'subscription_plan', 'reminders_enabled'].includes(col.column_name)) return 'text-center';
+    if (['has_live_trial', 'has_vod_trial', 'subscription_plan', 'reminders_enabled'].includes(col.column_name)) return 'text-center';
     return '';
   };
 
@@ -194,14 +193,6 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 {serviceOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
-          </TableCell>
-        );
-      case 'has_trial':
-        return (
-          <TableCell key={col.id} className="text-center" onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateCustomer.mutate({ id: customer.id, has_trial: !customer.has_trial })}>
-              {customer.has_trial ? <Check className="h-5 w-5 text-success" /> : <X className="h-5 w-5 text-muted-foreground" />}
-            </Button>
           </TableCell>
         );
       case 'has_live_trial':

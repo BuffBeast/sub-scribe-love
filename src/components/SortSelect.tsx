@@ -1,4 +1,4 @@
-import { ArrowDownAZ, ArrowUpAZ, CalendarClock } from 'lucide-react';
+import { ArrowDownAZ, ArrowUpAZ, CalendarClock, Tv } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-export type SortOption = 'expiry-asc' | 'expiry-desc' | 'alpha-asc' | 'alpha-desc';
+export type SortOption = 'expiry-asc' | 'expiry-desc' | 'alpha-asc' | 'alpha-desc' | 'service-asc' | 'service-desc';
 
 interface SortSelectProps {
   value: SortOption;
@@ -19,6 +19,8 @@ const sortOptions: { value: SortOption; label: string; icon: React.ReactNode }[]
   { value: 'expiry-desc', label: 'Expiry (Latest)', icon: <CalendarClock className="h-4 w-4" /> },
   { value: 'alpha-asc', label: 'Name (A-Z)', icon: <ArrowDownAZ className="h-4 w-4" /> },
   { value: 'alpha-desc', label: 'Name (Z-A)', icon: <ArrowUpAZ className="h-4 w-4" /> },
+  { value: 'service-asc', label: 'Service (A-Z)', icon: <Tv className="h-4 w-4" /> },
+  { value: 'service-desc', label: 'Service (Z-A)', icon: <Tv className="h-4 w-4" /> },
 ];
 
 export function SortSelect({ value, onChange }: SortSelectProps) {
@@ -26,7 +28,7 @@ export function SortSelect({ value, onChange }: SortSelectProps) {
 
   return (
     <Select value={value} onValueChange={(val) => onChange(val as SortOption)}>
-      <SelectTrigger className="w-[160px] h-10">
+      <SelectTrigger className="w-[180px] h-10">
         <div className="flex items-center gap-2">
           {selectedOption?.icon}
           <SelectValue placeholder="Sort by..." />

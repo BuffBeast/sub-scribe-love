@@ -14,7 +14,6 @@ export const COLUMN_LABELS: Record<string, string> = {
   email: 'Email',
   phone: 'Phone',
   service: 'Service',
-  has_trial: 'Trial',
   has_live_trial: 'LIVE Trial',
   has_vod_trial: 'VOD Trial',
   company: 'Notes',
@@ -30,7 +29,7 @@ export const COLUMN_LABELS: Record<string, string> = {
 };
 
 export const DEFAULT_COLUMN_ORDER = [
-  'name', 'email', 'phone', 'service', 'has_trial',
+  'name', 'email', 'phone', 'service',
   'subscription_plan', 'has_live_trial', 'subscription_end_date',
   'vod_plan', 'has_vod_trial', 'vod_end_date',
   'company', 'device', 'subscription_status', 'reminders_enabled',
