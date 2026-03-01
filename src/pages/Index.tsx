@@ -141,6 +141,10 @@ const Index = () => {
           const bMax = Math.max(bLive, bVod);
           return bMax - aMax;
         }
+        case 'service-asc':
+          return (a.service || '').localeCompare(b.service || '');
+        case 'service-desc':
+          return (b.service || '').localeCompare(a.service || '');
         default:
           return 0;
       }
