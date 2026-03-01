@@ -32,10 +32,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Check, X, Bell, BellOff, Trash2, ChevronRight, CalendarIcon, Mail } from 'lucide-react';
+import { Check, X, Bell, BellOff, Trash2, ChevronRight, CalendarIcon, Mail, AlertTriangle } from 'lucide-react';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
 import { cn } from '@/lib/utils';
+import { isExpiringSoon } from '@/lib/dateUtils';
 
 interface MobileCustomerCardProps {
   customer: Customer;
@@ -107,7 +108,11 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
             <p className="text-sm text-muted-foreground truncate">{customer.email}</p>
           )}
         </div>
-        <StatusBadge status={customer.subscription_status as any || 'active'} />
+        <StatusBadge status={
+          customer.subscription_status === 'active' && (isExpiringSoon(customer.subscription_end_date) || isExpiringSoon(customer.vod_end_date))
+            ? 'expiring'
+            : (customer.subscription_status as any || 'active')
+        } />
       </div>
 
       {/* Service & Device Dropdowns */}
@@ -271,11 +276,11 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
           <span className="text-xs text-muted-foreground">LIVE Exp:</span>
           <Popover modal>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs font-normal">
+              <Button variant="ghost" size="sm" className={cn("h-6 px-2 text-xs font-normal", isExpiringSoon(customer.subscription_end_date) && "text-amber-600")}>
+                {isExpiringSoon(customer.subscription_end_date) && <AlertTriangle className="h-3 w-3 mr-1" />}
                 {customer.subscription_end_date
                   ? format(parseDateLocal(customer.subscription_end_date), 'MM/dd/yy')
                   : <span className="text-muted-foreground">-</span>}
-                <CalendarIcon className="ml-1 h-3 w-3" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -298,11 +303,11 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
           <span className="text-xs text-muted-foreground">VOD Exp:</span>
           <Popover modal>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs font-normal">
+              <Button variant="ghost" size="sm" className={cn("h-6 px-2 text-xs font-normal", isExpiringSoon(customer.vod_end_date) && "text-amber-600")}>
+                {isExpiringSoon(customer.vod_end_date) && <AlertTriangle className="h-3 w-3 mr-1" />}
                 {customer.vod_end_date
                   ? format(parseDateLocal(customer.vod_end_date), 'MM/dd/yy')
                   : <span className="text-muted-foreground">-</span>}
-                <CalendarIcon className="ml-1 h-3 w-3" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
