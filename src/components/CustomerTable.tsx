@@ -30,7 +30,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Check, X, Bell, BellOff, Mail, GripVertical } from 'lucide-react';
+import { Trash2, Check, X, Bell, BellOff, Mail, GripVertical, AlertTriangle } from 'lucide-react';
+import { isExpiringSoon } from '@/lib/dateUtils';
 import { useUpdateCustomer } from '@/hooks/useCustomers';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -220,12 +221,14 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             </Button>
           </TableCell>
         );
-      case 'subscription_end_date':
+      case 'subscription_end_date': {
+        const liveExpiring = isExpiringSoon(customer.subscription_end_date);
         return (
           <TableCell key={col.id} className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
             <Popover modal>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
+                <Button variant="ghost" size="sm" className={cn("h-8 px-2 font-normal", liveExpiring && "text-amber-600")}>
+                  {liveExpiring && <AlertTriangle className="h-3.5 w-3.5 mr-1 shrink-0" />}
                   {customer.subscription_end_date ? format(parseDateLocal(customer.subscription_end_date), 'MM/dd/yyyy') : <span className="text-muted-foreground">-</span>}
                 </Button>
               </PopoverTrigger>
@@ -235,6 +238,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             </Popover>
           </TableCell>
         );
+      }
       case 'vod_plan':
         return (
           <TableCell key={col.id} className="text-center" onClick={(e) => e.stopPropagation()}>
@@ -243,12 +247,14 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             </Button>
           </TableCell>
         );
-      case 'vod_end_date':
+      case 'vod_end_date': {
+        const vodExpiring = isExpiringSoon(customer.vod_end_date);
         return (
           <TableCell key={col.id} className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
             <Popover modal>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
+                <Button variant="ghost" size="sm" className={cn("h-8 px-2 font-normal", vodExpiring && "text-amber-600")}>
+                  {vodExpiring && <AlertTriangle className="h-3.5 w-3.5 mr-1 shrink-0" />}
                   {customer.vod_end_date ? format(parseDateLocal(customer.vod_end_date), 'MM/dd/yyyy') : <span className="text-muted-foreground">-</span>}
                 </Button>
               </PopoverTrigger>
@@ -258,6 +264,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             </Popover>
           </TableCell>
         );
+      }
       case 'company':
         return <TableCell key={col.id} className="text-muted-foreground">{customer.company || '-'}</TableCell>;
       case 'device':
@@ -272,8 +279,10 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             </Select>
           </TableCell>
         );
-      case 'subscription_status':
-        return <TableCell key={col.id}><StatusBadge status={customer.subscription_status as any || 'active'} /></TableCell>;
+      case 'subscription_status': {
+        const effectiveStatus = customer.subscription_status === 'active' && (isExpiringSoon(customer.subscription_end_date) || isExpiringSoon(customer.vod_end_date)) ? 'expiring' : (customer.subscription_status || 'active');
+        return <TableCell key={col.id}><StatusBadge status={effectiveStatus as any} /></TableCell>;
+      }
       case 'reminders_enabled':
         return (
           <TableCell key={col.id} className="text-center" onClick={(e) => e.stopPropagation()}>

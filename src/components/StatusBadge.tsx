@@ -23,6 +23,10 @@ const statusConfig: Record<SubscriptionStatus, { label: string; className: strin
     label: 'Cancelled',
     className: 'bg-destructive/10 text-destructive border-destructive/20',
   },
+  expiring: {
+    label: 'Expiring Soon',
+    className: 'bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse',
+  },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

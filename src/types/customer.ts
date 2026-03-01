@@ -1,4 +1,4 @@
-export type SubscriptionStatus = 'active' | 'trial' | 'expired' | 'cancelled';
+export type SubscriptionStatus = 'active' | 'trial' | 'expired' | 'cancelled' | 'expiring';
 
 export interface Customer {
   id: string;
