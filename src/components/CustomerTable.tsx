@@ -305,11 +305,11 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
         </div>
       )}
 
-      <Card className="shadow-card overflow-hidden">
+      <Card className="shadow-card border-border/50 overflow-hidden">
         <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
+            <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/50">
               <TableHead className="w-12">
                 <Checkbox
                   checked={allSelected}
@@ -334,7 +334,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             {customers.map((customer) => (
               <TableRow
                 key={customer.id}
-                className="cursor-pointer hover:bg-muted/30 transition-colors"
+                className="cursor-pointer hover:bg-muted/20 transition-colors border-b border-border/30"
                 onClick={() => onCustomerClick?.(customer)}
               >
                 <TableCell onClick={(e) => e.stopPropagation()}>
