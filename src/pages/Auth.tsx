@@ -119,7 +119,7 @@ export default function Auth() {
               <img 
                 src={letsStreamLogo} 
                 alt="Let's Stream logo" 
-                className="relative h-24 sm:h-28 w-auto object-contain drop-shadow-lg" 
+                className="relative h-24 sm:h-28 w-auto object-contain drop-shadow-lg bg-white rounded-2xl p-2" 
               />
             </div>
           </div>

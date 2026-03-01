@@ -80,7 +80,7 @@ export function MobileHeader({
             <img
               src={displayLogo}
               alt={`${displayName} logo`}
-              className="h-10 w-10 object-contain drop-shadow-xl shrink-0"
+              className="h-10 w-10 object-contain drop-shadow-xl shrink-0 bg-white rounded-lg p-1"
             />
             <div className="min-w-0 flex-1">
               <h1 className="text-base font-extrabold tracking-tight text-gradient truncate">

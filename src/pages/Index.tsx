@@ -305,7 +305,7 @@ const Index = () => {
               <img 
                 src={displayLogo} 
                 alt={`${displayName} logo`} 
-                className="h-10 w-auto object-contain"
+                className="h-10 w-auto object-contain bg-white rounded-lg p-1"
               />
               <div>
                 <h1 className="text-lg font-display font-bold tracking-tight">{displayName}</h1>
