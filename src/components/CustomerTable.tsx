@@ -33,6 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Check, X, Bell, BellOff, Mail, GripVertical } from 'lucide-react';
 import { useUpdateCustomer } from '@/hooks/useCustomers';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 import { useOrderedColumns, useUpdateColumnOrder, COLUMN_LABELS, UnifiedColumn } from '@/hooks/useColumnVisibility';
 import { useDeleteCustomer } from '@/hooks/useCustomers';
@@ -331,9 +332,12 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers.map((customer) => (
-              <TableRow
+            {customers.map((customer, rowIndex) => (
+              <motion.tr
                 key={customer.id}
+                initial={rowIndex < 20 ? { opacity: 0, y: 6 } : false}
+                animate={rowIndex < 20 ? { opacity: 1, y: 0 } : undefined}
+                transition={rowIndex < 20 ? { duration: 0.3, ease: 'easeOut', delay: rowIndex * 0.03 } : undefined}
                 className="cursor-pointer hover:bg-muted/20 transition-colors border-b border-border/30"
                 onClick={() => onCustomerClick?.(customer)}
               >
@@ -364,7 +368,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </Button>
                   </div>
                 </TableCell>
-              </TableRow>
+              </motion.tr>
             ))}
           </TableBody>
         </Table>

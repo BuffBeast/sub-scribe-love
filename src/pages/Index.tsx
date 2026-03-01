@@ -195,27 +195,32 @@ const Index = () => {
                 title="Total"
                 value={metrics.totalCustomers}
                 icon={Users}
+                index={0}
               />
               <MetricCard
                 title="Live"
                 value={metrics.activeLive}
                 icon={Tv}
+                index={1}
               />
               <MetricCard
                 title="VOD"
                 value={metrics.activeVod}
                 icon={Video}
+                index={2}
               />
               <MetricCard
                 title="Trial"
                 value={metrics.trialCustomers}
                 icon={Clock}
+                index={3}
               />
               <MetricCard
                 title="Expired"
                 value={metrics.expiredCustomers}
                 icon={AlertTriangle}
                 className="col-span-2"
+                index={4}
               />
             </div>
 
@@ -348,30 +353,35 @@ const Index = () => {
             value={metrics.totalCustomers}
             icon={Users}
             trend={{ value: 12, isPositive: true }}
+            index={0}
           />
           <MetricCard
             title="Active Live"
             value={metrics.activeLive}
             subtitle={metrics.totalCustomers > 0 ? `${Math.round((metrics.activeLive / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
             icon={Tv}
+            index={1}
           />
           <MetricCard
             title="Active VOD"
             value={metrics.activeVod}
             subtitle={metrics.totalCustomers > 0 ? `${Math.round((metrics.activeVod / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
             icon={Video}
+            index={2}
           />
           <MetricCard
             title="In Trial"
             value={metrics.trialCustomers}
             subtitle="Potential conversions"
             icon={Clock}
+            index={3}
           />
           <MetricCard
             title="Expired"
             value={metrics.expiredCustomers}
             subtitle={metrics.totalCustomers > 0 ? `${Math.round((metrics.expiredCustomers / metrics.totalCustomers) * 100)}% of total` : '0% of total'}
             icon={AlertTriangle}
+            index={4}
           />
         </div>
 
