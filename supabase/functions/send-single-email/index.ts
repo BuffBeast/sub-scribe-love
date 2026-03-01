@@ -4,12 +4,42 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
+// Allowed content types for attachments
+const ALLOWED_CONTENT_TYPES = new Set([
+  'application/pdf',
+  'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+  'text/plain', 'text/csv',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]);
+
+const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+
+// Sanitize filename to prevent path traversal
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[\x00-\x1F\x7F]/g, '')
+    .replace(/[/\\]/g, '_')
+    .replace(/\.\./g, '_')
+    .trim()
+    .slice(0, 255);
+}
+
 // Validation schema for attachments
 const attachmentSchema = z.object({
   filename: z.string().min(1).max(255),
   content: z.string().min(1), // base64 content
-  contentType: z.string().min(1).max(255),
-});
+  contentType: z.string().min(1).max(255).refine(
+    (ct) => ALLOWED_CONTENT_TYPES.has(ct.toLowerCase()),
+    { message: "File type not allowed" }
+  ),
+}).refine(
+  (att) => {
+    const estimatedBytes = Math.ceil(att.content.length * 3 / 4);
+    return estimatedBytes <= MAX_ATTACHMENT_SIZE_BYTES;
+  },
+  { message: "Attachment exceeds 5MB size limit" }
+);
 
 // Validation schema for request body
 const emailRequestSchema = z.object({
@@ -149,7 +179,7 @@ serve(async (req: Request): Promise<Response> => {
     // Add attachments if provided
     if (attachments && attachments.length > 0) {
       emailPayload.attachments = attachments.map(att => ({
-        filename: att.filename,
+        filename: sanitizeFilename(att.filename),
         content: att.content,
         type: att.contentType,
       }));
