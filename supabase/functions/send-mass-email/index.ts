@@ -9,12 +9,43 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Allowed content types for attachments
+const ALLOWED_CONTENT_TYPES = new Set([
+  'application/pdf',
+  'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+  'text/plain', 'text/csv',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]);
+
+const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+
+// Sanitize filename to prevent path traversal
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control chars
+    .replace(/[/\\]/g, '_')           // Replace path separators
+    .replace(/\.\./g, '_')            // Remove path traversal
+    .trim()
+    .slice(0, 255);
+}
+
 // Validation schema for attachments
 const attachmentSchema = z.object({
   filename: z.string().min(1).max(255),
   content: z.string().min(1), // base64 content
-  contentType: z.string().min(1).max(255),
-});
+  contentType: z.string().min(1).max(255).refine(
+    (ct) => ALLOWED_CONTENT_TYPES.has(ct.toLowerCase()),
+    { message: "File type not allowed" }
+  ),
+}).refine(
+  (att) => {
+    // Validate base64 decoded size is within limit
+    const estimatedBytes = Math.ceil(att.content.length * 3 / 4);
+    return estimatedBytes <= MAX_ATTACHMENT_SIZE_BYTES;
+  },
+  { message: "Attachment exceeds 5MB size limit" }
+);
 
 // Input validation schema
 const massEmailSchema = z.object({
@@ -79,7 +110,7 @@ async function sendEmail(
 
   if (attachments && attachments.length > 0) {
     emailPayload.attachments = attachments.map(att => ({
-      filename: att.filename,
+      filename: sanitizeFilename(att.filename),
       content: att.content,
       type: att.contentType,
     }));
