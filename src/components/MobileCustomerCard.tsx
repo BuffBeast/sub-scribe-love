@@ -1,5 +1,17 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
+
+function parseDateLocal(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 import { Customer, useUpdateCustomer, useDeleteCustomer } from '@/hooks/useCustomers';
 import { StatusBadge } from './StatusBadge';
 import { SendEmailDialog } from './SendEmailDialog';
@@ -243,7 +255,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-6 px-2 text-xs font-normal">
                 {customer.subscription_end_date
-                  ? format(new Date(customer.subscription_end_date), 'MM/dd/yy')
+                  ? format(parseDateLocal(customer.subscription_end_date), 'MM/dd/yy')
                   : <span className="text-muted-foreground">-</span>}
                 <CalendarIcon className="ml-1 h-3 w-3" />
               </Button>
@@ -251,11 +263,11 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={customer.subscription_end_date ? new Date(customer.subscription_end_date) : undefined}
+                selected={customer.subscription_end_date ? parseDateLocal(customer.subscription_end_date) : undefined}
                 onSelect={(date) => {
                   updateCustomer.mutate({
                     id: customer.id,
-                    subscription_end_date: date ? format(date, 'yyyy-MM-dd') : null,
+                    subscription_end_date: date ? formatDateLocal(date) : null,
                   });
                 }}
                 initialFocus
@@ -270,7 +282,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-6 px-2 text-xs font-normal">
                 {customer.vod_end_date
-                  ? format(new Date(customer.vod_end_date), 'MM/dd/yy')
+                  ? format(parseDateLocal(customer.vod_end_date), 'MM/dd/yy')
                   : <span className="text-muted-foreground">-</span>}
                 <CalendarIcon className="ml-1 h-3 w-3" />
               </Button>
@@ -278,11 +290,11 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={customer.vod_end_date ? new Date(customer.vod_end_date) : undefined}
+                selected={customer.vod_end_date ? parseDateLocal(customer.vod_end_date) : undefined}
                 onSelect={(date) => {
                   updateCustomer.mutate({
                     id: customer.id,
-                    vod_end_date: date ? format(date, 'yyyy-MM-dd') : null,
+                    vod_end_date: date ? formatDateLocal(date) : null,
                   });
                 }}
                 initialFocus
