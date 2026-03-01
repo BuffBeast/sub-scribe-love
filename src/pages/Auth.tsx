@@ -13,6 +13,12 @@ import letsStreamLogo from '@/assets/lets-stream-logo.png';
 import { z } from 'zod';
 
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255);
+const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Must contain an uppercase letter')
+  .regex(/[a-z]/, 'Must contain a lowercase letter')
+  .regex(/[0-9]/, 'Must contain a number')
+  .regex(/[^A-Za-z0-9]/, 'Must contain a special character');
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -25,6 +31,13 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const passResult = passwordSchema.safeParse(password);
+    if (!passResult.success) {
+      toast.error(passResult.error.errors[0].message);
+      return;
+    }
+
     setLoading(true);
     
     const { error } = await supabase.auth.signUp({
@@ -222,7 +235,7 @@ export default function Auth() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={8}
                     className="h-10"
                   />
                 </div>
