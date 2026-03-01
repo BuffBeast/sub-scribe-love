@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Clock, Tv, Video, LogOut, BarChart3, AlertTriangle } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
+import { useAllServiceOptions } from '@/hooks/useServiceTypes';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,12 +27,14 @@ import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
 import { MassEmailDialog } from '@/components/MassEmailDialog';
 import { StockTracker } from '@/components/StockTracker';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [customFieldFilters, setCustomFieldFilters] = useState<Record<string, string>>({});
+  const [serviceFilter, setServiceFilter] = useState<string>('all');
   const [sortOption, setSortOption] = useState<SortOption>('expiry-asc');
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -41,6 +44,7 @@ const Index = () => {
   const { data: appSettings } = useAppSettings();
   const { signOut } = useAuth();
   const isMobile = useIsMobile();
+  const serviceOptions = useAllServiceOptions();
   useThemeColor(); // Apply theme color
   usePageTracking(); // Track page views
 
@@ -112,7 +116,10 @@ const Index = () => {
         return customData[fieldName] === filterValue;
       });
 
-      return matchesSearch && matchesStatus && matchesCustomFields;
+      // Check service filter
+      const matchesService = serviceFilter === 'all' || customer.service === serviceFilter;
+
+      return matchesSearch && matchesStatus && matchesCustomFields && matchesService;
     });
 
     // Sort customers
@@ -149,7 +156,7 @@ const Index = () => {
           return 0;
       }
     });
-  }, [searchQuery, statusFilter, customFieldFilters, sortOption, customers]);
+  }, [searchQuery, statusFilter, serviceFilter, customFieldFilters, sortOption, customers]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -223,12 +230,23 @@ const Index = () => {
                 </div>
                 <SortSelect value={sortOption} onChange={setSortOption} />
               </div>
-              <div className="overflow-x-auto -mx-4 px-4">
+              <div className="flex gap-2 items-center overflow-x-auto -mx-4 px-4">
                 <FilterTabs
                   value={statusFilter}
                   onChange={setStatusFilter}
                   counts={statusCounts}
                 />
+                <Select value={serviceFilter} onValueChange={setServiceFilter}>
+                  <SelectTrigger className="h-9 w-[130px] shrink-0">
+                    <SelectValue placeholder="Service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Services</SelectItem>
+                    {serviceOptions.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <CustomFieldFilters
                 customFields={customFields}
@@ -365,6 +383,17 @@ const Index = () => {
               counts={statusCounts}
             />
             <div className="flex items-center gap-3">
+              <Select value={serviceFilter} onValueChange={setServiceFilter}>
+                <SelectTrigger className="h-10 w-[150px]">
+                  <SelectValue placeholder="Service" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Services</SelectItem>
+                  {serviceOptions.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <SortSelect value={sortOption} onChange={setSortOption} />
               <div className="w-full md:w-72">
                 <SearchBar value={searchQuery} onChange={setSearchQuery} />
