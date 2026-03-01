@@ -1,47 +1,23 @@
 
-# Fix: Add App Name Placeholder Support to Quick Reminder Subject
 
-## Understanding the Issue
-The Quick Reminder email feature uses a customizable subject line from Branding Settings (`reminder_subject`). However, unlike the message body which supports `{name}`, `{plan}`, and `{date}` placeholders, the subject line doesn't support an `{app_name}` placeholder to dynamically insert the user's custom app name.
+## Fix Logo Transparent Background
 
-## Current Behavior
-- Subject line: Uses static text like "Your subscription expires soon"
-- No way to include the app name dynamically in the subject
+The logo PNG has a transparent background, which causes a visible checkerboard pattern (or mismatched background) in some contexts. Rather than editing the image file itself, the fix is to add a solid background behind the logo image element so the transparency blends cleanly.
 
-## Proposed Solution
-Add support for an `{app_name}` placeholder in the reminder subject line, consistent with how other placeholders work in the message body.
+### Changes
 
-## Technical Changes
+**1. Desktop header logo** (`src/pages/Index.tsx`, ~line 305-309)
+- Add a `bg-white rounded-lg p-1` wrapper or apply directly to the `<img>` tag so the transparent areas show white instead of whatever is behind them.
 
-### 1. Update SendEmailDialog.tsx (Quick Reminder)
-**Location**: `src/components/SendEmailDialog.tsx`
+**2. Mobile header logo** (`src/components/MobileHeader.tsx`, ~line 80-83)
+- Same treatment: add `bg-white rounded-lg p-1` to the logo `<img>` to give it a clean white backing.
 
-Add `{app_name}` placeholder replacement to the subject line:
-```typescript
-// Line 156-157: Add app_name replacement
-const appName = settings?.app_name || "Let's Stream";
-let reminderSubject = settings?.reminder_subject || 'Your subscription expires soon';
-reminderSubject = reminderSubject.replace(/\{app_name\}/g, appName);
-```
+**3. Auth page logo** (`src/pages/Auth.tsx`)
+- The auth page logo already has a decorative glow div behind it. Add `bg-white rounded-2xl p-2` to the `<img>` element to ensure the transparent areas look clean there too.
 
-Also update the preview display to show the resolved subject.
+### Approach
+- Use a white background with slight rounding and padding on each logo `<img>` element
+- This works regardless of light/dark mode since logos typically expect a white/light backing
+- Keeps the existing `drop-shadow-xl` and `object-contain` classes intact
+- No image file changes needed -- purely CSS fix
 
-### 2. Update BrandingSettingsDialog.tsx
-**Location**: `src/components/BrandingSettingsDialog.tsx`
-
-Add `{app_name}` to the available placeholders documentation:
-```
-Available placeholders: {name}, {plan}, {date}, {app_name}
-```
-
-Add this note to the subject field as well since it now supports placeholders.
-
-### 3. Update send-expiry-reminders Edge Function
-**Location**: `supabase/functions/send-expiry-reminders/index.ts`
-
-Add `{app_name}` placeholder replacement to automated reminder subjects for consistency.
-
-## Summary of Files to Modify
-1. `src/components/SendEmailDialog.tsx` - Add placeholder replacement for subject
-2. `src/components/BrandingSettingsDialog.tsx` - Document the new placeholder
-3. `supabase/functions/send-expiry-reminders/index.ts` - Add placeholder support to automated reminders
