@@ -20,6 +20,8 @@ const COLUMN_CSV_MAP: Record<string, { header: string; getValue: (c: Customer, c
   phone: { header: 'Phone', getValue: (c) => c.phone || '' },
   service: { header: 'Service', getValue: (c) => c.service || '' },
   has_trial: { header: 'Trial', getValue: (c) => c.has_trial ? 'Yes' : 'No' },
+  has_live_trial: { header: 'LIVE Trial', getValue: (c) => c.has_live_trial ? 'Yes' : 'No' },
+  has_vod_trial: { header: 'VOD Trial', getValue: (c) => c.has_vod_trial ? 'Yes' : 'No' },
   subscription_plan: { header: 'LIVE Plan', getValue: (c) => c.subscription_plan || '' },
   subscription_end_date: { header: 'LIVE Expiry', getValue: (c) => c.subscription_end_date || '' },
   vod_plan: { header: 'VOD Plan', getValue: (c) => c.vod_plan || '' },
@@ -33,8 +35,8 @@ const COLUMN_CSV_MAP: Record<string, { header: string; getValue: (c: Customer, c
 
 const ALL_COLUMN_ORDER = [
   'name', 'email', 'phone', 'service', 'has_trial',
-  'subscription_plan', 'subscription_end_date',
-  'vod_plan', 'vod_end_date',
+  'subscription_plan', 'has_live_trial', 'subscription_end_date',
+  'vod_plan', 'has_vod_trial', 'vod_end_date',
   'device', 'company', 'subscription_status', 'total_spent', 'reminders_enabled',
 ];
 

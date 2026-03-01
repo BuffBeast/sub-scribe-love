@@ -38,6 +38,8 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
     subscription_status: 'active',
     service: '',
     has_trial: false,
+    has_live_trial: false,
+    has_vod_trial: false,
     has_live: false,
     subscription_end_date: null as Date | null,
     has_vod: false,
@@ -57,6 +59,8 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         subscription_status: customer.subscription_status || 'active',
         service: customer.service || '',
         has_trial: customer.has_trial || false,
+        has_live_trial: customer.has_live_trial || false,
+        has_vod_trial: customer.has_vod_trial || false,
         has_live: !!customer.subscription_plan,
         subscription_end_date: customer.subscription_end_date ? new Date(customer.subscription_end_date) : null,
         has_vod: !!customer.vod_plan,
@@ -93,6 +97,8 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         subscription_status: form.subscription_status,
         service: form.service || null,
         has_trial: form.has_trial,
+        has_live_trial: form.has_live_trial,
+        has_vod_trial: form.has_vod_trial,
         subscription_plan: form.has_live ? 'Active' : null,
         subscription_end_date: form.subscription_end_date ? format(form.subscription_end_date, 'yyyy-MM-dd') : null,
         vod_plan: form.has_vod ? 'Active' : null,
@@ -150,25 +156,25 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
             </Select>
           </div>
 
-          {/* Trial */}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="edit-trial"
-              checked={form.has_trial}
-              onCheckedChange={(checked) => setForm({ ...form, has_trial: !!checked })}
-            />
-            <Label htmlFor="edit-trial" className="font-normal">Trial Customer</Label>
-          </div>
-
           {/* LIVE Subscription */}
           <div className="space-y-2 p-3 border rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="edit-live"
-                checked={form.has_live}
-                onCheckedChange={(checked) => setForm({ ...form, has_live: !!checked })}
-              />
-              <Label htmlFor="edit-live" className="font-medium">LIVE Subscription</Label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="edit-live"
+                  checked={form.has_live}
+                  onCheckedChange={(checked) => setForm({ ...form, has_live: !!checked })}
+                />
+                <Label htmlFor="edit-live" className="font-medium">LIVE Subscription</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="edit-live-trial"
+                  checked={form.has_live_trial}
+                  onCheckedChange={(checked) => setForm({ ...form, has_live_trial: !!checked })}
+                />
+                <Label htmlFor="edit-live-trial" className="text-sm text-muted-foreground">Trial</Label>
+              </div>
             </div>
             {form.has_live && (
               <div className="ml-6 space-y-2">
@@ -202,13 +208,23 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
 
           {/* VOD Subscription */}
           <div className="space-y-2 p-3 border rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="edit-vod"
-                checked={form.has_vod}
-                onCheckedChange={(checked) => setForm({ ...form, has_vod: !!checked })}
-              />
-              <Label htmlFor="edit-vod" className="font-medium">VOD Subscription</Label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="edit-vod"
+                  checked={form.has_vod}
+                  onCheckedChange={(checked) => setForm({ ...form, has_vod: !!checked })}
+                />
+                <Label htmlFor="edit-vod" className="font-medium">VOD Subscription</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="edit-vod-trial"
+                  checked={form.has_vod_trial}
+                  onCheckedChange={(checked) => setForm({ ...form, has_vod_trial: !!checked })}
+                />
+                <Label htmlFor="edit-vod-trial" className="text-sm text-muted-foreground">Trial</Label>
+              </div>
             </div>
             {form.has_vod && (
               <div className="ml-6 space-y-2">

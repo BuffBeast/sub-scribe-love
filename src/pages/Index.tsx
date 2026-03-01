@@ -53,7 +53,7 @@ const Index = () => {
     const totalCustomers = customers.length;
     const activeLive = customers.filter(c => c.subscription_plan).length;
     const activeVod = customers.filter(c => c.vod_plan).length;
-    const trialCustomers = customers.filter(c => c.has_trial === true).length;
+    const trialCustomers = customers.filter(c => c.has_trial === true || c.has_live_trial === true || c.has_vod_trial === true).length;
     const expiredCustomers = customers.filter(c => c.subscription_status === 'expired').length;
 
     return { totalCustomers, activeLive, activeVod, trialCustomers, expiredCustomers };
@@ -63,8 +63,8 @@ const Index = () => {
   const statusCounts = useMemo(() => {
     return {
       all: customers.length,
-      active: customers.filter(c => c.subscription_status === 'active' && !c.has_trial).length,
-      trial: customers.filter(c => c.has_trial === true).length,
+      active: customers.filter(c => c.subscription_status === 'active' && !c.has_trial && !c.has_live_trial && !c.has_vod_trial).length,
+      trial: customers.filter(c => c.has_trial === true || c.has_live_trial === true || c.has_vod_trial === true).length,
       expired: customers.filter(c => c.subscription_status === 'expired').length,
       cancelled: customers.filter(c => c.subscription_status === 'cancelled').length,
     };
@@ -98,9 +98,9 @@ const Index = () => {
       if (statusFilter === 'all') {
         matchesStatus = true;
       } else if (statusFilter === 'trial') {
-        matchesStatus = customer.has_trial === true;
+        matchesStatus = customer.has_trial === true || customer.has_live_trial === true || customer.has_vod_trial === true;
       } else if (statusFilter === 'active') {
-        matchesStatus = customer.subscription_status === 'active' && !customer.has_trial;
+        matchesStatus = customer.subscription_status === 'active' && !customer.has_trial && !customer.has_live_trial && !customer.has_vod_trial;
       } else {
         matchesStatus = customer.subscription_status === statusFilter;
       }
