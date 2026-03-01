@@ -16,26 +16,29 @@ interface MetricCardProps {
 
 export function MetricCard({ title, value, subtitle, icon: Icon, trend, className }: MetricCardProps) {
   return (
-    <Card className={cn('shadow-card hover:shadow-elevated transition-shadow duration-200', className)}>
-      <CardContent className="p-4 sm:p-6">
-        <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1 sm:space-y-2 min-w-0">
-            <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{title}</p>
-            <p className="text-xl sm:text-3xl font-bold tracking-tight">{value}</p>
+    <Card className={cn(
+      'shadow-card hover:shadow-card-hover transition-all duration-300 border-border/50 group',
+      className
+    )}>
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+            <p className="text-2xl sm:text-3xl font-display font-bold tracking-tight">{value}</p>
             {subtitle && (
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">{subtitle}</p>
+              <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
             )}
             {trend && (
               <p className={cn(
-                'text-xs sm:text-sm font-medium',
+                'text-xs font-medium',
                 trend.isPositive ? 'text-success' : 'text-destructive'
               )}>
-                {trend.isPositive ? '+' : ''}{trend.value}% from last month
+                {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
               </p>
             )}
           </div>
-          <div className="p-2 sm:p-3 rounded-xl bg-primary/10 shrink-0">
-            <Icon className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
+          <div className="p-2.5 rounded-xl bg-primary/8 group-hover:bg-primary/12 transition-colors shrink-0">
+            <Icon className="h-5 w-5 text-primary" />
           </div>
         </div>
       </CardContent>

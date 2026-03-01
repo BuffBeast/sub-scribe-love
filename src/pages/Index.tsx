@@ -298,35 +298,41 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-ghost-gradient">
       {/* Header */}
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
+      <header className="border-b border-border/50 glass sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <img 
                 src={displayLogo} 
                 alt={`${displayName} logo`} 
-                className="h-12 sm:h-14 w-auto object-contain drop-shadow-xl"
+                className="h-10 w-auto object-contain"
               />
               <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-gradient">{displayName}</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <h1 className="text-lg font-display font-bold tracking-tight">{displayName}</h1>
+                <p className="text-xs text-muted-foreground">
                   {displayTagline}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <AddCustomerDialog />
               <MassEmailDialog customers={customers} />
+              
+              <div className="h-6 w-px bg-border mx-1" />
+              
+              <ImportCustomersDialog />
               <ExportCSVButton customers={customers} customFields={customFields} />
+              
+              <div className="h-6 w-px bg-border mx-1" />
+              
               <ColumnSettingsDialog />
               <BrandingSettingsDialog />
-              <ImportCustomersDialog />
-              <AddCustomerDialog />
               <Link to="/analytics">
-                <Button variant="outline" size="icon" title="Analytics">
+                <Button variant="ghost" size="icon" title="Analytics">
                   <BarChart3 className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button variant="outline" size="icon" onClick={signOut} title="Sign Out">
+              <Button variant="ghost" size="icon" onClick={signOut} title="Sign Out">
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
@@ -334,7 +340,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-6 py-6">
         {/* Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <MetricCard
