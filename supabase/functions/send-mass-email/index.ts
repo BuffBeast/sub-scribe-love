@@ -150,9 +150,9 @@ serve(async (req: Request): Promise<Response> => {
       const validationResult = massEmailSchema.safeParse(rawBody);
       
       if (!validationResult.success) {
-        const errors = validationResult.error.errors.map(e => e.message).join(", ");
+        console.error("Validation failed:", validationResult.error);
         return new Response(
-          JSON.stringify({ error: `Validation failed: ${errors}` }),
+          JSON.stringify({ error: "Invalid request parameters" }),
           { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
@@ -225,18 +225,17 @@ serve(async (req: Request): Promise<Response> => {
     for (const customer of customers) {
       if (!customer.email) continue;
 
-      // Replace placeholders with escaped values
+      // Escape each line of the message first, then replace placeholders with pre-escaped values
       const escapedName = escapeHtml(customer.name);
       const escapedPlan = escapeHtml(customer.subscription_plan || 'N/A');
       
-      const personalizedMessage = message
-        .replace(/\{name\}/g, escapedName)
-        .replace(/\{plan\}/g, escapedPlan);
-
-      // Build HTML email
+      // Build HTML email: escape each line individually, then substitute placeholders
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          ${personalizedMessage.split('\n').map(line => `<p style="margin: 0 0 10px 0;">${escapeHtml(line) || '&nbsp;'}</p>`).join('')}
+          ${message.split('\n').map(line => {
+            const escapedLine = escapeHtml(line) || '&nbsp;';
+            return `<p style="margin: 0 0 10px 0;">${escapedLine.replace(/\{name\}/g, escapedName).replace(/\{plan\}/g, escapedPlan)}</p>`;
+          }).join('')}
         </div>
       `;
 

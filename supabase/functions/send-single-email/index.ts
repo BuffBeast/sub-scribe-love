@@ -104,8 +104,9 @@ serve(async (req: Request): Promise<Response> => {
 
     const validationResult = emailRequestSchema.safeParse(body);
     if (!validationResult.success) {
+      console.error("Validation failed:", validationResult.error);
       return new Response(
-        JSON.stringify({ error: "Validation failed", details: validationResult.error.flatten() }),
+        JSON.stringify({ error: "Invalid request parameters" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

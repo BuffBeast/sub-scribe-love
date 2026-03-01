@@ -238,15 +238,16 @@ serve(async (req: Request): Promise<Response> => {
       // Replace {app_name} in subject
       const finalSubject = subjectTemplate.replace(/\{app_name\}/g, fromName);
       
-      const messageBody = messageTemplate
-        .replace(/\{name\}/g, escapedName)
-        .replace(/\{plan\}/g, planDescription)
-        .replace(/\{date\}/g, escapedDate)
-        .replace(/\{app_name\}/g, fromName);
+      // Build HTML: escape each line first, then substitute pre-escaped placeholders
+      const escapedPlan = escapeHtml(planDescription);
+      const escapedFromName = escapeHtml(fromName);
 
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${messageBody.split('\n').map(line => `<p>${escapeHtml(line) || '&nbsp;'}</p>`).join('')}
+          ${messageTemplate.split('\n').map(line => {
+            const escapedLine = escapeHtml(line) || '&nbsp;';
+            return `<p>${escapedLine.replace(/\{name\}/g, escapedName).replace(/\{plan\}/g, escapedPlan).replace(/\{date\}/g, escapedDate).replace(/\{app_name\}/g, escapedFromName)}</p>`;
+          }).join('')}
         </div>
       `;
 
