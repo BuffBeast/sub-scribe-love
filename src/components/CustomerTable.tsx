@@ -1,5 +1,17 @@
 import { useState, ReactNode } from 'react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+
+function parseDateLocal(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 import { Customer } from '@/hooks/useCustomers';
 import { StatusBadge } from './StatusBadge';
 import { SendEmailDialog } from './SendEmailDialog';
@@ -204,11 +216,11 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             <Popover modal>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
-                  {customer.subscription_end_date ? format(parseISO(customer.subscription_end_date), 'MM/dd/yyyy') : <span className="text-muted-foreground">-</span>}
+                  {customer.subscription_end_date ? format(parseDateLocal(customer.subscription_end_date), 'MM/dd/yyyy') : <span className="text-muted-foreground">-</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={customer.subscription_end_date ? parseISO(customer.subscription_end_date) : undefined} onSelect={(date) => updateCustomer.mutate({ id: customer.id, subscription_end_date: date ? format(date, 'yyyy-MM-dd') : null })} initialFocus className={cn("p-3 pointer-events-auto")} />
+                <Calendar mode="single" selected={customer.subscription_end_date ? parseDateLocal(customer.subscription_end_date) : undefined} onSelect={(date) => updateCustomer.mutate({ id: customer.id, subscription_end_date: date ? formatDateLocal(date) : null })} initialFocus className={cn("p-3 pointer-events-auto")} />
               </PopoverContent>
             </Popover>
           </TableCell>
@@ -227,11 +239,11 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             <Popover modal>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 px-2 font-normal">
-                  {customer.vod_end_date ? format(parseISO(customer.vod_end_date), 'MM/dd/yyyy') : <span className="text-muted-foreground">-</span>}
+                  {customer.vod_end_date ? format(parseDateLocal(customer.vod_end_date), 'MM/dd/yyyy') : <span className="text-muted-foreground">-</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={customer.vod_end_date ? parseISO(customer.vod_end_date) : undefined} onSelect={(date) => updateCustomer.mutate({ id: customer.id, vod_end_date: date ? format(date, 'yyyy-MM-dd') : null })} initialFocus className={cn("p-3 pointer-events-auto")} />
+                <Calendar mode="single" selected={customer.vod_end_date ? parseDateLocal(customer.vod_end_date) : undefined} onSelect={(date) => updateCustomer.mutate({ id: customer.id, vod_end_date: date ? formatDateLocal(date) : null })} initialFocus className={cn("p-3 pointer-events-auto")} />
               </PopoverContent>
             </Popover>
           </TableCell>
@@ -261,7 +273,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
           </TableCell>
         );
       case 'last_contact_date':
-        return <TableCell key={col.id} className="text-muted-foreground">{customer.last_contact_date ? format(parseISO(customer.last_contact_date), 'MM/dd/yyyy') : '-'}</TableCell>;
+        return <TableCell key={col.id} className="text-muted-foreground">{customer.last_contact_date ? format(parseDateLocal(customer.last_contact_date), 'MM/dd/yyyy') : '-'}</TableCell>;
       case 'total_spent':
         return <TableCell key={col.id} className="text-muted-foreground">{customer.total_spent != null ? `$${customer.total_spent}` : '-'}</TableCell>;
       default:
