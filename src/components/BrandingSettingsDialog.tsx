@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Settings, Upload, X, Play } from 'lucide-react';
+import { Settings, Upload, X, Play, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAppSettings, useUpdateAppSettings, useUploadLogo } from '@/hooks/useAppSettings';
 import { ColorThemePicker, ThemeColor } from '@/components/ColorThemePicker';
+import { ReminderHistoryList } from '@/components/ReminderHistoryList';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
 
 export function BrandingSettingsDialog() {
@@ -128,9 +129,13 @@ export function BrandingSettingsDialog() {
         </DialogHeader>
 
         <Tabs defaultValue="branding" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="branding">Branding</TabsTrigger>
-            <TabsTrigger value="reminders">Email Reminders</TabsTrigger>
+            <TabsTrigger value="reminders">Reminders</TabsTrigger>
+            <TabsTrigger value="history" className="gap-1">
+              <History className="h-3.5 w-3.5" />
+              History
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="branding" className="space-y-6 py-4">
@@ -306,6 +311,10 @@ export function BrandingSettingsDialog() {
                 </Button>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="py-4">
+            <ReminderHistoryList />
           </TabsContent>
         </Tabs>
 

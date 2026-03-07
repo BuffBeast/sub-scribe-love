@@ -1,0 +1,70 @@
+import { format } from 'date-fns';
+import { CheckCircle2, XCircle, Clock, Mail } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useReminderHistory } from '@/hooks/useReminderHistory';
+
+export function ReminderHistoryList() {
+  const { data: history, isLoading } = useReminderHistory();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+        <Clock className="h-4 w-4 mr-2 animate-spin" />
+        Loading history...
+      </div>
+    );
+  }
+
+  if (!history || history.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+        <Mail className="h-8 w-8 mb-2 opacity-50" />
+        <p className="text-sm">No reminders sent yet</p>
+        <p className="text-xs mt-1">History will appear here after reminders are sent</p>
+      </div>
+    );
+  }
+
+  return (
+    <ScrollArea className="h-[320px]">
+      <div className="space-y-2 pr-3">
+        {history.map((entry) => (
+          <div
+            key={entry.id}
+            className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+          >
+            {entry.status === 'sent' ? (
+              <CheckCircle2 className="h-4 w-4 mt-0.5 text-green-500 shrink-0" />
+            ) : (
+              <XCircle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium truncate">{entry.customer_name}</span>
+                {entry.plan_description && (
+                  <Badge variant="secondary" className="text-xs">
+                    {entry.plan_description}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground truncate">{entry.customer_email}</p>
+              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                <span>{format(new Date(entry.sent_at), 'MMM d, yyyy h:mm a')}</span>
+                {entry.expiry_date && (
+                  <>
+                    <span>•</span>
+                    <span>Expires {format(new Date(entry.expiry_date + 'T00:00:00'), 'MMM d, yyyy')}</span>
+                  </>
+                )}
+              </div>
+              {entry.status === 'failed' && entry.error_message && (
+                <p className="text-xs text-destructive mt-1 truncate">{entry.error_message}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </ScrollArea>
+  );
+}
