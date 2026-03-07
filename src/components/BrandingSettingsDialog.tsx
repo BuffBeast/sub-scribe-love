@@ -265,6 +265,47 @@ export function BrandingSettingsDialog() {
                 Available placeholders: {'{name}'}, {'{plan}'}, {'{date}'}, {'{app_name}'}
               </p>
             </div>
+
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Test Reminders</p>
+                  <p className="text-xs text-muted-foreground">
+                    Manually trigger reminders for customers expiring within your reminder window
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={testingReminders}
+                  onClick={async () => {
+                    setTestingReminders(true);
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (!session) throw new Error('Not authenticated');
+                      const { data, error } = await supabase.functions.invoke('send-expiry-reminders', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                      });
+                      if (error) throw error;
+                      const result = data as { totalProcessed?: number; totalSuccess?: number; totalFailed?: number };
+                      if (result.totalProcessed === 0) {
+                        toast.info('No customers have expiry dates within your reminder window right now.');
+                      } else {
+                        toast.success(`Sent ${result.totalSuccess} reminder(s). ${result.totalFailed ? `${result.totalFailed} failed.` : ''}`);
+                      }
+                    } catch (err) {
+                      toast.error('Failed to test reminders: ' + (err instanceof Error ? err.message : 'Unknown error'));
+                    } finally {
+                      setTestingReminders(false);
+                    }
+                  }}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {testingReminders ? 'Sending...' : 'Run Now'}
+                </Button>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 
