@@ -251,6 +251,56 @@ export type Database = {
         }
         Relationships: []
       }
+      reminder_history: {
+        Row: {
+          customer_email: string
+          customer_id: string
+          customer_name: string
+          error_message: string | null
+          expiry_date: string | null
+          id: string
+          plan_description: string | null
+          reminder_type: string
+          sent_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          customer_email: string
+          customer_id: string
+          customer_name: string
+          error_message?: string | null
+          expiry_date?: string | null
+          id?: string
+          plan_description?: string | null
+          reminder_type?: string
+          sent_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          customer_email?: string
+          customer_id?: string
+          customer_name?: string
+          error_message?: string | null
+          expiry_date?: string | null
+          id?: string
+          plan_description?: string | null
+          reminder_type?: string
+          sent_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_types: {
         Row: {
           created_at: string
