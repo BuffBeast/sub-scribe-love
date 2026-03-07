@@ -2,3 +2,9 @@ project_id = "nmmwxdcflqzcsyulckwa"
 
 [functions.send-mass-email]
 verify_jwt = false
+
+[functions.send-single-email]
+verify_jwt = false
+
+[functions.send-expiry-reminders]
+verify_jwt = false
