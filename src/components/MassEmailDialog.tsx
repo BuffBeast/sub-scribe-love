@@ -49,6 +49,9 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
   const [message, setMessage] = useState('');
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set());
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [activeServices, setActiveServices] = useState<Set<string>>(new Set());
+  const [activeStatuses, setActiveStatuses] = useState<Set<string>>(new Set());
+  const [trialFilterActive, setTrialFilterActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const customersWithEmail = useMemo(
@@ -74,28 +77,65 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
     return Array.from(statuses).sort();
   }, [customersWithEmail]);
 
+  const hasActiveFilters = activeServices.size > 0 || activeStatuses.size > 0 || trialFilterActive;
+
+  // Apply filters whenever they change
+  const applyFilters = (services: Set<string>, statuses: Set<string>, trial: boolean) => {
+    const noFilters = services.size === 0 && statuses.size === 0 && !trial;
+    if (noFilters) {
+      setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
+      return;
+    }
+    const ids = customersWithEmail.filter(c => {
+      const matchService = services.size === 0 || (c.service && services.has(c.service));
+      const matchStatus = statuses.size === 0 || (c.subscription_status && statuses.has(c.subscription_status));
+      const matchTrial = !trial || c.has_trial || c.has_live_trial || c.has_vod_trial;
+      return matchService && matchStatus && matchTrial;
+    }).map(c => c.id);
+    setSelectedCustomerIds(new Set(ids));
+  };
+
   // Initialize selection when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (isOpen) {
       setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
       setAttachments([]);
+      setActiveServices(new Set());
+      setActiveStatuses(new Set());
+      setTrialFilterActive(false);
     }
   };
 
-  const selectByService = (service: string) => {
-    const ids = customersWithEmail.filter(c => c.service === service).map(c => c.id);
-    setSelectedCustomerIds(new Set(ids));
+  const toggleServiceFilter = (service: string) => {
+    setActiveServices(prev => {
+      const next = new Set(prev);
+      if (next.has(service)) next.delete(service); else next.add(service);
+      applyFilters(next, activeStatuses, trialFilterActive);
+      return next;
+    });
   };
 
-  const selectByStatus = (status: string) => {
-    const ids = customersWithEmail.filter(c => c.subscription_status === status).map(c => c.id);
-    setSelectedCustomerIds(new Set(ids));
+  const toggleStatusFilter = (status: string) => {
+    setActiveStatuses(prev => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status); else next.add(status);
+      applyFilters(activeServices, next, trialFilterActive);
+      return next;
+    });
   };
 
-  const selectTrialCustomers = () => {
-    const ids = customersWithEmail.filter(c => c.has_trial || c.has_live_trial || c.has_vod_trial).map(c => c.id);
-    setSelectedCustomerIds(new Set(ids));
+  const toggleTrialFilter = () => {
+    const next = !trialFilterActive;
+    setTrialFilterActive(next);
+    applyFilters(activeServices, activeStatuses, next);
+  };
+
+  const clearAllFilters = () => {
+    setActiveServices(new Set());
+    setActiveStatuses(new Set());
+    setTrialFilterActive(false);
+    setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -269,47 +309,71 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
               </div>
             </div>
 
-            {/* Quick group selection */}
-            {(uniqueServices.length > 1 || uniqueStatuses.length > 1) && (
+            {/* Quick group selection - toggle filters */}
+            {(uniqueServices.length > 0 || uniqueStatuses.length > 0) && (
               <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Filter className="h-3 w-3" />
-                  Quick select by group:
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Filter className="h-3 w-3" />
+                    Filter by group (combinable):
+                  </div>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="h-5 px-1.5 text-xs text-muted-foreground"
+                    >
+                      <X className="h-3 w-3 mr-0.5" />
+                      Clear filters
+                    </Button>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {uniqueServices.map(service => (
+                {uniqueServices.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="text-xs text-muted-foreground self-center">Service:</span>
+                    {uniqueServices.map(service => (
+                      <Button
+                        key={`service-${service}`}
+                        variant={activeServices.has(service) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleServiceFilter(service)}
+                        className="h-6 px-2 text-xs"
+                      >
+                        {service}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+                {uniqueStatuses.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="text-xs text-muted-foreground self-center">Status:</span>
+                    {uniqueStatuses.map(status => (
+                      <Button
+                        key={`status-${status}`}
+                        variant={activeStatuses.has(status) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleStatusFilter(status)}
+                        className="h-6 px-2 text-xs capitalize"
+                      >
+                        {status}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+                {customersWithEmail.some(c => c.has_trial || c.has_live_trial || c.has_vod_trial) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="text-xs text-muted-foreground self-center">Other:</span>
                     <Button
-                      key={`service-${service}`}
-                      variant="outline"
+                      variant={trialFilterActive ? "default" : "outline"}
                       size="sm"
-                      onClick={() => selectByService(service)}
-                      className="h-6 px-2 text-xs"
-                    >
-                      {service}
-                    </Button>
-                  ))}
-                  {uniqueStatuses.map(status => (
-                    <Button
-                      key={`status-${status}`}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => selectByStatus(status)}
-                      className="h-6 px-2 text-xs capitalize"
-                    >
-                      {status}
-                    </Button>
-                  ))}
-                  {customersWithEmail.some(c => c.has_trial || c.has_live_trial || c.has_vod_trial) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={selectTrialCustomers}
+                      onClick={toggleTrialFilter}
                       className="h-6 px-2 text-xs"
                     >
                       Trial
                     </Button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
             
