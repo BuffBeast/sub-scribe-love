@@ -56,14 +56,46 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
     [customers]
   );
 
+  // Get unique services for group selection
+  const uniqueServices = useMemo(() => {
+    const services = new Set<string>();
+    customersWithEmail.forEach(c => {
+      if (c.service) services.add(c.service);
+    });
+    return Array.from(services).sort();
+  }, [customersWithEmail]);
+
+  // Get unique statuses for group selection
+  const uniqueStatuses = useMemo(() => {
+    const statuses = new Set<string>();
+    customersWithEmail.forEach(c => {
+      if (c.subscription_status) statuses.add(c.subscription_status);
+    });
+    return Array.from(statuses).sort();
+  }, [customersWithEmail]);
+
   // Initialize selection when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (isOpen) {
-      // Select all customers by default when opening
       setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
       setAttachments([]);
     }
+  };
+
+  const selectByService = (service: string) => {
+    const ids = customersWithEmail.filter(c => c.service === service).map(c => c.id);
+    setSelectedCustomerIds(new Set(ids));
+  };
+
+  const selectByStatus = (status: string) => {
+    const ids = customersWithEmail.filter(c => c.subscription_status === status).map(c => c.id);
+    setSelectedCustomerIds(new Set(ids));
+  };
+
+  const selectTrialCustomers = () => {
+    const ids = customersWithEmail.filter(c => c.has_trial || c.has_live_trial || c.has_vod_trial).map(c => c.id);
+    setSelectedCustomerIds(new Set(ids));
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
