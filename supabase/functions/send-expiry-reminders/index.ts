@@ -179,23 +179,51 @@ async function processUserReminders(
       </div>
     `;
 
+    const typeLabel = customer.liveExpiring && customer.vodExpiring ? 'LIVE+VOD' : (customer.liveExpiring ? 'LIVE' : 'VOD');
+    const expiryDateForLog = customer.liveExpiring ? customer.liveDate : customer.vodDate;
+
     try {
       const result = await sendEmail(customer.email, finalSubject, html, fromName, replyToEmail);
       emailResults.push({
         email: customer.email,
-        types: customer.liveExpiring && customer.vodExpiring ? 'LIVE+VOD' : (customer.liveExpiring ? 'LIVE' : 'VOD'),
+        types: typeLabel,
         success: true,
         id: result?.id,
       });
       successCount++;
+
+      // Log successful reminder
+      await supabase.from('reminder_history').insert({
+        user_id: customer.user_id,
+        customer_id: customer.id,
+        customer_name: customer.name,
+        customer_email: customer.email,
+        reminder_type: 'expiry',
+        plan_description: typeLabel,
+        expiry_date: expiryDateForLog,
+        status: 'sent',
+      });
     } catch (e) {
       emailResults.push({
         email: customer.email,
-        types: customer.liveExpiring && customer.vodExpiring ? 'LIVE+VOD' : (customer.liveExpiring ? 'LIVE' : 'VOD'),
+        types: typeLabel,
         success: false,
         error: String(e),
       });
       failCount++;
+
+      // Log failed reminder
+      await supabase.from('reminder_history').insert({
+        user_id: customer.user_id,
+        customer_id: customer.id,
+        customer_name: customer.name,
+        customer_email: customer.email,
+        reminder_type: 'expiry',
+        plan_description: typeLabel,
+        expiry_date: expiryDateForLog,
+        status: 'failed',
+        error_message: String(e).slice(0, 500),
+      });
     }
 
     // Small delay to avoid Resend rate limits
