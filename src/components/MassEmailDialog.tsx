@@ -59,23 +59,32 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
     [customers]
   );
 
-  // Get unique services for group selection
-  const uniqueServices = useMemo(() => {
-    const services = new Set<string>();
+  // Get unique services with counts for group selection
+  const serviceCounts = useMemo(() => {
+    const counts = new Map<string, number>();
     customersWithEmail.forEach(c => {
-      if (c.service) services.add(c.service);
+      if (c.service) counts.set(c.service, (counts.get(c.service) || 0) + 1);
     });
-    return Array.from(services).sort();
+    return counts;
   }, [customersWithEmail]);
 
-  // Get unique statuses for group selection
-  const uniqueStatuses = useMemo(() => {
-    const statuses = new Set<string>();
+  const uniqueServices = useMemo(() => Array.from(serviceCounts.keys()).sort(), [serviceCounts]);
+
+  // Get unique statuses with counts for group selection
+  const statusCounts = useMemo(() => {
+    const counts = new Map<string, number>();
     customersWithEmail.forEach(c => {
-      if (c.subscription_status) statuses.add(c.subscription_status);
+      if (c.subscription_status) counts.set(c.subscription_status, (counts.get(c.subscription_status) || 0) + 1);
     });
-    return Array.from(statuses).sort();
+    return counts;
   }, [customersWithEmail]);
+
+  const uniqueStatuses = useMemo(() => Array.from(statusCounts.keys()).sort(), [statusCounts]);
+
+  const trialCount = useMemo(
+    () => customersWithEmail.filter(c => c.has_trial || c.has_live_trial || c.has_vod_trial).length,
+    [customersWithEmail]
+  );
 
   const hasActiveFilters = activeServices.size > 0 || activeStatuses.size > 0 || trialFilterActive;
 
@@ -340,7 +349,7 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
                         onClick={() => toggleServiceFilter(service)}
                         className="h-6 px-2 text-xs"
                       >
-                        {service}
+                        {service} <span className="ml-1 opacity-70">({serviceCounts.get(service)})</span>
                       </Button>
                     ))}
                   </div>
@@ -356,7 +365,7 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
                         onClick={() => toggleStatusFilter(status)}
                         className="h-6 px-2 text-xs capitalize"
                       >
-                        {status}
+                        {status} <span className="ml-1 opacity-70">({statusCounts.get(status)})</span>
                       </Button>
                     ))}
                   </div>
@@ -370,7 +379,7 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
                       onClick={toggleTrialFilter}
                       className="h-6 px-2 text-xs"
                     >
-                      Trial
+                      Trial <span className="ml-1 opacity-70">({trialCount})</span>
                     </Button>
                   </div>
                 )}
