@@ -32,6 +32,7 @@ export function BrandingSettingsDialog() {
   const [replyToEmail, setReplyToEmail] = useState('');
   const [themeColor, setThemeColor] = useState<ThemeColor>('purple');
   const [reminderDays, setReminderDays] = useState(30);
+  const [testingReminders, setTestingReminders] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: settings } = useAppSettings();
