@@ -268,6 +268,50 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
                 </Button>
               </div>
             </div>
+
+            {/* Quick group selection */}
+            {(uniqueServices.length > 1 || uniqueStatuses.length > 1) && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Filter className="h-3 w-3" />
+                  Quick select by group:
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {uniqueServices.map(service => (
+                    <Button
+                      key={`service-${service}`}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => selectByService(service)}
+                      className="h-6 px-2 text-xs"
+                    >
+                      {service}
+                    </Button>
+                  ))}
+                  {uniqueStatuses.map(status => (
+                    <Button
+                      key={`status-${status}`}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => selectByStatus(status)}
+                      className="h-6 px-2 text-xs capitalize"
+                    >
+                      {status}
+                    </Button>
+                  ))}
+                  {customersWithEmail.some(c => c.has_trial || c.has_live_trial || c.has_vod_trial) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={selectTrialCustomers}
+                      className="h-6 px-2 text-xs"
+                    >
+                      Trial
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
             
             {customersWithEmail.length === 0 ? (
               <Alert>
