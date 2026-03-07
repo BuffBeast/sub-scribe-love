@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { Mail, Send, Users, Loader2, Check, X, Paperclip } from 'lucide-react';
+import { Mail, Send, Users, Loader2, Check, X, Paperclip, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
