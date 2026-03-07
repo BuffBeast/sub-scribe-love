@@ -27,6 +27,7 @@ import { ExportCSVButton } from '@/components/ExportCSVButton';
 import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
 import { MassEmailDialog } from '@/components/MassEmailDialog';
 import { StockTracker } from '@/components/StockTracker';
+import { ExpiringBanner } from '@/components/ExpiringBanner';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
@@ -228,6 +229,9 @@ const Index = () => {
               />
             </div>
 
+            {/* Expiring Banner */}
+            <ExpiringBanner customers={customers} onFilterExpiring={() => setStatusFilter('expiring')} />
+
             {/* Stock Tracker */}
             <StockTracker />
 
@@ -350,6 +354,11 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-6 py-6">
+        {/* Expiring Banner */}
+        <div className="mb-6">
+          <ExpiringBanner customers={customers} onFilterExpiring={() => setStatusFilter('expiring')} />
+        </div>
+
         {/* Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <MetricCard
