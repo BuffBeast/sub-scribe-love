@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, Menu, Download, BarChart3 } from 'lucide-react';
+import { LogOut, Menu, Download, BarChart3, Bell } from 'lucide-react';
+import { isExpiringSoon } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ExportCSVButton } from '@/components/ExportCSVButton';
@@ -35,6 +36,13 @@ export function MobileHeader({
   const [open, setOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+
+  const expiringCount = useMemo(() => {
+    return customers.filter(c => {
+      if (c.subscription_status === 'expired' || c.subscription_status === 'cancelled') return false;
+      return isExpiringSoon(c.subscription_end_date, 7) || isExpiringSoon(c.vod_end_date, 7);
+    }).length;
+  }, [customers]);
 
   useEffect(() => {
     // Check if already installed
@@ -92,6 +100,19 @@ export function MobileHeader({
             </div>
           </div>
           
+          {expiringCount > 0 && (
+            <button
+              type="button"
+              className="relative shrink-0 p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+              title={`${expiringCount} customer${expiringCount !== 1 ? 's' : ''} expiring this week`}
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                {expiringCount}
+              </span>
+            </button>
+          )}
+
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="shrink-0">

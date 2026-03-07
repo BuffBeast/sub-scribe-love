@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { isExpiringSoon } from '@/lib/dateUtils';
-import { Users, Clock, Tv, Video, LogOut, BarChart3, AlertTriangle } from 'lucide-react';
+import { Users, Clock, Tv, Video, LogOut, BarChart3, AlertTriangle, Bell } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
 import { useCustomFields } from '@/hooks/useCustomFields';
@@ -328,6 +328,19 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-1.5">
+              {statusCounts.expiring > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('expiring')}
+                  className="relative p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors mr-1"
+                  title={`${statusCounts.expiring} customer${statusCounts.expiring !== 1 ? 's' : ''} expiring this week`}
+                >
+                  <Bell className="h-4 w-4" />
+                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                    {statusCounts.expiring}
+                  </span>
+                </button>
+              )}
               <AddCustomerDialog />
               <MassEmailDialog customers={customers} />
               
