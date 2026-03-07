@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { Mail, Send, Users, Loader2, Check, X, Paperclip } from 'lucide-react';
+import { Mail, Send, Users, Loader2, Check, X, Paperclip, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,14 +56,46 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
     [customers]
   );
 
+  // Get unique services for group selection
+  const uniqueServices = useMemo(() => {
+    const services = new Set<string>();
+    customersWithEmail.forEach(c => {
+      if (c.service) services.add(c.service);
+    });
+    return Array.from(services).sort();
+  }, [customersWithEmail]);
+
+  // Get unique statuses for group selection
+  const uniqueStatuses = useMemo(() => {
+    const statuses = new Set<string>();
+    customersWithEmail.forEach(c => {
+      if (c.subscription_status) statuses.add(c.subscription_status);
+    });
+    return Array.from(statuses).sort();
+  }, [customersWithEmail]);
+
   // Initialize selection when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (isOpen) {
-      // Select all customers by default when opening
       setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
       setAttachments([]);
     }
+  };
+
+  const selectByService = (service: string) => {
+    const ids = customersWithEmail.filter(c => c.service === service).map(c => c.id);
+    setSelectedCustomerIds(new Set(ids));
+  };
+
+  const selectByStatus = (status: string) => {
+    const ids = customersWithEmail.filter(c => c.subscription_status === status).map(c => c.id);
+    setSelectedCustomerIds(new Set(ids));
+  };
+
+  const selectTrialCustomers = () => {
+    const ids = customersWithEmail.filter(c => c.has_trial || c.has_live_trial || c.has_vod_trial).map(c => c.id);
+    setSelectedCustomerIds(new Set(ids));
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,6 +268,50 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
                 </Button>
               </div>
             </div>
+
+            {/* Quick group selection */}
+            {(uniqueServices.length > 1 || uniqueStatuses.length > 1) && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Filter className="h-3 w-3" />
+                  Quick select by group:
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {uniqueServices.map(service => (
+                    <Button
+                      key={`service-${service}`}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => selectByService(service)}
+                      className="h-6 px-2 text-xs"
+                    >
+                      {service}
+                    </Button>
+                  ))}
+                  {uniqueStatuses.map(status => (
+                    <Button
+                      key={`status-${status}`}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => selectByStatus(status)}
+                      className="h-6 px-2 text-xs capitalize"
+                    >
+                      {status}
+                    </Button>
+                  ))}
+                  {customersWithEmail.some(c => c.has_trial || c.has_live_trial || c.has_vod_trial) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={selectTrialCustomers}
+                      className="h-6 px-2 text-xs"
+                    >
+                      Trial
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
             
             {customersWithEmail.length === 0 ? (
               <Alert>
