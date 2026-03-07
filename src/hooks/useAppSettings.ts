@@ -45,6 +45,28 @@ export function useAppSettings() {
         data = legacyData;
       }
 
+      // If logo_url is a storage path (not a full URL), generate a fresh signed URL
+      if (data?.logo_url && !data.logo_url.startsWith('http')) {
+        const { data: signedUrlData } = await supabase.storage
+          .from('logos')
+          .createSignedUrl(data.logo_url, 60 * 60 * 24 * 7); // 7 days
+        if (signedUrlData?.signedUrl) {
+          data = { ...data, logo_url: signedUrlData.signedUrl };
+        }
+      } else if (data?.logo_url && data.logo_url.includes('/storage/v1/') && data.logo_url.includes('token=')) {
+        // Legacy: existing signed URL stored in DB — extract the path and refresh it
+        const match = data.logo_url.match(/\/logos\/(.+?)(?:\?|$)/);
+        if (match) {
+          const filePath = decodeURIComponent(match[1]);
+          const { data: signedUrlData } = await supabase.storage
+            .from('logos')
+            .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+          if (signedUrlData?.signedUrl) {
+            data = { ...data, logo_url: signedUrlData.signedUrl };
+          }
+        }
+      }
+
       return data as AppSettings | null;
     },
   });
@@ -140,14 +162,8 @@ export function useUploadLogo() {
 
       if (uploadError) throw uploadError;
 
-      // Use signed URL since bucket is now private (1 hour expiry for security)
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from('logos')
-        .createSignedUrl(fileName, 60 * 60); // 1 hour expiry
-
-      if (signedUrlError) throw signedUrlError;
-
-      return signedUrlData.signedUrl;
+      // Return the file path — signed URLs are generated on fetch
+      return fileName;
     },
     onError: (error) => {
       toast.error('Failed to upload logo: ' + error.message);
