@@ -20,6 +20,7 @@ import {
 import { useAppSettings, useUpdateAppSettings, useUploadLogo } from '@/hooks/useAppSettings';
 import { ColorThemePicker, ThemeColor } from '@/components/ColorThemePicker';
 import { ReminderHistoryList } from '@/components/ReminderHistoryList';
+import { ReminderEligibilityPreview } from '@/components/ReminderEligibilityPreview';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
 
 export function BrandingSettingsDialog() {
@@ -269,6 +270,16 @@ export function BrandingSettingsDialog() {
               <p className="text-xs text-muted-foreground">
                 Available placeholders: {'{name}'}, {'{plan}'}, {'{date}'}, {'{app_name}'}
               </p>
+            </div>
+
+            <div className="border-t pt-4">
+              <div className="mb-2">
+                <p className="text-sm font-medium">Eligible Customers</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Preview which customers will receive a reminder based on your current settings
+                </p>
+              </div>
+              <ReminderEligibilityPreview />
             </div>
 
             <div className="border-t pt-4">
