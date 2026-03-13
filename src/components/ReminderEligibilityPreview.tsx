@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { format } from 'date-fns';
-import { CheckCircle2, AlertTriangle, XCircle, Mail, MailX, BellOff, CalendarOff, FileX } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Mail, MailX, BellOff, CalendarOff, FileX, Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useCustomers } from '@/hooks/useCustomers';
+import { useCustomers, useUpdateCustomer } from '@/hooks/useCustomers';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useReminderHistory } from '@/hooks/useReminderHistory';
+import { toast } from 'sonner';
 
 type SkipReason =
   | 'no_email'
@@ -48,6 +50,7 @@ export function ReminderEligibilityPreview() {
   const { data: customers, isLoading: loadingCustomers } = useCustomers();
   const { data: settings } = useAppSettings();
   const { data: history } = useReminderHistory();
+  const updateCustomer = useUpdateCustomer();
 
   const reminderDays = settings?.reminder_days ?? 30;
 
@@ -151,10 +154,33 @@ export function ReminderEligibilityPreview() {
 
   const eligibleCount = results.filter(r => r.eligible).length;
   const skippedCount = results.filter(r => !r.eligible).length;
+  const remindersDisabledResults = results.filter(r => r.skipReasons.includes('reminders_disabled'));
+
+  const handleEnableReminder = async (customerId: string, customerName: string) => {
+    try {
+      await updateCustomer.mutateAsync({ id: customerId, reminders_enabled: true });
+      toast.success(`Reminders enabled for ${customerName}`);
+    } catch {
+      toast.error(`Failed to enable reminders for ${customerName}`);
+    }
+  };
+
+  const handleEnableAll = async () => {
+    try {
+      await Promise.all(
+        remindersDisabledResults.map(r =>
+          updateCustomer.mutateAsync({ id: r.id, reminders_enabled: true })
+        )
+      );
+      toast.success(`Reminders enabled for ${remindersDisabledResults.length} customer(s)`);
+    } catch {
+      toast.error('Failed to enable reminders for some customers');
+    }
+  };
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center gap-3 text-sm flex-wrap">
         <div className="flex items-center gap-1.5">
           <CheckCircle2 className="h-4 w-4 text-green-500" />
           <span className="font-medium">{eligibleCount}</span>
@@ -169,6 +195,24 @@ export function ReminderEligibilityPreview() {
           Window: next {reminderDays} day{reminderDays !== 1 ? 's' : ''}
         </span>
       </div>
+
+      {remindersDisabledResults.length > 0 && (
+        <div className="flex items-center justify-between p-2 rounded-md bg-accent/50 border border-border">
+          <span className="text-xs text-muted-foreground">
+            {remindersDisabledResults.length} customer{remindersDisabledResults.length !== 1 ? 's have' : ' has'} reminders disabled
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-xs gap-1"
+            disabled={updateCustomer.isPending}
+            onClick={handleEnableAll}
+          >
+            <Bell className="h-3 w-3" />
+            Enable All
+          </Button>
+        </div>
+      )}
 
       {results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
@@ -220,7 +264,7 @@ export function ReminderEligibilityPreview() {
                     </div>
                   )}
                   {!result.eligible && result.skipReasons.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-1">
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       {result.skipReasons.map(reason => {
                         const info = getSkipInfo(reason);
                         const Icon = info.icon;
@@ -231,6 +275,18 @@ export function ReminderEligibilityPreview() {
                           </span>
                         );
                       })}
+                      {result.skipReasons.includes('reminders_disabled') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-1.5 text-xs gap-1 text-primary"
+                          disabled={updateCustomer.isPending}
+                          onClick={() => handleEnableReminder(result.id, result.name)}
+                        >
+                          <Bell className="h-3 w-3" />
+                          Enable
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
