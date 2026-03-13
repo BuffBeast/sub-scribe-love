@@ -45,39 +45,60 @@ export function useCustomers() {
   });
 
   // Auto-mark customers as expired when all their subscription end dates have passed
+  // AND auto-reactivate expired customers when dates are extended into the future
   useEffect(() => {
     if (!query.data) return;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const expiredCustomers = query.data.filter((c) => {
-      // Skip if already expired or cancelled
-      if (c.subscription_status === 'expired' || c.subscription_status === 'cancelled') return false;
+    const toExpire: string[] = [];
+    const toReactivate: string[] = [];
 
+    for (const c of query.data) {
       const hasLive = !!c.subscription_plan;
       const hasVod = !!c.vod_plan;
-      // Must have at least one subscription
-      if (!hasLive && !hasVod) return false;
+      if (!hasLive && !hasVod) continue;
 
       const liveExpired = hasLive && c.subscription_end_date && new Date(c.subscription_end_date) < today;
       const vodExpired = hasVod && c.vod_end_date && new Date(c.vod_end_date) < today;
+      const liveValid = hasLive && c.subscription_end_date && new Date(c.subscription_end_date) >= today;
+      const vodValid = hasVod && c.vod_end_date && new Date(c.vod_end_date) >= today;
 
-      // If they have both, both must be expired. If only one, that one must be expired.
-      if (hasLive && hasVod) return liveExpired && vodExpired;
-      if (hasLive) return liveExpired;
-      return vodExpired;
-    });
+      const allExpired = (!hasLive || liveExpired) && (!hasVod || vodExpired);
+      const anyValid = liveValid || vodValid;
 
-    if (expiredCustomers.length === 0) return;
+      // Auto-expire: not already expired/cancelled, all plans past
+      if (c.subscription_status !== 'expired' && c.subscription_status !== 'cancelled' && allExpired) {
+        toExpire.push(c.id);
+      }
 
-    // Batch update expired customers
-    Promise.all(
-      expiredCustomers.map((c) =>
-        supabase.from('customers').update({ subscription_status: 'expired' }).eq('id', c.id)
-      )
-    ).then(() => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-    });
+      // Auto-reactivate: currently expired, but at least one plan has a future date
+      if (c.subscription_status === 'expired' && anyValid) {
+        toReactivate.push(c.id);
+      }
+    }
+
+    const updates: Promise<unknown>[] = [];
+    if (toExpire.length > 0) {
+      updates.push(
+        ...toExpire.map((id) =>
+          supabase.from('customers').update({ subscription_status: 'expired' }).eq('id', id)
+        )
+      );
+    }
+    if (toReactivate.length > 0) {
+      updates.push(
+        ...toReactivate.map((id) =>
+          supabase.from('customers').update({ subscription_status: 'active' }).eq('id', id)
+        )
+      );
+    }
+
+    if (updates.length > 0) {
+      Promise.all(updates).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['customers'] });
+      });
+    }
   }, [query.data, queryClient]);
 
   return query;
