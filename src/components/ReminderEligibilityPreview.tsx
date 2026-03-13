@@ -157,6 +157,9 @@ export function ReminderEligibilityPreview() {
   const skippedCount = results.filter(r => !r.eligible).length;
   const remindersDisabledResults = results.filter(r => r.skipReasons.includes('reminders_disabled'));
 
+  const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
+  const [emailValue, setEmailValue] = useState('');
+
   const handleEnableReminder = async (customerId: string, customerName: string) => {
     try {
       await updateCustomer.mutateAsync({ id: customerId, reminders_enabled: true });
@@ -176,6 +179,22 @@ export function ReminderEligibilityPreview() {
       toast.success(`Reminders enabled for ${remindersDisabledResults.length} customer(s)`);
     } catch {
       toast.error('Failed to enable reminders for some customers');
+    }
+  };
+
+  const handleAddEmail = async (customerId: string, customerName: string) => {
+    const trimmed = emailValue.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    try {
+      await updateCustomer.mutateAsync({ id: customerId, email: trimmed });
+      toast.success(`Email added for ${customerName}`);
+      setEditingEmailId(null);
+      setEmailValue('');
+    } catch {
+      toast.error(`Failed to add email for ${customerName}`);
     }
   };
 
