@@ -180,6 +180,8 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
           subject: reminderSubject,
           message: reminderMessage,
           customerName: customer.name,
+          customerId: customer.id,
+          emailType: 'quick_reminder',
           attachments: attachments.length > 0 ? attachments : undefined,
         },
       });
