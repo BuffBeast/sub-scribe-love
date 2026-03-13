@@ -115,6 +115,8 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
           subject: subject.trim(),
           message: message.trim(),
           customerName: customer.name,
+          customerId: customer.id,
+          emailType: 'compose',
           attachments: attachments.length > 0 ? attachments : undefined,
         },
       });
@@ -178,6 +180,8 @@ export function SendEmailDialog({ customer, open, onOpenChange }: SendEmailDialo
           subject: reminderSubject,
           message: reminderMessage,
           customerName: customer.name,
+          customerId: customer.id,
+          emailType: 'quick_reminder',
           attachments: attachments.length > 0 ? attachments : undefined,
         },
       });

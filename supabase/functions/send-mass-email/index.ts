@@ -85,7 +85,7 @@ interface Attachment {
 interface MassEmailRequest {
   subject: string;
   message: string;
-  customerIds?: string[]; // Optional: send to specific customers, otherwise all with email
+  customerIds?: string[];
   attachments?: Attachment[];
 }
 
@@ -125,7 +125,7 @@ async function sendEmail(
     body: JSON.stringify(emailPayload),
   });
   
-  return response.json();
+  return { json: await response.json(), ok: response.ok };
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -253,6 +253,18 @@ serve(async (req: Request): Promise<Response> => {
     let successCount = 0;
     let failCount = 0;
 
+    // Collect history entries to batch insert
+    const historyEntries: Array<{
+      user_id: string;
+      customer_id: string;
+      customer_name: string;
+      customer_email: string;
+      reminder_type: string;
+      plan_description: string;
+      status: string;
+      error_message: string | null;
+    }> = [];
+
     for (const customer of customers) {
       if (!customer.email) continue;
 
@@ -272,20 +284,60 @@ serve(async (req: Request): Promise<Response> => {
 
       try {
         const result = await sendEmail(customer.email, sanitizedSubject, html, fromName, replyToEmail, attachments);
-        if (result.error) {
-          emailResults.push({ email: customer.email, success: false, error: result.error.message || result.error });
+        if (!result.ok || result.json.error) {
+          const errMsg = result.json.error?.message || result.json.error || 'Send failed';
+          emailResults.push({ email: customer.email, success: false, error: errMsg });
           failCount++;
+          historyEntries.push({
+            user_id: userId,
+            customer_id: customer.id,
+            customer_name: customer.name,
+            customer_email: customer.email,
+            reminder_type: 'mass_email',
+            plan_description: sanitizedSubject,
+            status: 'failed',
+            error_message: typeof errMsg === 'string' ? errMsg : String(errMsg),
+          });
         } else {
           emailResults.push({ email: customer.email, success: true });
           successCount++;
+          historyEntries.push({
+            user_id: userId,
+            customer_id: customer.id,
+            customer_name: customer.name,
+            customer_email: customer.email,
+            reminder_type: 'mass_email',
+            plan_description: sanitizedSubject,
+            status: 'sent',
+            error_message: null,
+          });
         }
       } catch (e) {
         emailResults.push({ email: customer.email, success: false, error: String(e) });
         failCount++;
+        historyEntries.push({
+          user_id: userId,
+          customer_id: customer.id,
+          customer_name: customer.name,
+          customer_email: customer.email,
+          reminder_type: 'mass_email',
+          plan_description: sanitizedSubject,
+          status: 'failed',
+          error_message: 'Send error',
+        });
       }
 
       // Small delay to avoid rate limiting (Resend allows 10 emails/second on free tier)
       await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Batch insert all history entries
+    if (historyEntries.length > 0) {
+      try {
+        await supabase.from('reminder_history').insert(historyEntries);
+      } catch (logError) {
+        console.error("Failed to log mass email history:", logError);
+      }
     }
 
     return new Response(

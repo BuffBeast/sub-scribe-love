@@ -47,6 +47,8 @@ const emailRequestSchema = z.object({
   subject: z.string().min(1).max(200, "Subject must be 200 characters or less"),
   message: z.string().min(1).max(10000, "Message must be 10000 characters or less"),
   customerName: z.string().optional(),
+  customerId: z.string().uuid("Invalid customer ID").optional(),
+  emailType: z.enum(['compose', 'quick_reminder']).optional(),
   attachments: z.array(attachmentSchema).max(5, "Maximum 5 attachments allowed").optional(),
 });
 
@@ -141,7 +143,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email, subject, message, customerName, attachments } = validationResult.data;
+    const { email, subject, message, customerName, customerId, emailType, attachments } = validationResult.data;
 
     // Use service role key for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -196,6 +198,28 @@ serve(async (req: Request): Promise<Response> => {
     });
 
     const result = await response.json();
+
+    const emailStatus = response.ok ? 'sent' : 'failed';
+    const errorMessage = response.ok ? null : (result?.error?.message || 'Failed to send email');
+
+    // Log to reminder_history if we have a customerId
+    if (customerId) {
+      const reminderType = emailType === 'quick_reminder' ? 'manual_reminder' : 'individual';
+      try {
+        await supabase.from('reminder_history').insert({
+          user_id: userId,
+          customer_id: customerId,
+          customer_name: customerName || 'Unknown',
+          customer_email: email,
+          reminder_type: reminderType,
+          plan_description: subject,
+          status: emailStatus,
+          error_message: errorMessage,
+        });
+      } catch (logError) {
+        console.error("Failed to log email history:", logError);
+      }
+    }
 
     if (!response.ok) {
       console.error("Resend API error:", result);
