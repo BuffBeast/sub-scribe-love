@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { CheckCircle2, AlertTriangle, XCircle, Mail, MailX, BellOff, CalendarOff, FileX, Bell } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Mail, MailX, BellOff, CalendarOff, FileX, Bell, Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCustomers, useUpdateCustomer } from '@/hooks/useCustomers';
 import { useAppSettings } from '@/hooks/useAppSettings';
