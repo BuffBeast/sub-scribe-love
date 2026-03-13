@@ -51,7 +51,6 @@ export function ReminderEligibilityPreview() {
   const { data: settings } = useAppSettings();
   const { data: history } = useReminderHistory();
   const updateCustomer = useUpdateCustomer();
-  const { data: history } = useReminderHistory();
 
   const reminderDays = settings?.reminder_days ?? 30;
 
