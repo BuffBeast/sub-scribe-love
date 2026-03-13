@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { format } from 'date-fns';
-import { CheckCircle2, AlertTriangle, XCircle, Mail, MailX, BellOff, CalendarOff, FileX } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Mail, MailX, BellOff, CalendarOff, FileX, Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useCustomers } from '@/hooks/useCustomers';
+import { useCustomers, useUpdateCustomer } from '@/hooks/useCustomers';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useReminderHistory } from '@/hooks/useReminderHistory';
+import { toast } from 'sonner';
 
 type SkipReason =
   | 'no_email'
