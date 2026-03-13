@@ -273,6 +273,16 @@ export function BrandingSettingsDialog() {
             </div>
 
             <div className="border-t pt-4">
+              <div className="mb-2">
+                <p className="text-sm font-medium">Eligible Customers</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Preview which customers will receive a reminder based on your current settings
+                </p>
+              </div>
+              <ReminderEligibilityPreview />
+            </div>
+
+            <div className="border-t pt-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Test Reminders</p>
