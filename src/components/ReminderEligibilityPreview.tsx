@@ -285,7 +285,51 @@ export function ReminderEligibilityPreview() {
                           Enable
                         </Button>
                       )}
+                      {result.skipReasons.includes('no_email') && editingEmailId !== result.id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-1.5 text-xs gap-1 text-primary"
+                          onClick={() => { setEditingEmailId(result.id); setEmailValue(''); }}
+                        >
+                          <Mail className="h-3 w-3" />
+                          Add Email
+                        </Button>
+                      )}
                     </div>
+                    {result.skipReasons.includes('no_email') && editingEmailId === result.id && (
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <Input
+                          type="email"
+                          placeholder="email@example.com"
+                          value={emailValue}
+                          onChange={(e) => setEmailValue(e.target.value)}
+                          className="h-6 text-xs flex-1"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleAddEmail(result.id, result.name);
+                            if (e.key === 'Escape') { setEditingEmailId(null); setEmailValue(''); }
+                          }}
+                          autoFocus
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-primary"
+                          disabled={updateCustomer.isPending}
+                          onClick={() => handleAddEmail(result.id, result.name)}
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-muted-foreground"
+                          onClick={() => { setEditingEmailId(null); setEmailValue(''); }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )
                   )}
                 </div>
               </div>
