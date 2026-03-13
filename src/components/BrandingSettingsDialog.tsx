@@ -20,6 +20,7 @@ import {
 import { useAppSettings, useUpdateAppSettings, useUploadLogo } from '@/hooks/useAppSettings';
 import { ColorThemePicker, ThemeColor } from '@/components/ColorThemePicker';
 import { ReminderHistoryList } from '@/components/ReminderHistoryList';
+import { ReminderEligibilityPreview } from '@/components/ReminderEligibilityPreview';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
 
 export function BrandingSettingsDialog() {
