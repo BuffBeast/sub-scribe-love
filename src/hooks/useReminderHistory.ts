@@ -15,7 +15,7 @@ export interface ReminderHistoryEntry {
   sent_at: string;
 }
 
-export function useReminderHistory(limit = 50) {
+export function useReminderHistory(limit = 500) {
   return useQuery({
     queryKey: ['reminder-history', limit],
     queryFn: async () => {
