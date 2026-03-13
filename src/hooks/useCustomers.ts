@@ -78,7 +78,7 @@ export function useCustomers() {
       }
     }
 
-    const updates: Promise<unknown>[] = [];
+    const updates: PromiseLike<unknown>[] = [];
     if (toExpire.length > 0) {
       updates.push(
         ...toExpire.map((id) =>
