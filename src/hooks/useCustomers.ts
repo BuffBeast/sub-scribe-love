@@ -82,14 +82,14 @@ export function useCustomers() {
     if (toExpire.length > 0) {
       updates.push(
         ...toExpire.map((id) =>
-          supabase.from('customers').update({ subscription_status: 'expired' }).eq('id', id)
+          supabase.from('customers').update({ subscription_status: 'expired' }).eq('id', id).then()
         )
       );
     }
     if (toReactivate.length > 0) {
       updates.push(
         ...toReactivate.map((id) =>
-          supabase.from('customers').update({ subscription_status: 'active' }).eq('id', id)
+          supabase.from('customers').update({ subscription_status: 'active' }).eq('id', id).then()
         )
       );
     }
