@@ -52,6 +52,8 @@ export function ReminderEligibilityPreview() {
   const { data: settings } = useAppSettings();
   const { data: history } = useReminderHistory();
   const updateCustomer = useUpdateCustomer();
+  const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
+  const [emailValue, setEmailValue] = useState('');
 
   const reminderDays = settings?.reminder_days ?? 30;
 
@@ -65,7 +67,6 @@ export function ReminderEligibilityPreview() {
     futureDate.setDate(today.getDate() + reminderDays);
     const futureDateStr = futureDate.toISOString().split('T')[0];
 
-    // Build set of customer IDs already reminded within window
     const alreadyRemindedIds = new Set<string>();
     if (history) {
       const windowStart = new Date(today.getTime() - reminderDays * 24 * 60 * 60 * 1000).toISOString();
@@ -77,38 +78,23 @@ export function ReminderEligibilityPreview() {
     const eligibilityResults: EligibilityResult[] = customers.map(customer => {
       const skipReasons: SkipReason[] = [];
 
-      // Check email
-      if (!customer.email) {
-        skipReasons.push('no_email');
-      }
+      if (!customer.email) skipReasons.push('no_email');
+      if (!customer.reminders_enabled) skipReasons.push('reminders_disabled');
 
-      // Check reminders toggle
-      if (!customer.reminders_enabled) {
-        skipReasons.push('reminders_disabled');
-      }
-
-      // Check if they have any plan
       const hasLive = !!customer.subscription_plan;
       const hasVod = !!customer.vod_plan;
-      if (!hasLive && !hasVod) {
-        skipReasons.push('no_plan');
-      }
+      if (!hasLive && !hasVod) skipReasons.push('no_plan');
 
-      // Check if within window
       const liveInWindow = hasLive && customer.subscription_end_date &&
         customer.subscription_end_date >= todayStr &&
         customer.subscription_end_date <= futureDateStr;
-
       const vodInWindow = hasVod && customer.vod_end_date &&
         customer.vod_end_date >= todayStr &&
         customer.vod_end_date <= futureDateStr;
 
-      // Check if already expired (all plans past)
       const liveExpired = hasLive && customer.subscription_end_date && customer.subscription_end_date < todayStr;
       const vodExpired = hasVod && customer.vod_end_date && customer.vod_end_date < todayStr;
-      const allExpired = (hasLive || hasVod) &&
-        (!hasLive || liveExpired) &&
-        (!hasVod || vodExpired);
+      const allExpired = (hasLive || hasVod) && (!hasLive || liveExpired) && (!hasVod || vodExpired);
 
       if (allExpired && (hasLive || hasVod)) {
         skipReasons.push('expired');
@@ -116,14 +102,10 @@ export function ReminderEligibilityPreview() {
         skipReasons.push('not_in_window');
       }
 
-      // Check deduplication
-      if (alreadyRemindedIds.has(customer.id)) {
-        skipReasons.push('already_reminded');
-      }
+      if (alreadyRemindedIds.has(customer.id)) skipReasons.push('already_reminded');
 
       const eligible = !!customer.email && customer.reminders_enabled &&
-        (liveInWindow || vodInWindow) &&
-        !alreadyRemindedIds.has(customer.id);
+        (liveInWindow || vodInWindow) && !alreadyRemindedIds.has(customer.id);
 
       return {
         id: customer.id,
@@ -138,7 +120,6 @@ export function ReminderEligibilityPreview() {
       };
     });
 
-    // Sort: eligible first, then by name
     return eligibilityResults.sort((a, b) => {
       if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
       return a.name.localeCompare(b.name);
@@ -156,9 +137,6 @@ export function ReminderEligibilityPreview() {
   const eligibleCount = results.filter(r => r.eligible).length;
   const skippedCount = results.filter(r => !r.eligible).length;
   const remindersDisabledResults = results.filter(r => r.skipReasons.includes('reminders_disabled'));
-
-  const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
-  const [emailValue, setEmailValue] = useState('');
 
   const handleEnableReminder = async (customerId: string, customerName: string) => {
     try {
