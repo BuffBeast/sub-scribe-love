@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { CheckCircle2, AlertTriangle, XCircle, Mail, MailX, BellOff, CalendarOff, FileX, Bell } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Mail, MailX, BellOff, CalendarOff, FileX, Bell, Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCustomers, useUpdateCustomer } from '@/hooks/useCustomers';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -51,6 +52,8 @@ export function ReminderEligibilityPreview() {
   const { data: settings } = useAppSettings();
   const { data: history } = useReminderHistory();
   const updateCustomer = useUpdateCustomer();
+  const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
+  const [emailValue, setEmailValue] = useState('');
 
   const reminderDays = settings?.reminder_days ?? 30;
 
@@ -64,7 +67,6 @@ export function ReminderEligibilityPreview() {
     futureDate.setDate(today.getDate() + reminderDays);
     const futureDateStr = futureDate.toISOString().split('T')[0];
 
-    // Build set of customer IDs already reminded within window
     const alreadyRemindedIds = new Set<string>();
     if (history) {
       const windowStart = new Date(today.getTime() - reminderDays * 24 * 60 * 60 * 1000).toISOString();
@@ -76,38 +78,23 @@ export function ReminderEligibilityPreview() {
     const eligibilityResults: EligibilityResult[] = customers.map(customer => {
       const skipReasons: SkipReason[] = [];
 
-      // Check email
-      if (!customer.email) {
-        skipReasons.push('no_email');
-      }
+      if (!customer.email) skipReasons.push('no_email');
+      if (!customer.reminders_enabled) skipReasons.push('reminders_disabled');
 
-      // Check reminders toggle
-      if (!customer.reminders_enabled) {
-        skipReasons.push('reminders_disabled');
-      }
-
-      // Check if they have any plan
       const hasLive = !!customer.subscription_plan;
       const hasVod = !!customer.vod_plan;
-      if (!hasLive && !hasVod) {
-        skipReasons.push('no_plan');
-      }
+      if (!hasLive && !hasVod) skipReasons.push('no_plan');
 
-      // Check if within window
       const liveInWindow = hasLive && customer.subscription_end_date &&
         customer.subscription_end_date >= todayStr &&
         customer.subscription_end_date <= futureDateStr;
-
       const vodInWindow = hasVod && customer.vod_end_date &&
         customer.vod_end_date >= todayStr &&
         customer.vod_end_date <= futureDateStr;
 
-      // Check if already expired (all plans past)
       const liveExpired = hasLive && customer.subscription_end_date && customer.subscription_end_date < todayStr;
       const vodExpired = hasVod && customer.vod_end_date && customer.vod_end_date < todayStr;
-      const allExpired = (hasLive || hasVod) &&
-        (!hasLive || liveExpired) &&
-        (!hasVod || vodExpired);
+      const allExpired = (hasLive || hasVod) && (!hasLive || liveExpired) && (!hasVod || vodExpired);
 
       if (allExpired && (hasLive || hasVod)) {
         skipReasons.push('expired');
@@ -115,14 +102,10 @@ export function ReminderEligibilityPreview() {
         skipReasons.push('not_in_window');
       }
 
-      // Check deduplication
-      if (alreadyRemindedIds.has(customer.id)) {
-        skipReasons.push('already_reminded');
-      }
+      if (alreadyRemindedIds.has(customer.id)) skipReasons.push('already_reminded');
 
       const eligible = !!customer.email && customer.reminders_enabled &&
-        (liveInWindow || vodInWindow) &&
-        !alreadyRemindedIds.has(customer.id);
+        (liveInWindow || vodInWindow) && !alreadyRemindedIds.has(customer.id);
 
       return {
         id: customer.id,
@@ -137,7 +120,6 @@ export function ReminderEligibilityPreview() {
       };
     });
 
-    // Sort: eligible first, then by name
     return eligibilityResults.sort((a, b) => {
       if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
       return a.name.localeCompare(b.name);
@@ -175,6 +157,22 @@ export function ReminderEligibilityPreview() {
       toast.success(`Reminders enabled for ${remindersDisabledResults.length} customer(s)`);
     } catch {
       toast.error('Failed to enable reminders for some customers');
+    }
+  };
+
+  const handleAddEmail = async (customerId: string, customerName: string) => {
+    const trimmed = emailValue.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    try {
+      await updateCustomer.mutateAsync({ id: customerId, email: trimmed });
+      toast.success(`Email added for ${customerName}`);
+      setEditingEmailId(null);
+      setEmailValue('');
+    } catch {
+      toast.error(`Failed to add email for ${customerName}`);
     }
   };
 
@@ -264,30 +262,76 @@ export function ReminderEligibilityPreview() {
                     </div>
                   )}
                   {!result.eligible && result.skipReasons.length > 0 && (
-                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                      {result.skipReasons.map(reason => {
-                        const info = getSkipInfo(reason);
-                        const Icon = info.icon;
-                        return (
-                          <span key={reason} className={`flex items-center gap-1 text-xs ${info.color}`}>
-                            <Icon className="h-3 w-3" />
-                            {info.label}
-                          </span>
-                        );
-                      })}
-                      {result.skipReasons.includes('reminders_disabled') && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 px-1.5 text-xs gap-1 text-primary"
-                          disabled={updateCustomer.isPending}
-                          onClick={() => handleEnableReminder(result.id, result.name)}
-                        >
-                          <Bell className="h-3 w-3" />
-                          Enable
-                        </Button>
+                    <>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        {result.skipReasons.map(reason => {
+                          const info = getSkipInfo(reason);
+                          const Icon = info.icon;
+                          return (
+                            <span key={reason} className={`flex items-center gap-1 text-xs ${info.color}`}>
+                              <Icon className="h-3 w-3" />
+                              {info.label}
+                            </span>
+                          );
+                        })}
+                        {result.skipReasons.includes('reminders_disabled') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 px-1.5 text-xs gap-1 text-primary"
+                            disabled={updateCustomer.isPending}
+                            onClick={() => handleEnableReminder(result.id, result.name)}
+                          >
+                            <Bell className="h-3 w-3" />
+                            Enable
+                          </Button>
+                        )}
+                        {result.skipReasons.includes('no_email') && editingEmailId !== result.id && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 px-1.5 text-xs gap-1 text-primary"
+                            onClick={() => { setEditingEmailId(result.id); setEmailValue(''); }}
+                          >
+                            <Mail className="h-3 w-3" />
+                            Add Email
+                          </Button>
+                        )}
+                      </div>
+                      {result.skipReasons.includes('no_email') && editingEmailId === result.id && (
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <Input
+                            type="email"
+                            placeholder="email@example.com"
+                            value={emailValue}
+                            onChange={(e) => setEmailValue(e.target.value)}
+                            className="h-6 text-xs flex-1"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleAddEmail(result.id, result.name);
+                              if (e.key === 'Escape') { setEditingEmailId(null); setEmailValue(''); }
+                            }}
+                            autoFocus
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-primary"
+                            disabled={updateCustomer.isPending}
+                            onClick={() => handleAddEmail(result.id, result.name)}
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-muted-foreground"
+                            onClick={() => { setEditingEmailId(null); setEmailValue(''); }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       )}
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
