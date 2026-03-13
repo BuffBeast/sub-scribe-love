@@ -82,51 +82,94 @@ interface UserSettings {
 async function processUserReminders(
   supabase: ReturnType<typeof createClient>,
   userSettings: UserSettings
-): Promise<{ userId: string; processed: number; success: number; failed: number; results: unknown[] }> {
+): Promise<{ userId: string; processed: number; success: number; failed: number; skippedDuplicate: number; results: unknown[] }> {
   const { user_id: userId, reminder_days: reminderDays } = userSettings;
 
+  // Calculate date range: today through today + reminderDays (inclusive)
   const today = new Date();
-  const targetDateObj = new Date(today);
-  targetDateObj.setDate(today.getDate() + reminderDays);
-  const targetDate = targetDateObj.toISOString().split('T')[0];
+  const todayStr = today.toISOString().split('T')[0];
+  const futureDate = new Date(today);
+  futureDate.setDate(today.getDate() + reminderDays);
+  const futureDateStr = futureDate.toISOString().split('T')[0];
 
-  console.log(`[User ${userId}] Checking for customers expiring in ${reminderDays} days (on: ${targetDate})`);
+  console.log(`[User ${userId}] Checking for customers expiring between ${todayStr} and ${futureDateStr} (within ${reminderDays} days)`);
 
+  // Query customers with expiry dates within the reminder window
   const { data: customers, error } = await supabase
     .from('customers')
     .select('id, name, email, subscription_plan, subscription_end_date, vod_plan, vod_end_date, reminders_enabled, user_id')
     .eq('user_id', userId)
     .eq('reminders_enabled', true)
     .not('email', 'is', null)
-    .or(`subscription_end_date.eq.${targetDate},vod_end_date.eq.${targetDate}`);
+    .or(
+      `and(subscription_end_date.gte.${todayStr},subscription_end_date.lte.${futureDateStr}),and(vod_end_date.gte.${todayStr},vod_end_date.lte.${futureDateStr})`
+    );
 
   if (error) {
     console.error(`[User ${userId}] Database query failed:`, error);
-    return { userId, processed: 0, success: 0, failed: 0, results: [{ error: "Database query failed" }] };
+    return { userId, processed: 0, success: 0, failed: 0, skippedDuplicate: 0, results: [{ error: "Database query failed" }] };
+  }
+
+  // Deduplication: check which customers already received an expiry reminder recently
+  // We check for any successful reminder sent within the current reminder window
+  const customerIds = (customers || []).map(c => c.id);
+  let alreadySentSet = new Set<string>();
+
+  if (customerIds.length > 0) {
+    const { data: recentReminders } = await supabase
+      .from('reminder_history')
+      .select('customer_id')
+      .eq('user_id', userId)
+      .eq('reminder_type', 'expiry')
+      .eq('status', 'sent')
+      .gte('sent_at', new Date(today.getTime() - reminderDays * 24 * 60 * 60 * 1000).toISOString())
+      .in('customer_id', customerIds);
+
+    if (recentReminders) {
+      alreadySentSet = new Set(recentReminders.map(r => r.customer_id));
+    }
   }
 
   const customersToNotify: CustomerExpiry[] = [];
+  let skippedDuplicate = 0;
+
   for (const customer of customers || []) {
     if (!customer.email) continue;
-    const liveExpiring = customer.subscription_end_date === targetDate && customer.subscription_plan;
-    const vodExpiring = customer.vod_end_date === targetDate && customer.vod_plan;
-    if (liveExpiring || vodExpiring) {
+
+    // Skip if already sent a reminder in this window
+    if (alreadySentSet.has(customer.id)) {
+      console.log(`[User ${userId}] Skipping ${customer.name} - already reminded recently`);
+      skippedDuplicate++;
+      continue;
+    }
+
+    const liveInWindow = customer.subscription_end_date &&
+      customer.subscription_end_date >= todayStr &&
+      customer.subscription_end_date <= futureDateStr &&
+      customer.subscription_plan;
+
+    const vodInWindow = customer.vod_end_date &&
+      customer.vod_end_date >= todayStr &&
+      customer.vod_end_date <= futureDateStr &&
+      customer.vod_plan;
+
+    if (liveInWindow || vodInWindow) {
       customersToNotify.push({
         id: customer.id,
         name: customer.name,
         email: customer.email,
         user_id: customer.user_id,
-        liveExpiring: !!liveExpiring,
+        liveExpiring: !!liveInWindow,
         livePlan: customer.subscription_plan,
         liveDate: customer.subscription_end_date,
-        vodExpiring: !!vodExpiring,
+        vodExpiring: !!vodInWindow,
         vodPlan: customer.vod_plan,
         vodDate: customer.vod_end_date,
       });
     }
   }
 
-  console.log(`[User ${userId}] Found ${customersToNotify.length} customers to notify`);
+  console.log(`[User ${userId}] Found ${customersToNotify.length} customers to notify (${skippedDuplicate} skipped as duplicates)`);
 
   // Build templates
   let subjectTemplate = "Your subscription expires soon";
@@ -192,7 +235,6 @@ async function processUserReminders(
       });
       successCount++;
 
-      // Log successful reminder
       await supabase.from('reminder_history').insert({
         user_id: customer.user_id,
         customer_id: customer.id,
@@ -212,7 +254,6 @@ async function processUserReminders(
       });
       failCount++;
 
-      // Log failed reminder
       await supabase.from('reminder_history').insert({
         user_id: customer.user_id,
         customer_id: customer.id,
@@ -226,13 +267,12 @@ async function processUserReminders(
       });
     }
 
-    // Small delay to avoid Resend rate limits
     await new Promise(resolve => setTimeout(resolve, 100));
   }
 
-  console.log(`[User ${userId}] Sent ${successCount} emails, ${failCount} failed`);
+  console.log(`[User ${userId}] Sent ${successCount} emails, ${failCount} failed, ${skippedDuplicate} skipped`);
 
-  return { userId, processed: customersToNotify.length, success: successCount, failed: failCount, results: emailResults };
+  return { userId, processed: customersToNotify.length, success: successCount, failed: failCount, skippedDuplicate, results: emailResults };
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -263,21 +303,17 @@ serve(async (req: Request): Promise<Response> => {
     const token = authHeader.replace("Bearer ", "");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Determine if this is a cron call (service role / anon key) or a user call
     let userIds: string[] = [];
     let isCronCall = false;
 
-    // Try to authenticate as a real user
     const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
     const { data: claimsData, error: authError } = await authClient.auth.getClaims(token);
 
     if (!authError && claimsData?.claims?.sub) {
-      // Check if the sub is a real user (not the anon key's ref)
       const { data: userCheck } = await supabase.auth.admin.getUserById(claimsData.claims.sub as string);
       if (userCheck?.user) {
-        // Real user - process only their customers
         userIds = [claimsData.claims.sub as string];
         console.log(`Manual trigger by user ${userIds[0]}`);
       } else {
@@ -288,7 +324,6 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     if (isCronCall) {
-      // Cron job: process ALL users who have app_settings
       console.log("Cron job trigger - processing all users");
       const { data: allSettings, error: settingsError } = await supabase
         .from('app_settings')
@@ -305,7 +340,6 @@ serve(async (req: Request): Promise<Response> => {
       console.log(`Found ${userIds.length} users to process`);
     }
 
-    // Fetch settings for all users we need to process
     const { data: settingsList } = await supabase
       .from('app_settings')
       .select('user_id, reminder_days, reminder_subject, reminder_message, reply_to_email, app_name')
@@ -315,6 +349,7 @@ serve(async (req: Request): Promise<Response> => {
     let totalProcessed = 0;
     let totalSuccess = 0;
     let totalFailed = 0;
+    let totalSkipped = 0;
 
     for (const userId of userIds) {
       const settings = settingsList?.find(s => s.user_id === userId);
@@ -332,15 +367,17 @@ serve(async (req: Request): Promise<Response> => {
       totalProcessed += result.processed;
       totalSuccess += result.success;
       totalFailed += result.failed;
+      totalSkipped += result.skippedDuplicate;
     }
 
-    console.log(`Total: ${totalProcessed} processed, ${totalSuccess} sent, ${totalFailed} failed across ${userIds.length} user(s)`);
+    console.log(`Total: ${totalProcessed} processed, ${totalSuccess} sent, ${totalFailed} failed, ${totalSkipped} skipped across ${userIds.length} user(s)`);
 
     return new Response(JSON.stringify({
       users: userIds.length,
       totalProcessed,
       totalSuccess,
       totalFailed,
+      totalSkipped,
       details: allResults,
     }), {
       status: 200,
