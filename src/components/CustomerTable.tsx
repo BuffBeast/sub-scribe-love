@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Check, X, Bell, BellOff, Mail, GripVertical, AlertTriangle } from 'lucide-react';
 import { isExpiringSoon } from '@/lib/dateUtils';
 import { useUpdateCustomer } from '@/hooks/useCustomers';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
