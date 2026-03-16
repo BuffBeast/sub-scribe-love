@@ -154,30 +154,19 @@ export function useUpdateColumnOrder() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      for (const col of orderedColumns) {
-        const { data: existing } = await supabase
-          .from('column_visibility')
-          .select('id')
-          .eq('column_name', col.column_name)
-          .eq('user_id', user.id)
-          .maybeSingle();
+      // Batch upsert all column orders in a single query
+      const rows = orderedColumns.map(col => ({
+        column_name: col.column_name,
+        sort_order: col.sort_order,
+        user_id: user.id,
+        is_visible: true,
+      }));
 
-        if (existing) {
-          await supabase
-            .from('column_visibility')
-            .update({ sort_order: col.sort_order })
-            .eq('id', existing.id);
-        } else {
-          await supabase
-            .from('column_visibility')
-            .insert({
-              column_name: col.column_name,
-              sort_order: col.sort_order,
-              user_id: user.id,
-              is_visible: true,
-            });
-        }
-      }
+      const { error } = await supabase
+        .from('column_visibility')
+        .upsert(rows, { onConflict: 'column_name,user_id' });
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['column_visibility'] });

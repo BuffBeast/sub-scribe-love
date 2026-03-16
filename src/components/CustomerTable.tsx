@@ -145,11 +145,17 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
 
   const handleBulkDelete = async () => {
     const count = selectedIds.size;
-    for (const id of selectedIds) {
-      try { await deleteCustomer.mutateAsync(id); } catch (e) { console.error('Failed to delete customer:', e); }
+    const ids = Array.from(selectedIds);
+    try {
+      const { error } = await supabase.from('customers').delete().in('id', ids);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast({ title: `Deleted ${count} customer${count > 1 ? 's' : ''}` });
+    } catch (e) {
+      console.error('Failed to delete customers:', e);
+      toast({ title: 'Failed to delete some customers', variant: 'destructive' });
     }
     setSelectedIds(new Set());
-    toast({ title: `Deleted ${count} customer${count > 1 ? 's' : ''}` });
   };
 
   const getHeaderLabel = (col: UnifiedColumn) => {
