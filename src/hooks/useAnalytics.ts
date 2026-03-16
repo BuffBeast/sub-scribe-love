@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -72,7 +72,6 @@ export function useAnalyticsData(days: number = 30): AnalyticsData {
       startDate.setDate(startDate.getDate() - days);
 
       try {
-        // Fetch all events for the period
         const { data: events, error } = await supabase
           .from('analytics_events')
           .select('*')
@@ -83,11 +82,9 @@ export function useAnalyticsData(days: number = 30): AnalyticsData {
         if (error) throw error;
 
         if (events) {
-          // Calculate metrics
           const totalPageViews = events.length;
           const uniqueSessions = new Set(events.map(e => e.session_id)).size;
 
-          // Page views by path
           const pathCounts: Record<string, number> = {};
           events.forEach(e => {
             pathCounts[e.page_path] = (pathCounts[e.page_path] || 0) + 1;
@@ -96,7 +93,6 @@ export function useAnalyticsData(days: number = 30): AnalyticsData {
             .map(([path, count]) => ({ path, count }))
             .sort((a, b) => b.count - a.count);
 
-          // Daily page views
           const dailyCounts: Record<string, number> = {};
           events.forEach(e => {
             const date = new Date(e.created_at).toISOString().split('T')[0];
@@ -125,5 +121,3 @@ export function useAnalyticsData(days: number = 30): AnalyticsData {
 
   return { ...data, isLoading };
 }
-
-import { useState } from 'react';

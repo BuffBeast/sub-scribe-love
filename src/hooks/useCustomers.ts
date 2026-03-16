@@ -80,17 +80,15 @@ export function useCustomers() {
 
     const updates: PromiseLike<unknown>[] = [];
     if (toExpire.length > 0) {
+      // Single batch update for all customers to expire
       updates.push(
-        ...toExpire.map((id) =>
-          supabase.from('customers').update({ subscription_status: 'expired' }).eq('id', id).then()
-        )
+        supabase.from('customers').update({ subscription_status: 'expired' }).in('id', toExpire)
       );
     }
     if (toReactivate.length > 0) {
+      // Single batch update for all customers to reactivate
       updates.push(
-        ...toReactivate.map((id) =>
-          supabase.from('customers').update({ subscription_status: 'active' }).eq('id', id).then()
-        )
+        supabase.from('customers').update({ subscription_status: 'active' }).in('id', toReactivate)
       );
     }
 

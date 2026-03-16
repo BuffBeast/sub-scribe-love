@@ -1,4 +1,5 @@
 import { useState, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
 function parseDateLocal(dateStr: string): Date {
@@ -33,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Check, X, Bell, BellOff, Mail, GripVertical, AlertTriangle } from 'lucide-react';
 import { isExpiringSoon } from '@/lib/dateUtils';
 import { useUpdateCustomer } from '@/hooks/useCustomers';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -104,6 +106,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const deleteCustomer = useDeleteCustomer();
   const updateCustomer = useUpdateCustomer();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null);
 
@@ -145,11 +148,17 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
 
   const handleBulkDelete = async () => {
     const count = selectedIds.size;
-    for (const id of selectedIds) {
-      try { await deleteCustomer.mutateAsync(id); } catch (e) { console.error('Failed to delete customer:', e); }
+    const ids = Array.from(selectedIds);
+    try {
+      const { error } = await supabase.from('customers').delete().in('id', ids);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast({ title: `Deleted ${count} customer${count > 1 ? 's' : ''}` });
+    } catch (e) {
+      console.error('Failed to delete customers:', e);
+      toast({ title: 'Failed to delete some customers', variant: 'destructive' });
     }
     setSelectedIds(new Set());
-    toast({ title: `Deleted ${count} customer${count > 1 ? 's' : ''}` });
   };
 
   const getHeaderLabel = (col: UnifiedColumn) => {
