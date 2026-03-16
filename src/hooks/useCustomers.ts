@@ -82,7 +82,7 @@ export function useCustomers() {
     if (toExpire.length > 0) {
       // Single batch update for all customers to expire
       updates.push(
-        supabase.from('customers').update({ subscription_status: 'expired' }).in('id', toExpire).then()
+        supabase.from('customers').update({ subscription_status: 'expired' }).in('id', toExpire)
       );
     }
     if (toReactivate.length > 0) {
