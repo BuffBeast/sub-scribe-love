@@ -106,6 +106,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const deleteCustomer = useDeleteCustomer();
   const updateCustomer = useUpdateCustomer();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null);
 

@@ -88,7 +88,7 @@ export function useCustomers() {
     if (toReactivate.length > 0) {
       // Single batch update for all customers to reactivate
       updates.push(
-        supabase.from('customers').update({ subscription_status: 'active' }).in('id', toReactivate).then()
+        supabase.from('customers').update({ subscription_status: 'active' }).in('id', toReactivate)
       );
     }
 
