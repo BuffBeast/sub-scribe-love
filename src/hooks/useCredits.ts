@@ -94,3 +94,40 @@ export function useAllocateCredits() {
     },
   });
 }
+
+export function useUpdateCreditTransaction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; amount: number; notes?: string | null }) => {
+      const { data, error } = await supabase
+        .from('credit_transactions')
+        .update({ amount: input.amount, notes: input.notes ?? null })
+        .eq('id', input.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['credit_transactions'] });
+      qc.invalidateQueries({ queryKey: ['credit_balance'] });
+    },
+  });
+}
+
+export function useDeleteCreditTransaction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('credit_transactions')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['credit_transactions'] });
+      qc.invalidateQueries({ queryKey: ['credit_balance'] });
+    },
+  });
+}
