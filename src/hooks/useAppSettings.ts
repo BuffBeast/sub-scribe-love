@@ -95,6 +95,7 @@ export function useUpdateAppSettings() {
       replyToEmail?: string | null;
       themeColor?: string;
       reminderDays?: number;
+      creditWarningThreshold?: number;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
