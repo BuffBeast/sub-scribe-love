@@ -16,6 +16,7 @@ import { useAllocateCredits } from '@/hooks/useCredits';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
+import { useAllAddonOptions } from '@/hooks/useAddonTypes';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
