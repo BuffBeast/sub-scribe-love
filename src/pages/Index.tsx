@@ -236,6 +236,9 @@ const Index = () => {
             {/* Stock Tracker */}
             <StockTracker />
 
+            {/* Credit Tracker */}
+            <CreditTracker />
+
             {/* Search, Filters, and Sort */}
             <div className="space-y-3">
               <div className="flex gap-2">
