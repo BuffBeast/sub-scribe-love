@@ -231,7 +231,7 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
           {/* Connections & Add-Ons */}
           <div className="border rounded-lg p-3 space-y-3">
             <p className="text-sm font-medium">Package Details</p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-end">
               <div className="flex-1 space-y-1">
                 <Label className="text-xs text-muted-foreground">Connections</Label>
                 <Select value={String(form.connections)} onValueChange={(v) => setForm({ ...form, connections: parseInt(v) })}>
@@ -245,24 +245,33 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex-1 space-y-1">
-                <Label className="text-xs text-muted-foreground">Add-Ons</Label>
-                <Select value={String(form.add_ons)} onValueChange={(v) => setForm({ ...form, add_ons: parseInt(v) })}>
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[0, 1, 2, 3].map(n => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="text-center px-2">
                 <Label className="text-xs text-muted-foreground">Credits</Label>
-                <p className="text-lg font-bold text-primary tabular-nums">{calculateCredits(form.connections, form.add_ons)}</p>
+                <p className="text-lg font-bold text-primary tabular-nums">{calculateCredits(form.connections, form.selected_addons.length)}</p>
               </div>
             </div>
+            {addonOptions.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Add-Ons</Label>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {addonOptions.map((addon) => (
+                    <div key={addon} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`addon-${addon}`}
+                        checked={form.selected_addons.includes(addon)}
+                        onCheckedChange={(checked) => {
+                          const newAddons = checked
+                            ? [...form.selected_addons, addon]
+                            : form.selected_addons.filter(a => a !== addon);
+                          setForm({ ...form, selected_addons: newAddons });
+                        }}
+                      />
+                      <Label htmlFor={`addon-${addon}`} className="text-sm">{addon}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Device */}
