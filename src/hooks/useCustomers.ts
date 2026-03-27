@@ -28,6 +28,8 @@ export interface Customer {
   has_vod_trial: boolean;
   device: string | null;
   service: string | null;
+  connections: number;
+  add_ons: number;
 }
 
 export function useCustomers() {
