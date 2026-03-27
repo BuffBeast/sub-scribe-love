@@ -165,6 +165,7 @@ export function ColumnSettingsDialog() {
   const orderedColumns = useOrderedColumns();
   const { data: deviceTypes = [] } = useDeviceTypes();
   const { data: serviceTypes = [] } = useServiceTypes();
+  const { data: addonTypes = [] } = useAddonTypes();
   const updateColumn = useUpdateColumnVisibility();
   const updateOrder = useUpdateColumnOrder();
   const createField = useCreateCustomField();
@@ -174,6 +175,8 @@ export function ColumnSettingsDialog() {
   const deleteDevice = useDeleteDeviceType();
   const createService = useCreateServiceType();
   const deleteService = useDeleteServiceType();
+  const createAddon = useCreateAddonType();
+  const deleteAddon = useDeleteAddonType();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
