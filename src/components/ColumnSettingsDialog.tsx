@@ -226,6 +226,13 @@ export function ColumnSettingsDialog() {
     }
   };
 
+  const handleAddAddon = () => {
+    if (newAddonName.trim()) {
+      createAddon.mutate(newAddonName.trim());
+      setNewAddonName('');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
