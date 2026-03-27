@@ -27,6 +27,7 @@ interface EditCustomerDialogProps {
 export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustomerDialogProps) {
   const { toast } = useToast();
   const updateCustomer = useUpdateCustomer();
+  const allocateCredits = useAllocateCredits();
   const { data: customFields = [] } = useCustomFields();
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
