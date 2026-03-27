@@ -1,0 +1,1 @@
+ALTER TABLE public.credit_transactions ALTER COLUMN amount TYPE numeric(10,2);
