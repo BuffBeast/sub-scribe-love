@@ -30,6 +30,7 @@ export interface Customer {
   service: string | null;
   connections: number;
   add_ons: number;
+  selected_addons: string[];
 }
 
 export function useCustomers() {

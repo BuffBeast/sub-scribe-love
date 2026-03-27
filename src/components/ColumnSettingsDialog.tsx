@@ -10,6 +10,7 @@ import { useOrderedColumns, useUpdateColumnVisibility, useUpdateColumnOrder, Uni
 import { useCustomFields, useCreateCustomField, useDeleteCustomField, useUpdateCustomField } from '@/hooks/useCustomFields';
 import { useDeviceTypes, useCreateDeviceType, useDeleteDeviceType } from '@/hooks/useDeviceTypes';
 import { useServiceTypes, useCreateServiceType, useDeleteServiceType, DEFAULT_SERVICES } from '@/hooks/useServiceTypes';
+import { useAddonTypes, useCreateAddonType, useDeleteAddonType } from '@/hooks/useAddonTypes';
 import { Separator } from '@/components/ui/separator';
 import {
   DndContext,
