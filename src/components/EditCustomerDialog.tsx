@@ -11,6 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Customer, useUpdateCustomer } from '@/hooks/useCustomers';
+import { useAllocateCredits } from '@/hooks/useCredits';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
@@ -26,6 +27,7 @@ interface EditCustomerDialogProps {
 export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustomerDialogProps) {
   const { toast } = useToast();
   const updateCustomer = useUpdateCustomer();
+  const allocateCredits = useAllocateCredits();
   const { data: customFields = [] } = useCustomFields();
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
@@ -109,6 +111,30 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
       },
       {
         onSuccess: () => {
+          // Auto-deduct credits when subscription dates are extended
+          if (customer) {
+            const oldLiveEnd = customer.subscription_end_date;
+            const newLiveEnd = form.subscription_end_date ? format(form.subscription_end_date, 'yyyy-MM-dd') : null;
+            const oldVodEnd = customer.vod_end_date;
+            const newVodEnd = form.vod_end_date ? format(form.vod_end_date, 'yyyy-MM-dd') : null;
+
+            const liveExtended = form.has_live && newLiveEnd && (!oldLiveEnd || newLiveEnd > oldLiveEnd);
+            const vodExtended = form.has_vod && newVodEnd && (!oldVodEnd || newVodEnd > oldVodEnd);
+
+            const parts: string[] = [];
+            if (liveExtended) parts.push('LIVE');
+            if (vodExtended) parts.push('VOD');
+
+            if (parts.length > 0) {
+              allocateCredits.mutate({
+                amount: parts.length,
+                customer_id: customer.id,
+                customer_name: customer.name,
+                notes: `${parts.join(' + ')} renewal`,
+              });
+            }
+          }
+
           toast({ title: 'Customer updated' });
           onOpenChange(false);
         },

@@ -27,6 +27,7 @@ import { ExportCSVButton } from '@/components/ExportCSVButton';
 import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
 import { MassEmailDialog } from '@/components/MassEmailDialog';
 import { StockTracker } from '@/components/StockTracker';
+import { CreditTracker } from '@/components/CreditTracker';
 import { ExpiringBanner } from '@/components/ExpiringBanner';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -235,6 +236,9 @@ const Index = () => {
             {/* Stock Tracker */}
             <StockTracker />
 
+            {/* Credit Tracker */}
+            <CreditTracker />
+
             {/* Search, Filters, and Sort */}
             <div className="space-y-3">
               <div className="flex gap-2">
@@ -412,8 +416,9 @@ const Index = () => {
         </div>
 
         {/* Stock Tracker */}
-        <div className="mb-8">
+        <div className="mb-8 space-y-4">
           <StockTracker />
+          <CreditTracker />
         </div>
 
         {/* Filters, Search, and Sort */}
