@@ -18,7 +18,7 @@ export function CreditTracker() {
   const [purchaseQty, setPurchaseQty] = useState('');
   const [purchaseNotes, setPurchaseNotes] = useState('');
   const [calcConnections, setCalcConnections] = useState('1');
-  const [calcAddOns, setCalcAddOns] = useState('0');
+  const [calcSelectedAddons, setCalcSelectedAddons] = useState<string[]>([]);
 
   const { data: transactions = [], isLoading } = useCreditTransactions();
   const { data: balance = 0 } = useCreditBalance();
