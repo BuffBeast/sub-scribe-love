@@ -72,6 +72,8 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         vod_end_date: customer.vod_end_date ? new Date(customer.vod_end_date) : null,
         device: customer.device || '',
         reminders_enabled: customer.reminders_enabled ?? true,
+        connections: (customer as any).connections ?? 1,
+        add_ons: (customer as any).add_ons ?? 0,
       });
       const cd = customer.custom_data as Record<string, unknown> || {};
       const mapped: Record<string, string> = {};
