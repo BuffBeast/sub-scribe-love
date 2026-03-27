@@ -12,6 +12,7 @@ export interface AppSettings {
   reply_to_email: string | null;
   theme_color: string | null;
   reminder_days: number;
+  credit_warning_threshold: number | null;
   created_at: string;
   updated_at: string;
   user_id: string | null;
