@@ -164,7 +164,7 @@ export function CreditTracker() {
                     placeholder="Qty"
                     type="number"
                     min="0.01"
-                    step="0.1"
+                    step="0.01"
                     value={purchaseQty}
                     onChange={(e) => setPurchaseQty(e.target.value)}
                     className="w-20 h-8 text-sm"
