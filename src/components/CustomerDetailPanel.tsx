@@ -156,6 +156,18 @@ export function CustomerDetailPanel({ customer, onClose }: CustomerDetailPanelPr
                   <span className="text-sm font-medium">{customer.device}</span>
                 </div>
               )}
+
+              {/* Package */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Connections</span>
+                <span className="text-sm font-medium">{customer.connections}</span>
+              </div>
+              {Array.isArray(customer.selected_addons) && customer.selected_addons.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Add-Ons</span>
+                  <span className="text-sm font-medium">{(customer.selected_addons as string[]).join(', ')}</span>
+                </div>
+              )}
             </div>
           </div>
 
