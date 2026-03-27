@@ -163,8 +163,8 @@ export function CreditTracker() {
                   <Input
                     placeholder="Qty"
                     type="number"
-                    min="0.1"
-                    step="0.1"
+                    min="0.01"
+                    step="0.01"
                     value={purchaseQty}
                     onChange={(e) => setPurchaseQty(e.target.value)}
                     className="w-20 h-8 text-sm"
@@ -204,8 +204,8 @@ export function CreditTracker() {
                           )}
                           <Input
                             type="number"
-                            min="0.1"
-                            step="0.1"
+                            min="0.01"
+                            step="0.01"
                             value={editAmount}
                             onChange={(e) => setEditAmount(e.target.value)}
                             className="w-16 h-6 text-xs px-1"
