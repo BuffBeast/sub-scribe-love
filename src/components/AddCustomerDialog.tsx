@@ -100,6 +100,8 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
             has_trial: false,
             has_live_trial: false,
             has_vod_trial: false,
+            connections: 1,
+            add_ons: 0,
           });
           setCustomData({});
         },
