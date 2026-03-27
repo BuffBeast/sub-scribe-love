@@ -204,7 +204,7 @@ export function CreditTracker() {
                           )}
                           <Input
                             type="number"
-                            min="0.1"
+                            min="0.01"
                             step="0.1"
                             value={editAmount}
                             onChange={(e) => setEditAmount(e.target.value)}
