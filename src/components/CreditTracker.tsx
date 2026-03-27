@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Coins, Plus, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle, Calculator, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Coins, Plus, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle, Calculator, Pencil, Trash2, Check, X, AlertTriangle } from 'lucide-react';
 import { useCreditTransactions, useCreditBalance, useAddCredits, useUpdateCreditTransaction, useDeleteCreditTransaction } from '@/hooks/useCredits';
 import { calculateCredits } from '@/lib/creditCalculator';
 import { useAllAddonOptions } from '@/hooks/useAddonTypes';
+import { useAppSettings, useUpdateAppSettings } from '@/hooks/useAppSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +30,12 @@ export function CreditTracker() {
   const updateTransaction = useUpdateCreditTransaction();
   const deleteTransaction = useDeleteCreditTransaction();
   const addonOptions = useAllAddonOptions();
+  const { data: settings } = useAppSettings();
+  const updateSettings = useUpdateAppSettings();
+
+  const threshold = settings?.credit_warning_threshold ?? 5;
+  const isLowBalance = balance > 0 && balance <= threshold;
+  const isZeroBalance = balance <= 0;
 
   const calculatedCredits = calculateCredits(
     parseInt(calcConnections) || 1,
@@ -97,8 +104,14 @@ export function CreditTracker() {
                   <Coins className="h-5 w-5" /> Credits
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-1 ml-7">
-                  Balance: <span className={`font-semibold ${balance <= 0 ? 'text-destructive' : 'text-primary'}`}>{balance}</span>
+                  Balance: <span className={`font-semibold ${isZeroBalance ? 'text-destructive' : isLowBalance ? 'text-amber-500' : 'text-primary'}`}>{balance}</span>
                 </p>
+                {(isLowBalance || isZeroBalance) && (
+                  <p className={`text-xs mt-1 ml-7 flex items-center gap-1 ${isZeroBalance ? 'text-destructive' : 'text-amber-500'}`}>
+                    <AlertTriangle className="h-3 w-3" />
+                    {isZeroBalance ? 'No credits remaining!' : `Low balance — only ${balance} credits left`}
+                  </p>
+                )}
               </div>
               {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
             </button>
@@ -153,6 +166,28 @@ export function CreditTracker() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Warning threshold */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground whitespace-nowrap">Warn below</label>
+              <Input
+                type="number"
+                min="0"
+                step="1"
+                defaultValue={threshold}
+                className="w-20 h-7 text-xs"
+                onBlur={(e) => {
+                  const val = parseFloat(e.target.value);
+                  if (!isNaN(val) && val !== threshold && settings) {
+                    updateSettings.mutate({
+                      appName: settings.app_name,
+                      creditWarningThreshold: val,
+                    });
+                  }
+                }}
+              />
+              <span className="text-xs text-muted-foreground">credits</span>
             </div>
 
             {/* Add credits */}

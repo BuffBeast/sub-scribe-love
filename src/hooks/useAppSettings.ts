@@ -12,6 +12,7 @@ export interface AppSettings {
   reply_to_email: string | null;
   theme_color: string | null;
   reminder_days: number;
+  credit_warning_threshold: number | null;
   created_at: string;
   updated_at: string;
   user_id: string | null;
@@ -85,6 +86,7 @@ export function useUpdateAppSettings() {
       replyToEmail,
       themeColor,
       reminderDays,
+      creditWarningThreshold,
     }: { 
       appName: string; 
       logoUrl?: string | null;
@@ -94,6 +96,7 @@ export function useUpdateAppSettings() {
       replyToEmail?: string | null;
       themeColor?: string;
       reminderDays?: number;
+      creditWarningThreshold?: number;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -126,6 +129,7 @@ export function useUpdateAppSettings() {
       if (replyToEmail !== undefined) updates.reply_to_email = replyToEmail;
       if (themeColor !== undefined) updates.theme_color = themeColor;
       if (reminderDays !== undefined) updates.reminder_days = reminderDays;
+      if (creditWarningThreshold !== undefined) updates.credit_warning_threshold = creditWarningThreshold;
 
       if (existing) {
         const { error } = await supabase

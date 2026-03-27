@@ -1,0 +1,1 @@
+ALTER TABLE public.app_settings ADD COLUMN credit_warning_threshold numeric(10,1) DEFAULT 5;
