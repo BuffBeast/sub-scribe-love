@@ -72,6 +72,7 @@ export type Database = {
         Row: {
           app_name: string
           created_at: string
+          credit_warning_threshold: number | null
           id: string
           logo_url: string | null
           reminder_days: number
@@ -86,6 +87,7 @@ export type Database = {
         Insert: {
           app_name?: string
           created_at?: string
+          credit_warning_threshold?: number | null
           id?: string
           logo_url?: string | null
           reminder_days?: number
@@ -100,6 +102,7 @@ export type Database = {
         Update: {
           app_name?: string
           created_at?: string
+          credit_warning_threshold?: number | null
           id?: string
           logo_url?: string | null
           reminder_days?: number

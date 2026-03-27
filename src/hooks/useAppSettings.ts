@@ -128,6 +128,7 @@ export function useUpdateAppSettings() {
       if (replyToEmail !== undefined) updates.reply_to_email = replyToEmail;
       if (themeColor !== undefined) updates.theme_color = themeColor;
       if (reminderDays !== undefined) updates.reminder_days = reminderDays;
+      if (creditWarningThreshold !== undefined) updates.credit_warning_threshold = creditWarningThreshold;
 
       if (existing) {
         const { error } = await supabase
