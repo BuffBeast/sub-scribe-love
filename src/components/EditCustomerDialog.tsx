@@ -117,7 +117,8 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         device: form.device || null,
         reminders_enabled: form.reminders_enabled,
         connections: form.connections,
-        add_ons: form.add_ons,
+        add_ons: form.selected_addons.length,
+        selected_addons: form.selected_addons,
         custom_data: customData,
       },
       {
