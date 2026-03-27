@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Coins, Plus, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle, Calculator, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Coins, Plus, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle, Calculator, Pencil, Trash2, Check, X, AlertTriangle } from 'lucide-react';
 import { useCreditTransactions, useCreditBalance, useAddCredits, useUpdateCreditTransaction, useDeleteCreditTransaction } from '@/hooks/useCredits';
 import { calculateCredits } from '@/lib/creditCalculator';
 import { useAllAddonOptions } from '@/hooks/useAddonTypes';
+import { useAppSettings, useUpdateAppSettings } from '@/hooks/useAppSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
