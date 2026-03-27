@@ -51,6 +51,7 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
     has_vod_trial: false,
     connections: 1,
     add_ons: 0,
+    selected_addons: [] as string[],
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
