@@ -76,6 +76,8 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
         has_trial: form.has_trial,
         has_live_trial: form.has_live_trial,
         has_vod_trial: form.has_vod_trial,
+        connections: form.connections,
+        add_ons: form.add_ons,
         custom_data: customData,
       } as any,
       {
