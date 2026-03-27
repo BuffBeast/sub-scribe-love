@@ -113,7 +113,6 @@ export function CreditTracker() {
                   </div>
                 </div>
               )}
-              </div>
             </div>
 
             {/* Add credits */}
