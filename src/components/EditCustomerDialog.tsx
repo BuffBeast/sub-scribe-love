@@ -112,6 +112,8 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         vod_end_date: form.vod_end_date ? format(form.vod_end_date, 'yyyy-MM-dd') : null,
         device: form.device || null,
         reminders_enabled: form.reminders_enabled,
+        connections: form.connections,
+        add_ons: form.add_ons,
         custom_data: customData,
       },
       {
