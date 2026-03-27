@@ -1,26 +1,27 @@
 
 
-## Add Connections & Add-Ons Columns to Customer Table
+## Low Credit Balance Warning
 
-Add two new built-in columns to the customer table: **Connections** (shows the number) and **Add-Ons** (shows count or names of selected add-ons).
+Add a configurable threshold so a warning banner appears on the Credits card when the balance drops below it. The threshold is stored in `app_settings`.
 
 ### Changes
 
-**1. `src/hooks/useColumnVisibility.ts`**
-- Add `connections` and `selected_addons` to `COLUMN_LABELS` (e.g. "Conn." and "Add-Ons")
-- Add them to `DEFAULT_COLUMN_ORDER` (after `device`)
+**1. Database: Add `credit_warning_threshold` to `app_settings`**
+- Migration: `ALTER TABLE app_settings ADD COLUMN credit_warning_threshold numeric(10,1) DEFAULT 5;`
+- No new RLS needed (existing policies cover it)
 
-**2. `src/components/CustomerTable.tsx`**
-- Add header labels for the new columns in `HEADER_LABELS`
-- Add two new `case` branches in `renderCell`:
-  - `connections`: display `customer.connections` as a number
-  - `selected_addons`: display comma-joined names from `customer.selected_addons`, or the count, or "-" if empty
+**2. `src/hooks/useAppSettings.ts`**
+- Add `credit_warning_threshold` to the `AppSettings` interface
+- Add it as an accepted field in `useUpdateAppSettings`
 
-**3. `src/components/ExportCSVButton.tsx`**
-- Add `connections` and `selected_addons` entries to `COLUMN_CSV_MAP` and `ALL_COLUMN_ORDER` so they export correctly
+**3. `src/components/CreditTracker.tsx`**
+- Read `useAppSettings()` to get the threshold (default 5)
+- When `balance <= threshold && balance > 0`, show an amber warning bar below the balance line: "Low credit balance -- only X credits remaining"
+- When `balance <= 0`, show a red warning
+- Add a small input in the collapsible section to configure the threshold (saves via `useUpdateAppSettings`)
 
 ### Technical details
-- Both columns are read-only display in the table (editable via the Edit dialog)
-- `selected_addons` is stored as a JSONB array of strings on the customer; we'll join them with commas for display
-- No database changes needed -- columns already exist
+- Threshold defaults to 5 credits
+- Warning shows on the collapsed card header (always visible) so users see it without opening the tracker
+- Configurable inline within the Credits card -- no separate settings page needed
 
