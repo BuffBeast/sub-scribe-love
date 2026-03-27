@@ -31,6 +31,7 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
   const { data: customFields = [] } = useCustomFields();
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
+  const addonOptions = useAllAddonOptions();
 
   const [form, setForm] = useState({
     name: '',
