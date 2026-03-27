@@ -30,6 +30,12 @@ export function CreditTracker() {
   const updateTransaction = useUpdateCreditTransaction();
   const deleteTransaction = useDeleteCreditTransaction();
   const addonOptions = useAllAddonOptions();
+  const { data: settings } = useAppSettings();
+  const updateSettings = useUpdateAppSettings();
+
+  const threshold = settings?.credit_warning_threshold ?? 5;
+  const isLowBalance = balance > 0 && balance <= threshold;
+  const isZeroBalance = balance <= 0;
 
   const calculatedCredits = calculateCredits(
     parseInt(calcConnections) || 1,
