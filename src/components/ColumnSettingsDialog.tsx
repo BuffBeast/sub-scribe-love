@@ -355,6 +355,32 @@ export function ColumnSettingsDialog() {
               </div>
             </div>
           </div>
+          <Separator />
+
+          <div>
+            <h4 className="text-sm font-medium mb-3">Add-On Types</h4>
+            <div className="space-y-2">
+              {addonTypes.length > 0 && (
+                <div className="space-y-2">
+                  {addonTypes.map((addon) => (
+                    <div key={addon.id} className="flex items-center justify-between">
+                      <span className="text-sm">{addon.name}</span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteAddon.mutate(addon.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {addonTypes.length === 0 && (
+                <p className="text-xs text-muted-foreground">No add-ons defined yet. Add some below.</p>
+              )}
+              <div className="flex gap-2 mt-3">
+                <Input placeholder="New add-on type (e.g. Adult)..." value={newAddonName} onChange={(e) => setNewAddonName(e.target.value)} className="flex-1" onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAddon())} />
+                <Button onClick={handleAddAddon} size="icon"><Plus className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
