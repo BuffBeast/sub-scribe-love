@@ -33,6 +33,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
   const { data: customFields = [] } = useCustomFields();
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
+  const addonOptions = useAllAddonOptions();
 
   const [form, setForm] = useState({
     name: '',
