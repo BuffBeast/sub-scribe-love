@@ -34,7 +34,7 @@ export const DEFAULT_COLUMN_ORDER = [
   'name', 'email', 'phone', 'service',
   'subscription_plan', 'has_live_trial', 'subscription_end_date',
   'vod_plan', 'has_vod_trial', 'vod_end_date',
-  'company', 'device', 'subscription_status', 'reminders_enabled',
+  'company', 'device', 'connections', 'selected_addons', 'subscription_status', 'reminders_enabled',
   'last_contact_date', 'total_spent',
 ];
 

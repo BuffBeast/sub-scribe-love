@@ -38,7 +38,7 @@ const ALL_COLUMN_ORDER = [
   'name', 'email', 'phone', 'service',
   'subscription_plan', 'has_live_trial', 'subscription_end_date',
   'vod_plan', 'has_vod_trial', 'vod_end_date',
-  'device', 'company', 'subscription_status', 'total_spent', 'reminders_enabled',
+  'device', 'connections', 'selected_addons', 'company', 'subscription_status', 'total_spent', 'reminders_enabled',
 ];
 
 export function ExportCSVButton({ customers, customFields }: ExportCSVButtonProps) {
