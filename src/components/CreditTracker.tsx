@@ -104,8 +104,14 @@ export function CreditTracker() {
                   <Coins className="h-5 w-5" /> Credits
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-1 ml-7">
-                  Balance: <span className={`font-semibold ${balance <= 0 ? 'text-destructive' : 'text-primary'}`}>{balance}</span>
+                  Balance: <span className={`font-semibold ${isZeroBalance ? 'text-destructive' : isLowBalance ? 'text-amber-500' : 'text-primary'}`}>{balance}</span>
                 </p>
+                {(isLowBalance || isZeroBalance) && (
+                  <p className={`text-xs mt-1 ml-7 flex items-center gap-1 ${isZeroBalance ? 'text-destructive' : 'text-amber-500'}`}>
+                    <AlertTriangle className="h-3 w-3" />
+                    {isZeroBalance ? 'No credits remaining!' : `Low balance — only ${balance} credits left`}
+                  </p>
+                )}
               </div>
               {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
             </button>
