@@ -138,7 +138,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
             if (vodExtended) parts.push('VOD');
 
             if (parts.length > 0) {
-              const creditCost = calculateCredits(form.connections, form.add_ons);
+              const creditCost = calculateCredits(form.connections, form.selected_addons.length);
               allocateCredits.mutate({
                 amount: creditCost,
                 customer_id: customer.id,
