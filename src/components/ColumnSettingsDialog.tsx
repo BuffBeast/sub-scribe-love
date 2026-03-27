@@ -160,6 +160,7 @@ export function ColumnSettingsDialog() {
   const [newFieldOptions, setNewFieldOptions] = useState('');
   const [newDeviceName, setNewDeviceName] = useState('');
   const [newServiceName, setNewServiceName] = useState('');
+  const [newAddonName, setNewAddonName] = useState('');
 
   const orderedColumns = useOrderedColumns();
   const { data: deviceTypes = [] } = useDeviceTypes();
