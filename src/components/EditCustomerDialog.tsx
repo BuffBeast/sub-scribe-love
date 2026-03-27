@@ -340,7 +340,6 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
               </div>
             )}
           </div>
-          </div>
 
           {/* Device */}
           <div className="space-y-2">
