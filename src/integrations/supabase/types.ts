@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      addon_types: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           created_at: string
@@ -204,6 +228,7 @@ export type Database = {
           name: string
           phone: string | null
           reminders_enabled: boolean
+          selected_addons: Json
           service: string | null
           subscription_end_date: string | null
           subscription_plan: string | null
@@ -232,6 +257,7 @@ export type Database = {
           name: string
           phone?: string | null
           reminders_enabled?: boolean
+          selected_addons?: Json
           service?: string | null
           subscription_end_date?: string | null
           subscription_plan?: string | null
@@ -260,6 +286,7 @@ export type Database = {
           name?: string
           phone?: string | null
           reminders_enabled?: boolean
+          selected_addons?: Json
           service?: string | null
           subscription_end_date?: string | null
           subscription_plan?: string | null
