@@ -1,45 +1,49 @@
 
-# Add "Expiring Soon" Visual Warning Indicator
 
-## Overview
-Add a visual warning for customers whose LIVE or VOD subscriptions expire within the next 7 days. This will appear as an "Expiring Soon" status badge and highlighted expiry dates in both the desktop table and mobile card views.
+## Named Add-Ons Feature
 
-## Changes
+Replace the numeric add-ons dropdown with user-configurable named add-ons (e.g. "Adult", "24/7 Channels") that appear as checkboxes when adding/editing customers.
 
-### 1. Create a helper utility function
-Add a shared helper `isExpiringSoon(dateStr, days)` that checks if a date string is within N days from today. This will be used across components to keep logic consistent.
+### How it works
 
-**File:** `src/lib/dateUtils.ts` (new file)
+- You define your add-on types once (like you do with Device Types and Service Types)
+- When adding or editing a customer, each add-on appears as a checkbox
+- The number of checked add-ons feeds into the existing credit calculator automatically
+- The credit formula stays the same -- the count of selected add-ons replaces the old numeric dropdown
 
-### 2. Update StatusBadge component
-- Add a new `"expiring"` status type to `SubscriptionStatus` in `src/types/customer.ts`
-- Add an "Expiring Soon" entry to the `statusConfig` in `StatusBadge.tsx` with an amber/orange warning style (pulsing border for attention)
+### Changes
 
-### 3. Update the auto-expiry logic in useCustomers hook
-- Before returning customer data, compute an effective display status: if a customer is "active" and any of their active subscriptions expire within 7 days, the display status becomes `"expiring"`
-- This is purely a display-level enrichment -- no database changes
+**1. Database: Create `addon_types` table**
+- New table: `id`, `name`, `user_id`, `sort_order`, `created_at`
+- Same pattern as `device_types` / `service_types`
+- RLS policies for per-user isolation
+- Store selected add-ons on the customer as a JSONB array column (`selected_addons text[]` or keep using `add_ons` as the count derived from selections stored in `custom_data` or a new column)
+- Add `selected_addons jsonb DEFAULT '[]'` column to `customers` table to store the names of selected add-ons
 
-### 4. Highlight expiry dates in CustomerTable
-- In the `subscription_end_date` and `vod_end_date` cells, add amber/warning text color and a small warning icon (AlertTriangle from lucide) when the date is within 7 days
-- Same treatment in `MobileCustomerCard.tsx` for the expiry date buttons
+**2. Hook: `useAddonTypes`**
+- CRUD hook following the `useDeviceTypes` / `useServiceTypes` pattern
+- Query key: `addon_types`
 
-## Technical Details
+**3. UI: Manage Add-On Types**
+- Add an "Add-Ons" management section in the same area where Device Types and Service Types are managed (likely in settings or inline)
+- Add/remove named add-ons with a simple list + input
 
-**New file: `src/lib/dateUtils.ts`**
-- `isExpiringSoon(dateStr: string | null, days: number = 7): boolean` -- parses date locally and checks if it's between today and today + N days
+**4. Update AddCustomerDialog & EditCustomerDialog**
+- Replace the numeric "Add-Ons" dropdown with checkboxes for each defined add-on type
+- `add_ons` count is derived from the number of checked items
+- Credit preview updates automatically
 
-**`src/types/customer.ts`** -- Add `'expiring'` to `SubscriptionStatus` union type
+**5. Update CreditTracker pricing calculator**
+- Replace the numeric add-ons dropdown with checkboxes matching the user's defined add-on types
+- Credits calculation uses count of checked items
 
-**`src/components/StatusBadge.tsx`** -- Add expiring config:
-- Style: `bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse` 
-- Label: "Expiring Soon"
+**6. Update CustomerDetailPanel (if it displays add-ons)**
+- Show named add-ons instead of just a number
 
-**`src/components/CustomerTable.tsx`** -- In `renderCell` for `subscription_end_date` and `vod_end_date`:
-- Import `isExpiringSoon` and `AlertTriangle` icon
-- Add warning color class and icon when expiring soon
+### Technical details
 
-**`src/components/MobileCustomerCard.tsx`** -- Same warning treatment on the expiry date buttons
+- The `customers.add_ons` integer column stays as-is for the credit formula
+- A new `customers.selected_addons` JSONB column stores the array of add-on names (e.g. `["Adult", "24/7 Channels"]`)
+- On save, `add_ons` is set to `selected_addons.length` automatically
+- The `addon_types` table follows the exact same schema pattern as `service_types`
 
-**`src/hooks/useCustomers.ts`** or display logic -- When rendering the StatusBadge, compute the effective status: if `subscription_status === 'active'` and either LIVE or VOD end date is expiring soon, pass `"expiring"` to the StatusBadge instead. This keeps the database value unchanged.
-
-No database changes required. No new dependencies needed.
