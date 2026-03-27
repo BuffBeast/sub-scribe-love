@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Coins, Plus, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { Coins, Plus, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle, Calculator } from 'lucide-react';
 import { useCreditTransactions, useCreditBalance, useAddCredits } from '@/hooks/useCredits';
+import { calculateCredits } from '@/lib/creditCalculator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -12,13 +14,20 @@ export function CreditTracker() {
   const [isOpen, setIsOpen] = useState(false);
   const [purchaseQty, setPurchaseQty] = useState('');
   const [purchaseNotes, setPurchaseNotes] = useState('');
+  const [calcConnections, setCalcConnections] = useState('1');
+  const [calcAddOns, setCalcAddOns] = useState('0');
 
   const { data: transactions = [], isLoading } = useCreditTransactions();
   const { data: balance = 0 } = useCreditBalance();
   const addCredits = useAddCredits();
 
+  const calculatedCredits = calculateCredits(
+    parseInt(calcConnections) || 1,
+    parseInt(calcAddOns) || 0
+  );
+
   const handlePurchase = () => {
-    const qty = parseInt(purchaseQty);
+    const qty = parseFloat(purchaseQty);
     if (!qty || qty <= 0) return;
     addCredits.mutate(
       { amount: qty, notes: purchaseNotes.trim() || undefined },
@@ -53,6 +62,45 @@ export function CreditTracker() {
         </CardHeader>
         <CollapsibleContent>
           <CardContent className="space-y-4">
+            {/* Pricing Calculator */}
+            <div className="p-3 rounded-lg border bg-muted/30 space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <Calculator className="h-3.5 w-3.5" /> Pricing Calculator
+              </h4>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1 space-y-1">
+                  <label className="text-xs text-muted-foreground">Connections</label>
+                  <Select value={calcConnections} onValueChange={setCalcConnections}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <label className="text-xs text-muted-foreground">Add-Ons</label>
+                  <Select value={calcAddOns} onValueChange={setCalcAddOns}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[0, 1, 2, 3].map(n => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-center px-3">
+                  <p className="text-xs text-muted-foreground">Credits</p>
+                  <p className="text-lg font-bold text-primary tabular-nums">{calculatedCredits}</p>
+                </div>
+              </div>
+            </div>
+
             {/* Add credits */}
             <div className="flex gap-2 items-end">
               <div className="flex-1 space-y-1">
@@ -61,7 +109,8 @@ export function CreditTracker() {
                   <Input
                     placeholder="Qty"
                     type="number"
-                    min="1"
+                    min="0.1"
+                    step="0.1"
                     value={purchaseQty}
                     onChange={(e) => setPurchaseQty(e.target.value)}
                     className="w-20 h-8 text-sm"
@@ -74,7 +123,7 @@ export function CreditTracker() {
                     className="flex-1 h-8 text-sm"
                     onKeyDown={(e) => e.key === 'Enter' && handlePurchase()}
                   />
-                  <Button size="sm" className="h-8" onClick={handlePurchase} disabled={!purchaseQty || parseInt(purchaseQty) <= 0}>
+                  <Button size="sm" className="h-8" onClick={handlePurchase} disabled={!purchaseQty || parseFloat(purchaseQty) <= 0}>
                     <Plus className="h-3 w-3 mr-1" /> Add
                   </Button>
                 </div>
