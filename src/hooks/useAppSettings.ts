@@ -86,6 +86,7 @@ export function useUpdateAppSettings() {
       replyToEmail,
       themeColor,
       reminderDays,
+      creditWarningThreshold,
     }: { 
       appName: string; 
       logoUrl?: string | null;
