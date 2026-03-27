@@ -23,6 +23,8 @@ export const COLUMN_LABELS: Record<string, string> = {
   vod_plan: 'VOD',
   vod_end_date: 'VOD Expiry',
   device: 'Device',
+  connections: 'Conn.',
+  selected_addons: 'Add-Ons',
   reminders_enabled: 'Reminders',
   last_contact_date: 'Last Contact',
   total_spent: 'Total Spent',
