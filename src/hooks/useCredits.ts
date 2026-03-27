@@ -22,7 +22,10 @@ export function useCreditTransactions() {
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data as CreditTransaction[];
+      return (data as unknown as CreditTransaction[]).map(t => ({
+        ...t,
+        amount: Number(t.amount),
+      }));
     },
   });
 }
@@ -35,8 +38,9 @@ export function useCreditBalance() {
         .from('credit_transactions')
         .select('type, amount');
       if (error) throw error;
-      return (data as Pick<CreditTransaction, 'type' | 'amount'>[]).reduce((bal, t) => {
-        return t.type === 'purchase' ? bal + t.amount : bal - t.amount;
+      return (data as unknown as Pick<CreditTransaction, 'type' | 'amount'>[]).reduce((bal, t) => {
+        const amt = Number(t.amount);
+        return t.type === 'purchase' ? bal + amt : bal - amt;
       }, 0);
     },
   });
