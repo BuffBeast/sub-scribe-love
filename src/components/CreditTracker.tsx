@@ -27,7 +27,7 @@ export function CreditTracker() {
 
   const calculatedCredits = calculateCredits(
     parseInt(calcConnections) || 1,
-    parseInt(calcAddOns) || 0
+    calcSelectedAddons.length
   );
 
   const handlePurchase = () => {
