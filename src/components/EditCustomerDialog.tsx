@@ -143,7 +143,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
                 amount: creditCost,
                 customer_id: customer.id,
                 customer_name: customer.name,
-                notes: `${parts.join(' + ')} renewal (${form.connections} conn, ${form.add_ons} add-ons)`,
+                notes: `${parts.join(' + ')} renewal (${form.connections} conn, ${form.selected_addons.length} add-ons)`,
               });
             }
           }
