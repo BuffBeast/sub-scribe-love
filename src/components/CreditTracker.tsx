@@ -23,6 +23,7 @@ export function CreditTracker() {
   const { data: transactions = [], isLoading } = useCreditTransactions();
   const { data: balance = 0 } = useCreditBalance();
   const addCredits = useAddCredits();
+  const addonOptions = useAllAddonOptions();
 
   const calculatedCredits = calculateCredits(
     parseInt(calcConnections) || 1,
