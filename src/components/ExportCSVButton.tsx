@@ -30,13 +30,15 @@ const COLUMN_CSV_MAP: Record<string, { header: string; getValue: (c: Customer, c
   subscription_status: { header: 'Status', getValue: (c) => c.subscription_status || '' },
   total_spent: { header: 'Price', getValue: (c) => c.total_spent?.toString() || '0' },
   reminders_enabled: { header: 'Reminders', getValue: (c) => c.reminders_enabled ? 'Yes' : 'No' },
+  connections: { header: 'Connections', getValue: (c) => (c.connections ?? 1).toString() },
+  selected_addons: { header: 'Add-Ons', getValue: (c) => { const a = Array.isArray(c.selected_addons) ? (c.selected_addons as string[]) : []; return a.join(', '); } },
 };
 
 const ALL_COLUMN_ORDER = [
   'name', 'email', 'phone', 'service',
   'subscription_plan', 'has_live_trial', 'subscription_end_date',
   'vod_plan', 'has_vod_trial', 'vod_end_date',
-  'device', 'company', 'subscription_status', 'total_spent', 'reminders_enabled',
+  'device', 'connections', 'selected_addons', 'company', 'subscription_status', 'total_spent', 'reminders_enabled',
 ];
 
 export function ExportCSVButton({ customers, customFields }: ExportCSVButtonProps) {

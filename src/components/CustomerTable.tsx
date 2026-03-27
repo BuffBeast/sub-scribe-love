@@ -293,6 +293,12 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
             </Select>
           </TableCell>
         );
+      case 'connections':
+        return <TableCell key={col.id} className="text-center text-muted-foreground">{customer.connections ?? 1}</TableCell>;
+      case 'selected_addons': {
+        const addons = Array.isArray(customer.selected_addons) ? (customer.selected_addons as string[]) : [];
+        return <TableCell key={col.id} className="text-muted-foreground">{addons.length > 0 ? addons.join(', ') : '-'}</TableCell>;
+      }
       case 'subscription_status': {
         const effectiveStatus = customer.subscription_status === 'active' && (isExpiringSoon(customer.subscription_end_date) || isExpiringSoon(customer.vod_end_date)) ? 'expiring' : (customer.subscription_status || 'active');
         return <TableCell key={col.id}><StatusBadge status={effectiveStatus as any} /></TableCell>;
