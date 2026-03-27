@@ -49,6 +49,8 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
     vod_end_date: null as Date | null,
     device: '',
     reminders_enabled: true,
+    connections: 1,
+    add_ons: 0,
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
