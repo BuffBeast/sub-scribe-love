@@ -77,6 +77,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         reminders_enabled: customer.reminders_enabled ?? true,
         connections: (customer as any).connections ?? 1,
         add_ons: (customer as any).add_ons ?? 0,
+        selected_addons: Array.isArray((customer as any).selected_addons) ? (customer as any).selected_addons : [],
       });
       const cd = customer.custom_data as Record<string, unknown> || {};
       const mapped: Record<string, string> = {};
