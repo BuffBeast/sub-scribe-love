@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Coins, Plus, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle, Calculator } from 'lucide-react';
-import { useCreditTransactions, useCreditBalance, useAddCredits } from '@/hooks/useCredits';
+import { Coins, Plus, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle, Calculator, Pencil, Trash2, Check, X } from 'lucide-react';
+import { useCreditTransactions, useCreditBalance, useAddCredits, useUpdateCreditTransaction, useDeleteCreditTransaction } from '@/hooks/useCredits';
 import { calculateCredits } from '@/lib/creditCalculator';
 import { useAllAddonOptions } from '@/hooks/useAddonTypes';
 import { Button } from '@/components/ui/button';
@@ -19,10 +19,15 @@ export function CreditTracker() {
   const [purchaseNotes, setPurchaseNotes] = useState('');
   const [calcConnections, setCalcConnections] = useState('1');
   const [calcSelectedAddons, setCalcSelectedAddons] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [editNotes, setEditNotes] = useState('');
 
   const { data: transactions = [], isLoading } = useCreditTransactions();
   const { data: balance = 0 } = useCreditBalance();
   const addCredits = useAddCredits();
+  const updateTransaction = useUpdateCreditTransaction();
+  const deleteTransaction = useDeleteCreditTransaction();
   const addonOptions = useAllAddonOptions();
 
   const calculatedCredits = calculateCredits(
@@ -44,6 +49,41 @@ export function CreditTracker() {
         onError: () => toast.error('Failed to add credits'),
       }
     );
+  };
+
+  const startEdit = (t: { id: string; amount: number; notes: string | null }) => {
+    setEditingId(t.id);
+    setEditAmount(String(t.amount));
+    setEditNotes(t.notes || '');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditAmount('');
+    setEditNotes('');
+  };
+
+  const saveEdit = () => {
+    if (!editingId) return;
+    const amt = parseFloat(editAmount);
+    if (!amt || amt <= 0) return;
+    updateTransaction.mutate(
+      { id: editingId, amount: amt, notes: editNotes.trim() || null },
+      {
+        onSuccess: () => {
+          cancelEdit();
+          toast.success('Transaction updated');
+        },
+        onError: () => toast.error('Failed to update'),
+      }
+    );
+  };
+
+  const handleDelete = (id: string) => {
+    deleteTransaction.mutate(id, {
+      onSuccess: () => toast.success('Transaction deleted'),
+      onError: () => toast.error('Failed to delete'),
+    });
   };
 
   return (
@@ -154,23 +194,65 @@ export function CreditTracker() {
               ) : (
                 <div className="max-h-48 overflow-y-auto space-y-1">
                   {transactions.map(t => (
-                    <div key={t.id} className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/50">
-                      {t.type === 'purchase' ? (
-                        <ArrowUpCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <div key={t.id} className="group flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/50">
+                      {editingId === t.id ? (
+                        <>
+                          {t.type === 'purchase' ? (
+                            <ArrowUpCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          ) : (
+                            <ArrowDownCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                          )}
+                          <Input
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={editAmount}
+                            onChange={(e) => setEditAmount(e.target.value)}
+                            className="w-16 h-6 text-xs px-1"
+                            onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
+                          />
+                          <Input
+                            value={editNotes}
+                            onChange={(e) => setEditNotes(e.target.value)}
+                            placeholder="Notes"
+                            className="flex-1 h-6 text-xs px-1"
+                            onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
+                          />
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={saveEdit}>
+                            <Check className="h-3 w-3 text-emerald-500" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={cancelEdit}>
+                            <X className="h-3 w-3 text-muted-foreground" />
+                          </Button>
+                        </>
                       ) : (
-                        <ArrowDownCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                        <>
+                          {t.type === 'purchase' ? (
+                            <ArrowUpCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          ) : (
+                            <ArrowDownCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                          )}
+                          <span className={`font-semibold tabular-nums ${t.type === 'purchase' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                            {t.type === 'purchase' ? '+' : '-'}{t.amount}
+                          </span>
+                          <span className="flex-1 truncate text-muted-foreground">
+                            {t.type === 'allocation' && t.customer_name
+                              ? `→ ${t.customer_name}`
+                              : t.notes || 'Purchase'}
+                          </span>
+                          <span className="text-muted-foreground shrink-0">
+                            {format(new Date(t.created_at), 'MMM d')}
+                          </span>
+                          <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
+                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => startEdit(t)}>
+                              <Pencil className="h-3 w-3 text-muted-foreground" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleDelete(t.id)}>
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        </>
                       )}
-                      <span className={`font-semibold tabular-nums ${t.type === 'purchase' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                        {t.type === 'purchase' ? '+' : '-'}{t.amount}
-                      </span>
-                      <span className="flex-1 truncate text-muted-foreground">
-                        {t.type === 'allocation' && t.customer_name
-                          ? `→ ${t.customer_name}`
-                          : t.notes || 'Purchase'}
-                      </span>
-                      <span className="text-muted-foreground shrink-0">
-                        {format(new Date(t.created_at), 'MMM d')}
-                      </span>
                     </div>
                   ))}
                 </div>
