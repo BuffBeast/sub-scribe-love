@@ -168,6 +168,28 @@ export function CreditTracker() {
               )}
             </div>
 
+            {/* Warning threshold */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground whitespace-nowrap">Warn below</label>
+              <Input
+                type="number"
+                min="0"
+                step="1"
+                defaultValue={threshold}
+                className="w-20 h-7 text-xs"
+                onBlur={(e) => {
+                  const val = parseFloat(e.target.value);
+                  if (!isNaN(val) && val !== threshold && settings) {
+                    updateSettings.mutate({
+                      appName: settings.app_name,
+                      creditWarningThreshold: val,
+                    });
+                  }
+                }}
+              />
+              <span className="text-xs text-muted-foreground">credits</span>
+            </div>
+
             {/* Add credits */}
             <div className="flex gap-2 items-end">
               <div className="flex-1 space-y-1">
