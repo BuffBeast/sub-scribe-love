@@ -416,8 +416,9 @@ const Index = () => {
         </div>
 
         {/* Stock Tracker */}
-        <div className="mb-8">
+        <div className="mb-8 space-y-4">
           <StockTracker />
+          <CreditTracker />
         </div>
 
         {/* Filters, Search, and Sort */}
