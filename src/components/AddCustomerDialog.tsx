@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
 import { useCreateCustomer } from '@/hooks/useCustomers';
+import { calculateCredits } from '@/lib/creditCalculator';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
