@@ -290,6 +290,43 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
             )}
           </div>
 
+          {/* Connections & Add-Ons */}
+          <div className="space-y-2 p-3 border rounded-lg">
+            <p className="text-sm font-medium">Package Details</p>
+            <div className="flex gap-3">
+              <div className="flex-1 space-y-1">
+                <Label className="text-xs text-muted-foreground">Connections</Label>
+                <Select value={String(form.connections)} onValueChange={(v) => setForm({ ...form, connections: parseInt(v) })}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 space-y-1">
+                <Label className="text-xs text-muted-foreground">Add-Ons</Label>
+                <Select value={String(form.add_ons)} onValueChange={(v) => setForm({ ...form, add_ons: parseInt(v) })}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[0, 1, 2, 3].map(n => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-center px-2">
+                <Label className="text-xs text-muted-foreground">Credits</Label>
+                <p className="text-lg font-bold text-primary tabular-nums">{calculateCredits(form.connections, form.add_ons)}</p>
+              </div>
+            </div>
+          </div>
+
           {/* Device */}
           <div className="space-y-2">
             <Label htmlFor="edit-device">Device</Label>
