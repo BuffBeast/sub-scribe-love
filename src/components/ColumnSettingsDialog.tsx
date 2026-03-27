@@ -10,6 +10,7 @@ import { useOrderedColumns, useUpdateColumnVisibility, useUpdateColumnOrder, Uni
 import { useCustomFields, useCreateCustomField, useDeleteCustomField, useUpdateCustomField } from '@/hooks/useCustomFields';
 import { useDeviceTypes, useCreateDeviceType, useDeleteDeviceType } from '@/hooks/useDeviceTypes';
 import { useServiceTypes, useCreateServiceType, useDeleteServiceType, DEFAULT_SERVICES } from '@/hooks/useServiceTypes';
+import { useAddonTypes, useCreateAddonType, useDeleteAddonType } from '@/hooks/useAddonTypes';
 import { Separator } from '@/components/ui/separator';
 import {
   DndContext,
@@ -159,10 +160,12 @@ export function ColumnSettingsDialog() {
   const [newFieldOptions, setNewFieldOptions] = useState('');
   const [newDeviceName, setNewDeviceName] = useState('');
   const [newServiceName, setNewServiceName] = useState('');
+  const [newAddonName, setNewAddonName] = useState('');
 
   const orderedColumns = useOrderedColumns();
   const { data: deviceTypes = [] } = useDeviceTypes();
   const { data: serviceTypes = [] } = useServiceTypes();
+  const { data: addonTypes = [] } = useAddonTypes();
   const updateColumn = useUpdateColumnVisibility();
   const updateOrder = useUpdateColumnOrder();
   const createField = useCreateCustomField();
@@ -172,6 +175,8 @@ export function ColumnSettingsDialog() {
   const deleteDevice = useDeleteDeviceType();
   const createService = useCreateServiceType();
   const deleteService = useDeleteServiceType();
+  const createAddon = useCreateAddonType();
+  const deleteAddon = useDeleteAddonType();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -218,6 +223,13 @@ export function ColumnSettingsDialog() {
     if (newServiceName.trim()) {
       createService.mutate(newServiceName.trim());
       setNewServiceName('');
+    }
+  };
+
+  const handleAddAddon = () => {
+    if (newAddonName.trim()) {
+      createAddon.mutate(newAddonName.trim());
+      setNewAddonName('');
     }
   };
 
@@ -340,6 +352,32 @@ export function ColumnSettingsDialog() {
               <div className="flex gap-2 mt-3">
                 <Input placeholder="New device type..." value={newDeviceName} onChange={(e) => setNewDeviceName(e.target.value)} className="flex-1" />
                 <Button onClick={handleAddDevice} size="icon"><Plus className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          </div>
+          <Separator />
+
+          <div>
+            <h4 className="text-sm font-medium mb-3">Add-On Types</h4>
+            <div className="space-y-2">
+              {addonTypes.length > 0 && (
+                <div className="space-y-2">
+                  {addonTypes.map((addon) => (
+                    <div key={addon.id} className="flex items-center justify-between">
+                      <span className="text-sm">{addon.name}</span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteAddon.mutate(addon.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {addonTypes.length === 0 && (
+                <p className="text-xs text-muted-foreground">No add-ons defined yet. Add some below.</p>
+              )}
+              <div className="flex gap-2 mt-3">
+                <Input placeholder="New add-on type (e.g. Adult)..." value={newAddonName} onChange={(e) => setNewAddonName(e.target.value)} className="flex-1" onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAddon())} />
+                <Button onClick={handleAddAddon} size="icon"><Plus className="h-4 w-4" /></Button>
               </div>
             </div>
           </div>

@@ -16,6 +16,7 @@ import { useAllocateCredits } from '@/hooks/useCredits';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
+import { useAllAddonOptions } from '@/hooks/useAddonTypes';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +33,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
   const { data: customFields = [] } = useCustomFields();
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
+  const addonOptions = useAllAddonOptions();
 
   const [form, setForm] = useState({
     name: '',
@@ -51,6 +53,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
     reminders_enabled: true,
     connections: 1,
     add_ons: 0,
+    selected_addons: [] as string[],
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -74,6 +77,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         reminders_enabled: customer.reminders_enabled ?? true,
         connections: (customer as any).connections ?? 1,
         add_ons: (customer as any).add_ons ?? 0,
+        selected_addons: Array.isArray((customer as any).selected_addons) ? (customer as any).selected_addons : [],
       });
       const cd = customer.custom_data as Record<string, unknown> || {};
       const mapped: Record<string, string> = {};
@@ -113,7 +117,8 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         device: form.device || null,
         reminders_enabled: form.reminders_enabled,
         connections: form.connections,
-        add_ons: form.add_ons,
+        add_ons: form.selected_addons.length,
+        selected_addons: form.selected_addons,
         custom_data: customData,
       },
       {
@@ -133,12 +138,12 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
             if (vodExtended) parts.push('VOD');
 
             if (parts.length > 0) {
-              const creditCost = calculateCredits(form.connections, form.add_ons);
+              const creditCost = calculateCredits(form.connections, form.selected_addons.length);
               allocateCredits.mutate({
                 amount: creditCost,
                 customer_id: customer.id,
                 customer_name: customer.name,
-                notes: `${parts.join(' + ')} renewal (${form.connections} conn, ${form.add_ons} add-ons)`,
+                notes: `${parts.join(' + ')} renewal (${form.connections} conn, ${form.selected_addons.length} add-ons)`,
               });
             }
           }
@@ -293,7 +298,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
           {/* Connections & Add-Ons */}
           <div className="space-y-2 p-3 border rounded-lg">
             <p className="text-sm font-medium">Package Details</p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-end">
               <div className="flex-1 space-y-1">
                 <Label className="text-xs text-muted-foreground">Connections</Label>
                 <Select value={String(form.connections)} onValueChange={(v) => setForm({ ...form, connections: parseInt(v) })}>
@@ -307,24 +312,33 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex-1 space-y-1">
-                <Label className="text-xs text-muted-foreground">Add-Ons</Label>
-                <Select value={String(form.add_ons)} onValueChange={(v) => setForm({ ...form, add_ons: parseInt(v) })}>
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[0, 1, 2, 3].map(n => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="text-center px-2">
                 <Label className="text-xs text-muted-foreground">Credits</Label>
-                <p className="text-lg font-bold text-primary tabular-nums">{calculateCredits(form.connections, form.add_ons)}</p>
+                <p className="text-lg font-bold text-primary tabular-nums">{calculateCredits(form.connections, form.selected_addons.length)}</p>
               </div>
             </div>
+            {addonOptions.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Add-Ons</Label>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {addonOptions.map((addon) => (
+                    <div key={addon} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`edit-addon-${addon}`}
+                        checked={form.selected_addons.includes(addon)}
+                        onCheckedChange={(checked) => {
+                          const newAddons = checked
+                            ? [...form.selected_addons, addon]
+                            : form.selected_addons.filter(a => a !== addon);
+                          setForm({ ...form, selected_addons: newAddons });
+                        }}
+                      />
+                      <Label htmlFor={`edit-addon-${addon}`} className="text-sm">{addon}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Device */}

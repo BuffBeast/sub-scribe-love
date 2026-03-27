@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Coins, Plus, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle, Calculator } from 'lucide-react';
 import { useCreditTransactions, useCreditBalance, useAddCredits } from '@/hooks/useCredits';
 import { calculateCredits } from '@/lib/creditCalculator';
+import { useAllAddonOptions } from '@/hooks/useAddonTypes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -15,15 +18,16 @@ export function CreditTracker() {
   const [purchaseQty, setPurchaseQty] = useState('');
   const [purchaseNotes, setPurchaseNotes] = useState('');
   const [calcConnections, setCalcConnections] = useState('1');
-  const [calcAddOns, setCalcAddOns] = useState('0');
+  const [calcSelectedAddons, setCalcSelectedAddons] = useState<string[]>([]);
 
   const { data: transactions = [], isLoading } = useCreditTransactions();
   const { data: balance = 0 } = useCreditBalance();
   const addCredits = useAddCredits();
+  const addonOptions = useAllAddonOptions();
 
   const calculatedCredits = calculateCredits(
     parseInt(calcConnections) || 1,
-    parseInt(calcAddOns) || 0
+    calcSelectedAddons.length
   );
 
   const handlePurchase = () => {
@@ -81,24 +85,34 @@ export function CreditTracker() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex-1 space-y-1">
-                  <label className="text-xs text-muted-foreground">Add-Ons</label>
-                  <Select value={calcAddOns} onValueChange={setCalcAddOns}>
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[0, 1, 2, 3].map(n => (
-                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="text-center px-3">
                   <p className="text-xs text-muted-foreground">Credits</p>
                   <p className="text-lg font-bold text-primary tabular-nums">{calculatedCredits}</p>
                 </div>
               </div>
+              {addonOptions.length > 0 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Add-Ons</label>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                    {addonOptions.map((addon) => (
+                      <div key={addon} className="flex items-center space-x-1.5">
+                        <Checkbox
+                          id={`calc-addon-${addon}`}
+                          checked={calcSelectedAddons.includes(addon)}
+                          onCheckedChange={(checked) => {
+                            setCalcSelectedAddons(checked
+                              ? [...calcSelectedAddons, addon]
+                              : calcSelectedAddons.filter(a => a !== addon)
+                            );
+                          }}
+                          className="h-3.5 w-3.5"
+                        />
+                        <Label htmlFor={`calc-addon-${addon}`} className="text-xs">{addon}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Add credits */}
