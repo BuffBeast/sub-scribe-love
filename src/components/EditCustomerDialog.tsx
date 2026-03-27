@@ -11,6 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Customer, useUpdateCustomer } from '@/hooks/useCustomers';
+import { useAllocateCredits } from '@/hooks/useCredits';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
