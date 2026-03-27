@@ -133,11 +133,12 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
             if (vodExtended) parts.push('VOD');
 
             if (parts.length > 0) {
+              const creditCost = calculateCredits(form.connections, form.add_ons);
               allocateCredits.mutate({
-                amount: parts.length,
+                amount: creditCost,
                 customer_id: customer.id,
                 customer_name: customer.name,
-                notes: `${parts.join(' + ')} renewal`,
+                notes: `${parts.join(' + ')} renewal (${form.connections} conn, ${form.add_ons} add-ons)`,
               });
             }
           }
