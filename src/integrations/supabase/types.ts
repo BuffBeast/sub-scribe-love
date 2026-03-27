@@ -189,7 +189,9 @@ export type Database = {
       }
       customers: {
         Row: {
+          add_ons: number
           company: string | null
+          connections: number
           created_at: string
           custom_data: Json | null
           device: string | null
@@ -215,7 +217,9 @@ export type Database = {
           vod_start_date: string | null
         }
         Insert: {
+          add_ons?: number
           company?: string | null
+          connections?: number
           created_at?: string
           custom_data?: Json | null
           device?: string | null
@@ -241,7 +245,9 @@ export type Database = {
           vod_start_date?: string | null
         }
         Update: {
+          add_ons?: number
           company?: string | null
+          connections?: number
           created_at?: string
           custom_data?: Json | null
           device?: string | null
