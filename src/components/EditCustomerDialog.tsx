@@ -53,6 +53,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
     reminders_enabled: true,
     connections: 1,
     add_ons: 0,
+    selected_addons: [] as string[],
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
