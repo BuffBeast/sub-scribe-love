@@ -87,7 +87,8 @@ export function useOrderedColumns(): UnifiedColumn[] {
       label: COLUMN_LABELS[col] || col,
       is_visible: existing ? existing.is_visible : true,
       sort_order: existing?.sort_order ?? idx,
-      type: 'builtin',
+      column_width: existing?.column_width ?? null,
+      type: 'builtin' as const,
     };
   });
 
