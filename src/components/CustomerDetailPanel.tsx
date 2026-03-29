@@ -150,10 +150,10 @@ export function CustomerDetailPanel({ customer, onClose }: CustomerDetailPanelPr
               </div>
               
               {/* Device */}
-              {customer.device && (
+              {Array.isArray(customer.device) && customer.device.length > 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Device</span>
-                  <span className="text-sm font-medium">{customer.device}</span>
+                  <span className="text-sm font-medium">{(customer.device as string[]).join(', ')}</span>
                 </div>
               )}
 

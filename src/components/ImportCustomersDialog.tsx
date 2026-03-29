@@ -218,7 +218,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
       vod_end_date: findDate(['vod_end', 'vod_expiry', 'vod expiry', 'vod_end_date']),
       total_spent: findNumber(['price', 'spent', 'revenue', 'total', 'amount', 'balance', 'credits']),
       service: findValue(['service']) || null,
-      device: findValue(['device']) || null,
+      device: findValue(['device']) ? findValue(['device']).split(',').map(d => d.trim()).filter(Boolean) : [],
       has_trial,
       has_live_trial,
       has_vod_trial,
