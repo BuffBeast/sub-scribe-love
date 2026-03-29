@@ -102,7 +102,7 @@ function ResizeHandle({ onResize, onResizeEnd }: { onResize: (delta: number) => 
 
 function SortableHeader({ id, children, className, width, onResize, onResizeEnd }: { id: string; children: ReactNode; className?: string; width?: number | null; onResize: (colId: string, delta: number) => void; onResizeEnd: (colId: string) => void }) {
   const { attributes, listeners, setNodeRef, isDragging, isSorting, over } = useSortable({ id });
-  const startWidthRef = useRef(width || 0);
+  
 
   return (
     <TableHead
