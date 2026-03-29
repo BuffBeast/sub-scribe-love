@@ -46,6 +46,7 @@ export interface UnifiedColumn {
   label: string;
   is_visible: boolean;
   sort_order: number;
+  column_width: number | null;
   type: 'builtin' | 'custom';
   /** Only for custom fields */
   customField?: CustomField;
