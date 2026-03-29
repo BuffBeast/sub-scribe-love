@@ -7,6 +7,7 @@ export interface ColumnVisibility {
   column_name: string;
   is_visible: boolean;
   sort_order: number;
+  column_width: number | null;
 }
 
 export const COLUMN_LABELS: Record<string, string> = {
