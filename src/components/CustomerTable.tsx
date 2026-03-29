@@ -75,25 +75,56 @@ const HEADER_LABELS: Record<string, string> = {
   subscription_status: 'Status',
 };
 
-function SortableHeader({ id, children, className }: { id: string; children: ReactNode; className?: string }) {
+function ResizeHandle({ onResize, onResizeEnd }: { onResize: (delta: number) => void; onResizeEnd: () => void }) {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const handleMouseMove = (ev: MouseEvent) => {
+      onResize(ev.clientX - startX);
+    };
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      onResizeEnd();
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/40 active:bg-primary/60 z-10"
+    />
+  );
+}
+
+function SortableHeader({ id, children, className, width, onResize, onResizeEnd }: { id: string; children: ReactNode; className?: string; width?: number | null; onResize: (colId: string, delta: number) => void; onResizeEnd: (colId: string) => void }) {
   const { attributes, listeners, setNodeRef, isDragging, isSorting, over } = useSortable({ id });
+  const startWidthRef = useRef(width || 0);
 
   return (
     <TableHead
       ref={setNodeRef}
       className={cn(
-        "font-semibold transition-colors",
+        "font-semibold transition-colors relative",
         isDragging && "bg-primary/15 opacity-70",
         !isDragging && isSorting && over?.id === id && "bg-accent",
         className
       )}
+      style={width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : undefined}
     >
       <div className="flex items-center gap-1">
         <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground shrink-0">
           <GripVertical className="h-3 w-3" />
         </button>
-        {children}
+        <span className="truncate">{children}</span>
       </div>
+      <ResizeHandle
+        onResize={(delta) => onResize(id, delta)}
+        onResizeEnd={() => onResizeEnd(id)}
+      />
     </TableHead>
   );
 }
