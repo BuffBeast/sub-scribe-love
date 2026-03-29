@@ -110,8 +110,9 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null);
 
-  // Filter to visible columns, skip email (shown under name)
-  const visibleColumns = orderedColumns.filter((c) => c.is_visible && c.column_name !== 'email');
+  // Separate name column from others for sticky behavior
+  const nameColumn = orderedColumns.find((c) => c.column_name === 'name' && c.is_visible);
+  const visibleColumns = orderedColumns.filter((c) => c.is_visible && c.column_name !== 'email' && c.column_name !== 'name');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 10 } })
