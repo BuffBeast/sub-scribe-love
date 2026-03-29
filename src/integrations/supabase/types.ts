@@ -221,7 +221,7 @@ export type Database = {
           connections: number
           created_at: string
           custom_data: Json | null
-          device: string | null
+          device: Json | null
           email: string | null
           has_live_trial: boolean
           has_trial: boolean
@@ -250,7 +250,7 @@ export type Database = {
           connections?: number
           created_at?: string
           custom_data?: Json | null
-          device?: string | null
+          device?: Json | null
           email?: string | null
           has_live_trial?: boolean
           has_trial?: boolean
@@ -279,7 +279,7 @@ export type Database = {
           connections?: number
           created_at?: string
           custom_data?: Json | null
-          device?: string | null
+          device?: Json | null
           email?: string | null
           has_live_trial?: boolean
           has_trial?: boolean
