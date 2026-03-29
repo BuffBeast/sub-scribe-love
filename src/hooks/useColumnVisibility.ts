@@ -179,3 +179,36 @@ export function useUpdateColumnOrder() {
     },
   });
 }
+
+export function useUpdateColumnWidth() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ column_name, column_width }: { column_name: string; column_width: number | null }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: existing } = await supabase
+        .from('column_visibility')
+        .select('id')
+        .eq('column_name', column_name)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('column_visibility')
+          .update({ column_width })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('column_visibility')
+          .insert({ column_name, column_width, user_id: user.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['column_visibility'] });
+    },
+  });
+}
