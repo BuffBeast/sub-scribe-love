@@ -269,7 +269,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
           <TableCell key={col.id} onClick={(e) => e.stopPropagation()}>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 w-[130px] justify-start text-xs font-normal">
+                <Button variant="outline" size="sm" className="h-8 w-[90px] justify-start text-xs font-normal truncate">
                   {devices.length > 0 ? devices.join(', ') : <span className="text-muted-foreground">None</span>}
                 </Button>
               </PopoverTrigger>
