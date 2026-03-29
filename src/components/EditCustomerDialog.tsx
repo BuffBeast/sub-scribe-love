@@ -114,7 +114,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         subscription_end_date: form.subscription_end_date ? format(form.subscription_end_date, 'yyyy-MM-dd') : null,
         vod_plan: form.has_vod ? 'Active' : null,
         vod_end_date: form.vod_end_date ? format(form.vod_end_date, 'yyyy-MM-dd') : null,
-        device: form.device || null,
+        device: form.selected_devices,
         reminders_enabled: form.reminders_enabled,
         connections: form.connections,
         add_ons: form.selected_addons.length,
