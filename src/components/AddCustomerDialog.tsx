@@ -44,7 +44,7 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
     has_vod: false,
     vod_end_date: '',
     reminders_enabled: true,
-    device: '',
+    selected_devices: [] as string[],
     service: '',
     has_trial: false,
     has_live_trial: false,
