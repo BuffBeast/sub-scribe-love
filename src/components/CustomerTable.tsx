@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react';
+import { useState, useCallback, useRef, ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
@@ -38,7 +38,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
-import { useOrderedColumns, useUpdateColumnOrder, COLUMN_LABELS, UnifiedColumn } from '@/hooks/useColumnVisibility';
+import { useOrderedColumns, useUpdateColumnOrder, useUpdateColumnWidth, COLUMN_LABELS, UnifiedColumn } from '@/hooks/useColumnVisibility';
 import { useDeleteCustomer } from '@/hooks/useCustomers';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
@@ -75,25 +75,56 @@ const HEADER_LABELS: Record<string, string> = {
   subscription_status: 'Status',
 };
 
-function SortableHeader({ id, children, className }: { id: string; children: ReactNode; className?: string }) {
+function ResizeHandle({ onResize, onResizeEnd }: { onResize: (delta: number) => void; onResizeEnd: () => void }) {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const handleMouseMove = (ev: MouseEvent) => {
+      onResize(ev.clientX - startX);
+    };
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      onResizeEnd();
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/40 active:bg-primary/60 z-10"
+    />
+  );
+}
+
+function SortableHeader({ id, children, className, width, onResize, onResizeEnd }: { id: string; children: ReactNode; className?: string; width?: number | null; onResize: (colId: string, delta: number) => void; onResizeEnd: (colId: string) => void }) {
   const { attributes, listeners, setNodeRef, isDragging, isSorting, over } = useSortable({ id });
+  
 
   return (
     <TableHead
       ref={setNodeRef}
       className={cn(
-        "font-semibold transition-colors",
+        "font-semibold transition-colors relative",
         isDragging && "bg-primary/15 opacity-70",
         !isDragging && isSorting && over?.id === id && "bg-accent",
         className
       )}
+      style={width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : undefined}
     >
       <div className="flex items-center gap-1">
         <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground shrink-0">
           <GripVertical className="h-3 w-3" />
         </button>
-        {children}
+        <span className="truncate">{children}</span>
       </div>
+      <ResizeHandle
+        onResize={(delta) => onResize(id, delta)}
+        onResizeEnd={() => onResizeEnd(id)}
+      />
     </TableHead>
   );
 }
@@ -101,6 +132,9 @@ function SortableHeader({ id, children, className }: { id: string; children: Rea
 export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps) {
   const orderedColumns = useOrderedColumns();
   const updateOrder = useUpdateColumnOrder();
+  const updateWidth = useUpdateColumnWidth();
+  const [resizingWidths, setResizingWidths] = useState<Record<string, number>>({});
+  const baseWidthsRef = useRef<Record<string, number>>({});
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
   const deleteCustomer = useDeleteCustomer();
@@ -130,6 +164,31 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
     const reordered = arrayMove(orderedColumns, oldIndex, newIndex);
 
     updateOrder.mutate(reordered.map((col, idx) => ({ column_name: col.column_name, sort_order: idx })));
+  };
+
+  const handleColumnResize = useCallback((colId: string, delta: number) => {
+    const col = visibleColumns.find(c => c.id === colId);
+    const baseWidth = baseWidthsRef.current[colId] || col?.column_width || 120;
+    if (!baseWidthsRef.current[colId]) {
+      baseWidthsRef.current[colId] = baseWidth;
+    }
+    const newWidth = Math.max(60, baseWidthsRef.current[colId] + delta);
+    setResizingWidths(prev => ({ ...prev, [colId]: newWidth }));
+  }, [visibleColumns]);
+
+  const handleColumnResizeEnd = useCallback((colId: string) => {
+    const width = resizingWidths[colId];
+    if (width) {
+      const col = visibleColumns.find(c => c.id === colId);
+      if (col) {
+        updateWidth.mutate({ column_name: col.column_name, column_width: Math.round(width) });
+      }
+    }
+    baseWidthsRef.current = {};
+  }, [resizingWidths, visibleColumns, updateWidth]);
+
+  const getColumnWidth = (col: UnifiedColumn): number | null => {
+    return resizingWidths[col.id] || col.column_width;
   };
 
   const allSelected = customers.length > 0 && selectedIds.size === customers.length;
@@ -362,7 +421,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleHeaderDragEnd}>
                 <SortableContext items={visibleColumns.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
                   {visibleColumns.map((col) => (
-                    <SortableHeader key={col.id} id={col.id} className={getHeaderClassName(col)}>
+                    <SortableHeader key={col.id} id={col.id} className={getHeaderClassName(col)} width={getColumnWidth(col)} onResize={handleColumnResize} onResizeEnd={handleColumnResizeEnd}>
                       {getHeaderLabel(col)}
                     </SortableHeader>
                   ))}

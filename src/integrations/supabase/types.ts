@@ -119,6 +119,7 @@ export type Database = {
       column_visibility: {
         Row: {
           column_name: string
+          column_width: number | null
           id: string
           is_visible: boolean
           sort_order: number
@@ -126,6 +127,7 @@ export type Database = {
         }
         Insert: {
           column_name: string
+          column_width?: number | null
           id?: string
           is_visible?: boolean
           sort_order?: number
@@ -133,6 +135,7 @@ export type Database = {
         }
         Update: {
           column_name?: string
+          column_width?: number | null
           id?: string
           is_visible?: boolean
           sort_order?: number

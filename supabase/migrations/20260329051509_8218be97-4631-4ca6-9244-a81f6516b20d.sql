@@ -1,0 +1,1 @@
+ALTER TABLE public.column_visibility ADD COLUMN column_width integer DEFAULT NULL;

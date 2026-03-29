@@ -7,6 +7,7 @@ export interface ColumnVisibility {
   column_name: string;
   is_visible: boolean;
   sort_order: number;
+  column_width: number | null;
 }
 
 export const COLUMN_LABELS: Record<string, string> = {
@@ -45,6 +46,7 @@ export interface UnifiedColumn {
   label: string;
   is_visible: boolean;
   sort_order: number;
+  column_width: number | null;
   type: 'builtin' | 'custom';
   /** Only for custom fields */
   customField?: CustomField;
@@ -85,7 +87,8 @@ export function useOrderedColumns(): UnifiedColumn[] {
       label: COLUMN_LABELS[col] || col,
       is_visible: existing ? existing.is_visible : true,
       sort_order: existing?.sort_order ?? idx,
-      type: 'builtin',
+      column_width: existing?.column_width ?? null,
+      type: 'builtin' as const,
     };
   });
 
@@ -100,7 +103,8 @@ export function useOrderedColumns(): UnifiedColumn[] {
       label: field.name,
       is_visible: existing ? existing.is_visible : field.is_visible,
       sort_order: existing?.sort_order ?? (DEFAULT_COLUMN_ORDER.length + field.sort_order),
-      type: 'custom',
+      column_width: existing?.column_width ?? null,
+      type: 'custom' as const,
       customField: field,
     };
   });
@@ -169,6 +173,39 @@ export function useUpdateColumnOrder() {
         .upsert(rows, { onConflict: 'column_name,user_id' });
 
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['column_visibility'] });
+    },
+  });
+}
+
+export function useUpdateColumnWidth() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ column_name, column_width }: { column_name: string; column_width: number | null }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: existing } = await supabase
+        .from('column_visibility')
+        .select('id')
+        .eq('column_name', column_name)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('column_visibility')
+          .update({ column_width })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('column_visibility')
+          .insert({ column_name, column_width, user_id: user.id });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['column_visibility'] });
