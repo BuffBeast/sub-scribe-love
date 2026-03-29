@@ -281,18 +281,39 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
       }
       case 'company':
         return <TableCell key={col.id} className="text-muted-foreground">{customer.company || '-'}</TableCell>;
-      case 'device':
+      case 'device': {
+        const devices = Array.isArray(customer.device) ? (customer.device as string[]) : [];
         return (
           <TableCell key={col.id} onClick={(e) => e.stopPropagation()}>
-            <Select value={customer.device || 'none'} onValueChange={(value) => updateCustomer.mutate({ id: customer.id, device: value === 'none' ? null : value })}>
-              <SelectTrigger className="h-8 w-[110px]"><SelectValue placeholder="-" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {deviceOptions.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 w-[130px] justify-start text-xs font-normal">
+                  {devices.length > 0 ? devices.join(', ') : <span className="text-muted-foreground">None</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-2" align="start">
+                <div className="space-y-1">
+                  {deviceOptions.map((d) => (
+                    <div key={d} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`device-${customer.id}-${d}`}
+                        checked={devices.includes(d)}
+                        onCheckedChange={(checked) => {
+                          const newDevices = checked
+                            ? [...devices, d]
+                            : devices.filter(dev => dev !== d);
+                          updateCustomer.mutate({ id: customer.id, device: newDevices } as any);
+                        }}
+                      />
+                      <label htmlFor={`device-${customer.id}-${d}`} className="text-sm cursor-pointer">{d}</label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </TableCell>
         );
+      }
       case 'connections':
         return <TableCell key={col.id} className="text-center text-muted-foreground">{customer.connections ?? 1}</TableCell>;
       case 'selected_addons': {

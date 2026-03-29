@@ -143,27 +143,37 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
         </div>
         <div className="space-y-1">
           <span className="text-xs text-muted-foreground">Device</span>
-          <Select
-            value={customer.device || 'none'}
-            onValueChange={(value) => {
-              updateCustomer.mutate({
-                id: customer.id,
-                device: value === 'none' ? null : value,
-              });
-            }}
-          >
-            <SelectTrigger className="h-8 w-full text-xs">
-              <SelectValue placeholder="-" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {deviceOptions.map((device) => (
-                <SelectItem key={device} value={device}>
-                  {device}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 w-full justify-start text-xs font-normal">
+                {Array.isArray(customer.device) && customer.device.length > 0
+                  ? (customer.device as string[]).join(', ')
+                  : <span className="text-muted-foreground">None</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="start">
+              <div className="space-y-1">
+                {deviceOptions.map((d) => {
+                  const devices = Array.isArray(customer.device) ? (customer.device as string[]) : [];
+                  return (
+                    <div key={d} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`mobile-device-${customer.id}-${d}`}
+                        checked={devices.includes(d)}
+                        onCheckedChange={(checked) => {
+                          const newDevices = checked
+                            ? [...devices, d]
+                            : devices.filter(dev => dev !== d);
+                          updateCustomer.mutate({ id: customer.id, device: newDevices } as any);
+                        }}
+                      />
+                      <label htmlFor={`mobile-device-${customer.id}-${d}`} className="text-xs cursor-pointer">{d}</label>
+                    </div>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 

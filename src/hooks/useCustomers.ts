@@ -26,7 +26,7 @@ export interface Customer {
   has_trial: boolean;
   has_live_trial: boolean;
   has_vod_trial: boolean;
-  device: string | null;
+  device: string[];
   service: string | null;
   connections: number;
   add_ons: number;

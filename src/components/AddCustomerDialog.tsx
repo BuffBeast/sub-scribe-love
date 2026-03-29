@@ -44,7 +44,7 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
     has_vod: false,
     vod_end_date: '',
     reminders_enabled: true,
-    device: '',
+    selected_devices: [] as string[],
     service: '',
     has_trial: false,
     has_live_trial: false,
@@ -75,7 +75,7 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
         vod_plan: form.has_vod ? 'Active' : null,
         vod_end_date: form.has_vod ? form.vod_end_date || null : null,
         reminders_enabled: form.reminders_enabled,
-        device: form.device || null,
+        device: form.selected_devices,
         service: form.service || null,
         has_trial: form.has_trial,
         has_live_trial: form.has_live_trial,
@@ -100,7 +100,7 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
             has_vod: false,
             vod_end_date: '',
             reminders_enabled: true,
-            device: '',
+            selected_devices: [],
             service: '',
             has_trial: false,
             has_live_trial: false,
@@ -274,22 +274,28 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
             )}
           </div>
 
-          {/* Device */}
+          {/* Device (multi-select) */}
           <div className="space-y-2">
-            <Label htmlFor="device">Device</Label>
-            <Select value={form.device || 'none'} onValueChange={(v) => setForm({ ...form, device: v === 'none' ? '' : v })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select device..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {deviceOptions.map((device) => (
-                  <SelectItem key={device} value={device}>
-                    {device}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Device</Label>
+            <div className="flex flex-wrap gap-x-4 gap-y-2 p-3 border rounded-lg">
+              {deviceOptions.length > 0 ? deviceOptions.map((device) => (
+                <div key={device} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`add-device-${device}`}
+                    checked={form.selected_devices.includes(device)}
+                    onCheckedChange={(checked) => {
+                      const newDevices = checked
+                        ? [...form.selected_devices, device]
+                        : form.selected_devices.filter(d => d !== device);
+                      setForm({ ...form, selected_devices: newDevices });
+                    }}
+                  />
+                  <Label htmlFor={`add-device-${device}`} className="text-sm">{device}</Label>
+                </div>
+              )) : (
+                <p className="text-sm text-muted-foreground">No device types configured</p>
+              )}
+            </div>
           </div>
 
           {/* Notes */}

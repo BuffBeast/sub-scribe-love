@@ -29,7 +29,7 @@ const customerImportSchema = z.object({
   vod_end_date: dateStringSchema,
   total_spent: z.number().min(0, 'Total spent cannot be negative').max(999999999, 'Total spent too large').default(0),
   service: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
-  device: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
+  device: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val ? val.split(',').map(d => d.trim()).filter(Boolean) : []),
   has_trial: z.boolean().default(false),
   has_live_trial: z.boolean().default(false),
   has_vod_trial: z.boolean().default(false),
@@ -163,7 +163,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     vod_end_date: string | null;
     total_spent: number;
     service: string | null;
-    device: string | null;
+    device: string[];
     has_trial: boolean;
     has_live_trial: boolean;
     has_vod_trial: boolean;
@@ -218,7 +218,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
       vod_end_date: findDate(['vod_end', 'vod_expiry', 'vod expiry', 'vod_end_date']),
       total_spent: findNumber(['price', 'spent', 'revenue', 'total', 'amount', 'balance', 'credits']),
       service: findValue(['service']) || null,
-      device: findValue(['device']) || null,
+      device: findValue(['device']) ? findValue(['device']).split(',').map(d => d.trim()).filter(Boolean) : [],
       has_trial,
       has_live_trial,
       has_vod_trial,

@@ -25,7 +25,7 @@ const COLUMN_CSV_MAP: Record<string, { header: string; getValue: (c: Customer, c
   subscription_end_date: { header: 'LIVE Expiry', getValue: (c) => c.subscription_end_date || '' },
   vod_plan: { header: 'VOD Plan', getValue: (c) => c.vod_plan || '' },
   vod_end_date: { header: 'VOD Expiry', getValue: (c) => c.vod_end_date || '' },
-  device: { header: 'Device', getValue: (c) => c.device || '' },
+  device: { header: 'Device', getValue: (c) => { const d = Array.isArray(c.device) ? (c.device as string[]) : []; return d.join(', '); } },
   company: { header: 'Notes', getValue: (c) => c.company || '' },
   subscription_status: { header: 'Status', getValue: (c) => c.subscription_status || '' },
   total_spent: { header: 'Price', getValue: (c) => c.total_spent?.toString() || '0' },
