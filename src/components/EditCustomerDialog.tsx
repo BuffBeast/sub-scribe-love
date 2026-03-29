@@ -49,7 +49,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
     subscription_end_date: null as Date | null,
     has_vod: false,
     vod_end_date: null as Date | null,
-    device: '',
+    selected_devices: [] as string[],
     reminders_enabled: true,
     connections: 1,
     add_ons: 0,
