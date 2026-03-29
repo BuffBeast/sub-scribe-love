@@ -29,7 +29,7 @@ const customerImportSchema = z.object({
   vod_end_date: dateStringSchema,
   total_spent: z.number().min(0, 'Total spent cannot be negative').max(999999999, 'Total spent too large').default(0),
   service: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
-  device: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val || null),
+  device: z.string().trim().max(100).nullable().or(z.literal('')).transform(val => val ? val.split(',').map(d => d.trim()).filter(Boolean) : []),
   has_trial: z.boolean().default(false),
   has_live_trial: z.boolean().default(false),
   has_vod_trial: z.boolean().default(false),
