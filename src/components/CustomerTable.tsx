@@ -38,7 +38,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
-import { useOrderedColumns, useUpdateColumnOrder, useUpdateColumnWidth, COLUMN_LABELS, UnifiedColumn } from '@/hooks/useColumnVisibility';
+import { useOrderedColumns, useUpdateColumnOrder, COLUMN_LABELS, UnifiedColumn } from '@/hooks/useColumnVisibility';
 import { useDeleteCustomer } from '@/hooks/useCustomers';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
