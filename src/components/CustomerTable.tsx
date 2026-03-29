@@ -132,6 +132,9 @@ function SortableHeader({ id, children, className, width, onResize, onResizeEnd 
 export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps) {
   const orderedColumns = useOrderedColumns();
   const updateOrder = useUpdateColumnOrder();
+  const updateWidth = useUpdateColumnWidth();
+  const [resizingWidths, setResizingWidths] = useState<Record<string, number>>({});
+  const baseWidthsRef = useRef<Record<string, number>>({});
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
   const deleteCustomer = useDeleteCustomer();
