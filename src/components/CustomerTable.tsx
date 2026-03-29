@@ -358,11 +358,11 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
       )}
 
       <Card className="shadow-card border-border/50 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[70vh]">
         <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/50">
-              <TableHead className="w-12">
+          <TableHeader className="sticky top-0 z-20 bg-muted/95 backdrop-blur-sm">
+            <TableRow className="hover:bg-transparent border-b border-border/50">
+              <TableHead className="w-12 sticky left-0 z-30 bg-muted/95 backdrop-blur-sm">
                 <Checkbox
                   checked={allSelected}
                   ref={(ref) => { if (ref) { (ref as any).indeterminate = someSelected; } }}
@@ -370,6 +370,11 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                   aria-label="Select all"
                 />
               </TableHead>
+              {nameColumn && (
+                <TableHead className="font-semibold sticky left-12 z-30 bg-muted/95 backdrop-blur-sm min-w-[180px] after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50">
+                  {getHeaderLabel(nameColumn)}
+                </TableHead>
+              )}
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleHeaderDragEnd}>
                 <SortableContext items={visibleColumns.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
                   {visibleColumns.map((col) => (
@@ -392,7 +397,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                 className="cursor-pointer hover:bg-muted/20 transition-colors border-b border-border/30"
                 onClick={() => onCustomerClick?.(customer)}
               >
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell className="sticky left-0 z-10 bg-card" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={selectedIds.has(customer.id)}
                     onCheckedChange={() => {
@@ -406,6 +411,21 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     aria-label={`Select ${customer.name}`}
                   />
                 </TableCell>
+                {nameColumn && (
+                  <TableCell className="sticky left-12 z-10 bg-card min-w-[180px] after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/30">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9 border-2 border-background shadow-sm">
+                        <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">{getInitials(customer.name)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{customer.name}</p>
+                        {orderedColumns.find((c) => c.column_name === 'email')?.is_visible && customer.email && (
+                          <p className="text-sm text-muted-foreground">{customer.email}</p>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                )}
                 {visibleColumns.map((col) => renderCell(col, customer))}
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
