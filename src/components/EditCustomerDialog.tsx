@@ -73,7 +73,7 @@ export function EditCustomerDialog({ customer, open, onOpenChange }: EditCustome
         subscription_end_date: customer.subscription_end_date ? new Date(customer.subscription_end_date) : null,
         has_vod: !!customer.vod_plan,
         vod_end_date: customer.vod_end_date ? new Date(customer.vod_end_date) : null,
-        device: customer.device || '',
+        selected_devices: Array.isArray(customer.device) ? (customer.device as string[]) : [],
         reminders_enabled: customer.reminders_enabled ?? true,
         connections: (customer as any).connections ?? 1,
         add_ons: (customer as any).add_ons ?? 0,
