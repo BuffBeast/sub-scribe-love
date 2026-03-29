@@ -469,7 +469,15 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                     </div>
                   </TableCell>
                 )}
-                {visibleColumns.map((col) => renderCell(col, customer))}
+                {visibleColumns.map((col) => {
+                  const cell = renderCell(col, customer);
+                  if (!cell) return null;
+                  const w = getColumnWidth(col);
+                  if (w) {
+                    return <TableCell key={col.id} style={{ width: `${w}px`, minWidth: `${w}px`, maxWidth: `${w}px` }} className="overflow-hidden">{cell.props.children}</TableCell>;
+                  }
+                  return cell;
+                })}
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
                     {customer.email && (
