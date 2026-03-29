@@ -75,7 +75,7 @@ export function AddCustomerDialog({ onOpenChange }: AddCustomerDialogProps) {
         vod_plan: form.has_vod ? 'Active' : null,
         vod_end_date: form.has_vod ? form.vod_end_date || null : null,
         reminders_enabled: form.reminders_enabled,
-        device: form.device || null,
+        device: form.selected_devices,
         service: form.service || null,
         has_trial: form.has_trial,
         has_live_trial: form.has_live_trial,
