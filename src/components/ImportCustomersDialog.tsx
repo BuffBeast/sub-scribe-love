@@ -163,7 +163,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     vod_end_date: string | null;
     total_spent: number;
     service: string | null;
-    device: string | null;
+    device: string[];
     has_trial: boolean;
     has_live_trial: boolean;
     has_vod_trial: boolean;
