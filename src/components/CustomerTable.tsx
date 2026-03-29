@@ -166,6 +166,31 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
     updateOrder.mutate(reordered.map((col, idx) => ({ column_name: col.column_name, sort_order: idx })));
   };
 
+  const handleColumnResize = useCallback((colId: string, delta: number) => {
+    const col = visibleColumns.find(c => c.id === colId);
+    const baseWidth = baseWidthsRef.current[colId] || col?.column_width || 120;
+    if (!baseWidthsRef.current[colId]) {
+      baseWidthsRef.current[colId] = baseWidth;
+    }
+    const newWidth = Math.max(60, baseWidthsRef.current[colId] + delta);
+    setResizingWidths(prev => ({ ...prev, [colId]: newWidth }));
+  }, [visibleColumns]);
+
+  const handleColumnResizeEnd = useCallback((colId: string) => {
+    const width = resizingWidths[colId];
+    if (width) {
+      const col = visibleColumns.find(c => c.id === colId);
+      if (col) {
+        updateWidth.mutate({ column_name: col.column_name, column_width: Math.round(width) });
+      }
+    }
+    baseWidthsRef.current = {};
+  }, [resizingWidths, visibleColumns, updateWidth]);
+
+  const getColumnWidth = (col: UnifiedColumn): number | null => {
+    return resizingWidths[col.id] || col.column_width;
+  };
+
   const allSelected = customers.length > 0 && selectedIds.size === customers.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < customers.length;
 
