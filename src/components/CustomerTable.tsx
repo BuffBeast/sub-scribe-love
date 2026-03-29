@@ -101,64 +101,8 @@ function SortableHeader({ id, children, className }: { id: string; children: Rea
 export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps) {
   const orderedColumns = useOrderedColumns();
   const updateOrder = useUpdateColumnOrder();
-  const updateWidth = useUpdateColumnWidth();
-  const [resizingWidths, setResizingWidths] = useState<Record<string, number>>({});
-  const baseWidthsRef = useRef<Record<string, number>>({});
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
-  const deleteCustomer = useDeleteCustomer();
-  const updateCustomer = useUpdateCustomer();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null);
-
-  // Separate name column from others for sticky behavior
-  const nameColumn = orderedColumns.find((c) => c.column_name === 'name' && c.is_visible);
-  const visibleColumns = orderedColumns.filter((c) => c.is_visible && c.column_name !== 'email' && c.column_name !== 'name');
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 10 } })
-  );
-
-  const handleHeaderDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    // Work with ALL columns (including hidden) to preserve their positions
-    const allIds = orderedColumns.map((c) => c.id);
-    const oldIndex = allIds.indexOf(active.id as string);
-    const newIndex = allIds.indexOf(over.id as string);
-    if (oldIndex === -1 || newIndex === -1) return;
-    const reordered = arrayMove(orderedColumns, oldIndex, newIndex);
-
-    updateOrder.mutate(reordered.map((col, idx) => ({ column_name: col.column_name, sort_order: idx })));
-  };
-
-  const handleColumnResize = useCallback((colId: string, delta: number) => {
-    const col = visibleColumns.find(c => c.id === colId);
-    const baseWidth = baseWidthsRef.current[colId] || col?.column_width || 120;
-    if (!baseWidthsRef.current[colId]) {
-      baseWidthsRef.current[colId] = baseWidth;
-    }
-    const newWidth = Math.max(60, baseWidthsRef.current[colId] + delta);
-    setResizingWidths(prev => ({ ...prev, [colId]: newWidth }));
-  }, [visibleColumns]);
-
-  const handleColumnResizeEnd = useCallback((colId: string) => {
-    const width = resizingWidths[colId];
-    if (width) {
-      const col = visibleColumns.find(c => c.id === colId);
-      if (col) {
-        updateWidth.mutate({ column_name: col.column_name, column_width: Math.round(width) });
-      }
-    }
-    baseWidthsRef.current = {};
-  }, [resizingWidths, visibleColumns, updateWidth]);
-
-  const getColumnWidth = (col: UnifiedColumn): number | null => {
-    return resizingWidths[col.id] || col.column_width;
-  };
 
   const allSelected = customers.length > 0 && selectedIds.size === customers.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < customers.length;
