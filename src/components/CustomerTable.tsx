@@ -421,7 +421,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleHeaderDragEnd}>
                 <SortableContext items={visibleColumns.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
                   {visibleColumns.map((col) => (
-                    <SortableHeader key={col.id} id={col.id} className={getHeaderClassName(col)}>
+                    <SortableHeader key={col.id} id={col.id} className={getHeaderClassName(col)} width={getColumnWidth(col)} onResize={handleColumnResize} onResizeEnd={handleColumnResizeEnd}>
                       {getHeaderLabel(col)}
                     </SortableHeader>
                   ))}
