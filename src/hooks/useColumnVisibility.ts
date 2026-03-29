@@ -103,7 +103,8 @@ export function useOrderedColumns(): UnifiedColumn[] {
       label: field.name,
       is_visible: existing ? existing.is_visible : field.is_visible,
       sort_order: existing?.sort_order ?? (DEFAULT_COLUMN_ORDER.length + field.sort_order),
-      type: 'custom',
+      column_width: existing?.column_width ?? null,
+      type: 'custom' as const,
       customField: field,
     };
   });
