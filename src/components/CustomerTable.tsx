@@ -182,22 +182,6 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
     }
 
     switch (col.column_name) {
-      case 'name':
-        return (
-          <TableCell key={col.id}>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9 border-2 border-background shadow-sm">
-                <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">{getInitials(customer.name)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">{customer.name}</p>
-                {orderedColumns.find((c) => c.column_name === 'email')?.is_visible && customer.email && (
-                  <p className="text-sm text-muted-foreground">{customer.email}</p>
-                )}
-              </div>
-            </div>
-          </TableCell>
-        );
       case 'phone':
         return <TableCell key={col.id} className="text-muted-foreground">{customer.phone || '-'}</TableCell>;
       case 'service':
