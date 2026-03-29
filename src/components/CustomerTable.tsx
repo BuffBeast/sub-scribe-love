@@ -103,6 +103,31 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const updateOrder = useUpdateColumnOrder();
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
+  const deleteCustomer = useDeleteCustomer();
+  const updateCustomer = useUpdateCustomer();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null);
+
+  // Separate name column from others for sticky behavior
+  const nameColumn = orderedColumns.find((c) => c.column_name === 'name' && c.is_visible);
+  const visibleColumns = orderedColumns.filter((c) => c.is_visible && c.column_name !== 'email' && c.column_name !== 'name');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 10 } })
+  );
+
+  const handleHeaderDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const allIds = orderedColumns.map((c) => c.id);
+    const oldIndex = allIds.indexOf(active.id as string);
+    const newIndex = allIds.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(orderedColumns, oldIndex, newIndex);
+    updateOrder.mutate(reordered.map((col, idx) => ({ column_name: col.column_name, sort_order: idx })));
+  };
 
   const allSelected = customers.length > 0 && selectedIds.size === customers.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < customers.length;
