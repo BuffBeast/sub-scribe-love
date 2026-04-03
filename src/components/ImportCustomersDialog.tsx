@@ -473,23 +473,70 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
             )}
           </div>
 
-          {/* Column Mapping Preview */}
-          {parsedData.length > 0 && Object.keys(headerMapping).length > 0 && (
-            <div className="border rounded-md p-3 bg-muted/30 space-y-2">
-              <p className="text-sm font-medium">Column Mapping:</p>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(headerMapping).map(([csv, field]) => (
-                  <span key={csv} className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2 py-1">
-                    <Check className="h-3 w-3" />
-                    {csv} → {field}
-                  </span>
-                ))}
+          {/* Column Mapping - Interactive */}
+          {parsedData.length > 0 && columns.length > 0 && (
+            <div className="border rounded-md p-3 bg-muted/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Column Mapping</p>
+                <p className="text-xs text-muted-foreground">Click any dropdown to remap</p>
               </div>
-              {unmappedHeaders.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Skipped columns: {unmappedHeaders.join(', ')}
-                </p>
-              )}
+              <ScrollArea className="max-h-[180px]">
+                <div className="space-y-2 pr-3">
+                  {columns.map((csvHeader) => {
+                    const currentField = headerMapping[csvHeader] || '__skip__';
+                    // Fields already used by other CSV columns (prevent duplicates)
+                    const usedFields = new Set(
+                      Object.entries(headerMapping)
+                        .filter(([h]) => h !== csvHeader)
+                        .map(([, f]) => f)
+                    );
+                    return (
+                      <div key={csvHeader} className="flex items-center gap-2">
+                        <span className="text-xs font-mono bg-background border rounded px-2 py-1.5 min-w-[120px] truncate" title={csvHeader}>
+                          {csvHeader}
+                        </span>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <Select
+                          value={currentField}
+                          onValueChange={(value) => {
+                            setHeaderMapping((prev) => {
+                              const next = { ...prev };
+                              if (value === '__skip__') {
+                                delete next[csvHeader];
+                              } else {
+                                next[csvHeader] = value;
+                              }
+                              return next;
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="h-8 text-xs w-[180px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__skip__" className="text-xs text-muted-foreground">
+                              — Skip this column —
+                            </SelectItem>
+                            {IMPORTABLE_FIELDS.map((f) => (
+                              <SelectItem
+                                key={f.value}
+                                value={f.value}
+                                disabled={usedFields.has(f.value)}
+                                className="text-xs"
+                              >
+                                {f.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {currentField !== '__skip__' && (
+                          <Check className="h-3 w-3 text-primary shrink-0" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
             </div>
           )}
 
