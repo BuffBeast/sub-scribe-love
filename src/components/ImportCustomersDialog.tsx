@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Loader2, FileSpreadsheet, Check, RotateCcw } from 'lucide-react';
+import { Download, Loader2, FileSpreadsheet, Check, RotateCcw, ArrowRight } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Papa from 'papaparse';
 import { useCreateCustomer, useUpdateCustomer, useCustomers } from '@/hooks/useCustomers';
