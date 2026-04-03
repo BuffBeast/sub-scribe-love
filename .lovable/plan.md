@@ -1,27 +1,38 @@
 
 
-## Low Credit Balance Warning
+# Fix Import/Export and Column Visibility Issues
 
-Add a configurable threshold so a warning banner appears on the Credits card when the balance drops below it. The threshold is stored in `app_settings`.
+## Three Problems Identified
 
-### Changes
+1. **CSV import fails when columns are in different order** — The import already uses header-based matching (`findValue` does case-insensitive partial matching), but it's fragile. The real issue is that when headers don't exactly match expected patterns, data gets missed silently.
 
-**1. Database: Add `credit_warning_threshold` to `app_settings`**
-- Migration: `ALTER TABLE app_settings ADD COLUMN credit_warning_threshold numeric(10,1) DEFAULT 5;`
-- No new RLS needed (existing policies cover it)
+2. **Can't retry import after errors without logging out** — After a failed import, the dialog state (parsed data, errors) doesn't reset when reopening, and the file input retains the old file reference, blocking re-upload.
 
-**2. `src/hooks/useAppSettings.ts`**
-- Add `credit_warning_threshold` to the `AppSettings` interface
-- Add it as an accepted field in `useUpdateAppSettings`
+3. **Column visibility toggle doesn't hide columns** — The `useUpdateColumnOrder` mutation (line 168 of `useColumnVisibility.ts`) hard-codes `is_visible: true` for every column during upsert. So any drag-reorder operation resets all hidden columns back to visible.
 
-**3. `src/components/CreditTracker.tsx`**
-- Read `useAppSettings()` to get the threshold (default 5)
-- When `balance <= threshold && balance > 0`, show an amber warning bar below the balance line: "Low credit balance -- only X credits remaining"
-- When `balance <= 0`, show a red warning
-- Add a small input in the collapsible section to configure the threshold (saves via `useUpdateAppSettings`)
+---
 
-### Technical details
-- Threshold defaults to 5 credits
-- Warning shows on the collapsed card header (always visible) so users see it without opening the tracker
-- Configurable inline within the Credits card -- no separate settings page needed
+## Plan
+
+### Fix 1: Column Visibility Bug (root cause)
+**File:** `src/hooks/useColumnVisibility.ts`
+- In `useUpdateColumnOrder`, change the upsert to preserve existing `is_visible` state instead of forcing `true`. Pass the current visibility from `orderedColumns` data into the mutation, or only upsert the `sort_order` field without touching `is_visible`.
+
+### Fix 2: Import Retry Without Logout
+**File:** `src/components/ImportCustomersDialog.tsx`
+- Reset all state (`parsedData`, `columns`, `validationErrors`, file input value) when the dialog opens, not just when it closes.
+- After validation errors, keep the parsed data visible but allow the user to click the upload area again to pick a new file (clear the file input ref).
+- Add a "Clear / Try Again" button next to the error display that resets state so user can re-upload.
+
+### Fix 3: More Robust CSV Column Mapping
+**File:** `src/components/ImportCustomersDialog.tsx`
+- Improve the `findValue` function's header matching to handle more variations (e.g., "Customer Name" → name, "Subscription Plan" → subscription_plan).
+- Add a header mapping step that normalizes CSV headers before matching, so column order is irrelevant (this already mostly works, but needs better alias coverage).
+- Show a mapping preview so users can see which CSV columns mapped to which fields before importing.
+
+### Summary of File Changes
+| File | Change |
+|------|--------|
+| `src/hooks/useColumnVisibility.ts` | Fix `useUpdateColumnOrder` to preserve `is_visible` |
+| `src/components/ImportCustomersDialog.tsx` | Reset state on dialog open; add retry button; improve header matching |
 
