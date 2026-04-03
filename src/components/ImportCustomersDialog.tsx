@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Loader2, FileSpreadsheet, Check } from 'lucide-react';
+import { Download, Loader2, FileSpreadsheet, Check, RotateCcw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Papa from 'papaparse';
@@ -42,15 +42,113 @@ const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_ROW_COUNT = 10000;
 
+// Header alias map: normalized key → internal field name
+const HEADER_ALIASES: Record<string, string> = {
+  'name': 'name',
+  'customer name': 'name',
+  'customer': 'name',
+  'user': 'name',
+  'username': 'name',
+  'full name': 'name',
+  'email': 'email',
+  'e-mail': 'email',
+  'email address': 'email',
+  'mail': 'email',
+  'phone': 'phone',
+  'phone number': 'phone',
+  'tel': 'phone',
+  'telephone': 'phone',
+  'mobile': 'phone',
+  'contact': 'phone',
+  'notes': 'company',
+  'note': 'company',
+  'company': 'company',
+  'business': 'company',
+  'organization': 'company',
+  'org': 'company',
+  'status': 'subscription_status',
+  'subscription status': 'subscription_status',
+  'subscription_status': 'subscription_status',
+  'state': 'subscription_status',
+  'live plan': 'subscription_plan',
+  'live_plan': 'subscription_plan',
+  'subscription plan': 'subscription_plan',
+  'subscription_plan': 'subscription_plan',
+  'plan': 'subscription_plan',
+  'package': 'subscription_plan',
+  'tier': 'subscription_plan',
+  'live start': 'subscription_start_date',
+  'live_start': 'subscription_start_date',
+  'subscription start': 'subscription_start_date',
+  'subscription_start_date': 'subscription_start_date',
+  'start date': 'subscription_start_date',
+  'start_date': 'subscription_start_date',
+  'live end': 'subscription_end_date',
+  'live_end': 'subscription_end_date',
+  'live expiry': 'subscription_end_date',
+  'live_expiry': 'subscription_end_date',
+  'subscription end': 'subscription_end_date',
+  'subscription_end_date': 'subscription_end_date',
+  'end date': 'subscription_end_date',
+  'end_date': 'subscription_end_date',
+  'expiry': 'subscription_end_date',
+  'expiry date': 'subscription_end_date',
+  'vod plan': 'vod_plan',
+  'vod_plan': 'vod_plan',
+  'vod package': 'vod_package',
+  'vod_package': 'vod_plan',
+  'vod tier': 'vod_plan',
+  'vod_tier': 'vod_plan',
+  'vod start': 'vod_start_date',
+  'vod_start': 'vod_start_date',
+  'vod_start_date': 'vod_start_date',
+  'vod start date': 'vod_start_date',
+  'vod end': 'vod_end_date',
+  'vod_end': 'vod_end_date',
+  'vod expiry': 'vod_end_date',
+  'vod_expiry': 'vod_end_date',
+  'vod_end_date': 'vod_end_date',
+  'vod end date': 'vod_end_date',
+  'price': 'total_spent',
+  'total spent': 'total_spent',
+  'total_spent': 'total_spent',
+  'spent': 'total_spent',
+  'revenue': 'total_spent',
+  'amount': 'total_spent',
+  'balance': 'total_spent',
+  'credits': 'total_spent',
+  'service': 'service',
+  'service type': 'service',
+  'device': 'device',
+  'device type': 'device',
+  'devices': 'device',
+  'trial': 'has_trial',
+  'has trial': 'has_trial',
+  'has_trial': 'has_trial',
+  'live trial': 'has_live_trial',
+  'live_trial': 'has_live_trial',
+  'has live trial': 'has_live_trial',
+  'has_live_trial': 'has_live_trial',
+  'vod trial': 'has_vod_trial',
+  'vod_trial': 'has_vod_trial',
+  'has vod trial': 'has_vod_trial',
+  'has_vod_trial': 'has_vod_trial',
+};
+
 interface ParsedCustomer {
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  subscriptionStatus: string;
-  subscriptionPlan: string;
-  totalSpent: number;
   [key: string]: string | number;
+}
+
+/** Build a mapping from CSV header → internal field name */
+function buildHeaderMapping(csvHeaders: string[]): Record<string, string> {
+  const mapping: Record<string, string> = {};
+  for (const header of csvHeaders) {
+    const normalized = header.trim().toLowerCase();
+    if (HEADER_ALIASES[normalized]) {
+      mapping[header] = HEADER_ALIASES[normalized];
+    }
+  }
+  return mapping;
 }
 
 interface ImportCustomersDialogProps {
@@ -60,19 +158,30 @@ interface ImportCustomersDialogProps {
 export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  
-  const handleOpenChange = (isOpen: boolean) => {
-    setOpen(isOpen);
-    onOpenChange?.(isOpen);
-  };
   const [isLoading, setIsLoading] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedCustomer[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [headerMapping, setHeaderMapping] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createCustomer = useCreateCustomer();
   const updateCustomer = useUpdateCustomer();
   const { data: existingCustomers = [] } = useCustomers();
+
+  // Reset all state when dialog opens
+  const resetState = () => {
+    setParsedData([]);
+    setColumns([]);
+    setValidationErrors([]);
+    setHeaderMapping({});
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) resetState();
+    setOpen(isOpen);
+    onOpenChange?.(isOpen);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -93,6 +202,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     setParsedData([]);
     setColumns([]);
     setValidationErrors([]);
+    setHeaderMapping({});
 
     Papa.parse(file, {
       header: true,
@@ -130,12 +240,18 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
           return;
         }
 
-        setColumns(Object.keys(data[0]));
+        const csvHeaders = Object.keys(data[0]);
+        const mapping = buildHeaderMapping(csvHeaders);
+        setHeaderMapping(mapping);
+        setColumns(csvHeaders);
         setParsedData(data);
+        
+        const mappedCount = Object.keys(mapping).length;
+        const unmappedCount = csvHeaders.length - mappedCount;
         
         toast({
           title: 'File Parsed',
-          description: `Found ${data.length} records`,
+          description: `Found ${data.length} records. ${mappedCount} columns mapped${unmappedCount > 0 ? `, ${unmappedCount} unrecognised (will be skipped)` : ''}.`,
         });
       },
       error: (error) => {
@@ -149,127 +265,79 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     });
   };
 
-  const mapToCustomer = (row: ParsedCustomer): { 
-    name: string; 
-    email: string | null; 
-    phone: string | null; 
-    company: string | null; 
-    subscription_status: string; 
-    subscription_plan: string | null;
-    subscription_start_date: string | null;
-    subscription_end_date: string | null;
-    vod_plan: string | null;
-    vod_start_date: string | null;
-    vod_end_date: string | null;
-    total_spent: number;
-    service: string | null;
-    device: string[];
-    has_trial: boolean;
-    has_live_trial: boolean;
-    has_vod_trial: boolean;
-  } => {
-    // Try to find matching columns (case-insensitive)
-    const findValue = (keys: string[]): string => {
-      for (const key of keys) {
-        const found = Object.keys(row).find(k => k.toLowerCase().includes(key.toLowerCase()));
-        if (found && row[found]) return String(row[found]).trim();
+  const mapToCustomer = (row: ParsedCustomer) => {
+    // Use the header mapping to pull values by internal field name
+    const getField = (field: string): string => {
+      for (const [csvHeader, mappedField] of Object.entries(headerMapping)) {
+        if (mappedField === field && row[csvHeader] != null) {
+          const val = String(row[csvHeader]).trim();
+          if (val) return val;
+        }
       }
       return '';
     };
 
-    const findNumber = (keys: string[]): number => {
-      const val = findValue(keys);
+    const getNumber = (field: string): number => {
+      const val = getField(field);
       const num = parseFloat(val.replace(/[^0-9.-]/g, ''));
       return isNaN(num) ? 0 : Math.max(0, num);
     };
 
-    const findDate = (keys: string[]): string | null => {
-      const val = findValue(keys);
+    const getDate = (field: string): string | null => {
+      const val = getField(field);
       if (!val) return null;
       const parsed = Date.parse(val);
       return isNaN(parsed) ? null : new Date(parsed).toISOString().split('T')[0];
     };
 
-    const status = findValue(['status', 'subscription_status', 'state']).toLowerCase();
+    const getBool = (field: string): boolean => {
+      const val = getField(field).toLowerCase();
+      return val === 'yes' || val === 'true' || val === '1';
+    };
+
+    const status = getField('subscription_status').toLowerCase();
     let subscription_status: 'active' | 'trial' | 'expired' | 'cancelled' = 'active';
     if (status.includes('trial')) subscription_status = 'trial';
     else if (status.includes('expired') || status.includes('inactive')) subscription_status = 'expired';
     else if (status.includes('cancel')) subscription_status = 'cancelled';
 
-    // Check for trial field
-    const trialValue = findValue(['trial', 'has_trial']).toLowerCase();
-    const has_trial = trialValue === 'yes' || trialValue === 'true' || trialValue === '1';
-    const liveTrial = findValue(['live_trial', 'has_live_trial']).toLowerCase();
-    const has_live_trial = liveTrial === 'yes' || liveTrial === 'true' || liveTrial === '1';
-    const vodTrial = findValue(['vod_trial', 'has_vod_trial']).toLowerCase();
-    const has_vod_trial = vodTrial === 'yes' || vodTrial === 'true' || vodTrial === '1';
-
     return {
-      name: findValue(['name', 'customer', 'user', 'username']) || 'Unknown',
-      email: findValue(['email', 'mail', 'e-mail']) || null,
-      phone: findValue(['phone', 'tel', 'mobile', 'contact']) || null,
-      company: findValue(['notes', 'note', 'company', 'business', 'organization', 'org']) || null,
+      name: getField('name') || 'Unknown',
+      email: getField('email') || null,
+      phone: getField('phone') || null,
+      company: getField('company') || null,
       subscription_status,
-      subscription_plan: findValue(['live_plan', 'live plan', 'subscription_plan', 'plan', 'package', 'tier']) || null,
-      subscription_start_date: findDate(['live_start', 'subscription_start', 'start_date']),
-      subscription_end_date: findDate(['live_end', 'live_expiry', 'live expiry', 'subscription_end', 'end_date', 'expiry']),
-      vod_plan: findValue(['vod_plan', 'vod plan', 'vod_package', 'vod_tier']) || null,
-      vod_start_date: findDate(['vod_start', 'vod_start_date']),
-      vod_end_date: findDate(['vod_end', 'vod_expiry', 'vod expiry', 'vod_end_date']),
-      total_spent: findNumber(['price', 'spent', 'revenue', 'total', 'amount', 'balance', 'credits']),
-      service: findValue(['service']) || null,
-      device: findValue(['device']) ? findValue(['device']).split(',').map(d => d.trim()).filter(Boolean) : [],
-      has_trial,
-      has_live_trial,
-      has_vod_trial,
+      subscription_plan: getField('subscription_plan') || null,
+      subscription_start_date: getDate('subscription_start_date'),
+      subscription_end_date: getDate('subscription_end_date'),
+      vod_plan: getField('vod_plan') || null,
+      vod_start_date: getDate('vod_start_date'),
+      vod_end_date: getDate('vod_end_date'),
+      total_spent: getNumber('total_spent'),
+      service: getField('service') || null,
+      device: getField('device') ? getField('device').split(',').map(d => d.trim()).filter(Boolean) : [],
+      has_trial: getBool('has_trial'),
+      has_live_trial: getBool('has_live_trial'),
+      has_vod_trial: getBool('has_vod_trial'),
     };
-  };
-
-  const validateCustomer = (customer: ReturnType<typeof mapToCustomer>, rowIndex: number): ValidatedCustomer | null => {
-    const result = customerImportSchema.safeParse(customer);
-    if (!result.success) {
-      const errorMessages = result.error.errors.map(e => `Row ${rowIndex + 1}: ${e.path.join('.')} - ${e.message}`);
-      return null;
-    }
-    return result.data;
   };
 
   // Find existing customer by email first, then by name
   const findExistingCustomer = (customer: ValidatedCustomer) => {
-    console.log('[Import Debug] Looking for match:', { 
-      importName: customer.name, 
-      importEmail: customer.email,
-      existingCount: existingCustomers.length 
-    });
-    
-    // First try to match by email (if email exists)
     if (customer.email) {
       const emailMatch = existingCustomers.find(
         existing => existing.email?.toLowerCase() === customer.email?.toLowerCase()
       );
-      if (emailMatch) {
-        console.log('[Import Debug] ✓ Email match found:', emailMatch.name, emailMatch.email);
-        return emailMatch;
-      }
+      if (emailMatch) return emailMatch;
     }
     
-    // Fall back to matching by name
     const nameMatch = existingCustomers.find(
       existing => existing.name.toLowerCase().trim() === customer.name.toLowerCase().trim()
     );
-    if (nameMatch) {
-      console.log('[Import Debug] ✓ Name match found:', nameMatch.name);
-    } else {
-      console.log('[Import Debug] ✗ No match found for:', customer.name);
-    }
     return nameMatch || null;
   };
 
   const handleImport = async () => {
-    console.log('[Import Debug] Starting import...');
-    console.log('[Import Debug] Existing customers loaded:', existingCustomers.length);
-    console.log('[Import Debug] Existing customers:', existingCustomers.map(c => ({ name: c.name, email: c.email })));
-    
     const errors: string[] = [];
     const validCustomers: ValidatedCustomer[] = [];
 
@@ -288,23 +356,18 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     });
 
     if (errors.length > 0) {
-      setValidationErrors(errors.slice(0, 10)); // Show first 10 errors
-      if (errors.length > 10) {
-        toast({
-          title: 'Validation Errors',
-          description: `${errors.length} validation errors found. Showing first 10.`,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Validation Errors',
-          description: `${errors.length} validation errors found. Please fix and try again.`,
-          variant: 'destructive',
-        });
-      }
+      setValidationErrors(errors.slice(0, 10));
+      toast({
+        title: 'Validation Errors',
+        description: errors.length > 10
+          ? `${errors.length} validation errors found. Showing first 10.`
+          : `${errors.length} validation errors found. Please fix and try again.`,
+        variant: 'destructive',
+      });
       return;
     }
     
+    setIsLoading(true);
     let created = 0;
     let updated = 0;
     
@@ -313,14 +376,9 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
         const existing = findExistingCustomer(customer);
         
         if (existing) {
-          // Update existing customer
-          await updateCustomer.mutateAsync({
-            id: existing.id,
-            ...customer,
-          });
+          await updateCustomer.mutateAsync({ id: existing.id, ...customer });
           updated++;
         } else {
-          // Create new customer
           await createCustomer.mutateAsync(customer);
           created++;
         }
@@ -328,6 +386,8 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
         console.error('Failed to import customer:', e);
       }
     }
+
+    setIsLoading(false);
     
     toast({
       title: 'Import Complete',
@@ -335,10 +395,11 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     });
     
     setOpen(false);
-    setParsedData([]);
-    setColumns([]);
-    setValidationErrors([]);
+    resetState();
   };
+
+  const mappedFields = Object.values(headerMapping);
+  const unmappedHeaders = columns.filter(h => !headerMapping[h]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -357,7 +418,10 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
           {/* Upload Section */}
           <div 
             className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              if (fileInputRef.current) fileInputRef.current.value = '';
+              fileInputRef.current?.click();
+            }}
           >
             <input
               ref={fileInputRef}
@@ -366,7 +430,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
               onChange={handleFileChange}
               className="hidden"
             />
-            {isLoading ? (
+            {isLoading && !parsedData.length ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">Parsing file...</p>
@@ -374,7 +438,9 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
-                <p className="font-medium">Click to upload CSV or Excel file</p>
+                <p className="font-medium">
+                  {parsedData.length > 0 ? 'Click to upload a different file' : 'Click to upload CSV or Excel file'}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   Export your customer list from ourpanel.live and upload it here
                 </p>
@@ -385,10 +451,41 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
             )}
           </div>
 
+          {/* Column Mapping Preview */}
+          {parsedData.length > 0 && Object.keys(headerMapping).length > 0 && (
+            <div className="border rounded-md p-3 bg-muted/30 space-y-2">
+              <p className="text-sm font-medium">Column Mapping:</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(headerMapping).map(([csv, field]) => (
+                  <span key={csv} className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2 py-1">
+                    <Check className="h-3 w-3" />
+                    {csv} → {field}
+                  </span>
+                ))}
+              </div>
+              {unmappedHeaders.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Skipped columns: {unmappedHeaders.join(', ')}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Validation Errors */}
           {validationErrors.length > 0 && (
             <div className="border border-destructive rounded-md p-4 bg-destructive/10">
-              <p className="font-medium text-destructive mb-2">Validation Errors:</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-medium text-destructive">Validation Errors:</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs"
+                  onClick={resetState}
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Clear & Try Again
+                </Button>
+              </div>
               <ul className="text-sm text-destructive space-y-1">
                 {validationErrors.map((error, i) => (
                   <li key={i}>• {error}</li>
@@ -404,8 +501,12 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
                 <p className="text-sm text-muted-foreground">
                   Preview: {parsedData.length} records found
                 </p>
-                <Button onClick={handleImport} className="gap-2">
-                  <Check className="h-4 w-4" />
+                <Button onClick={handleImport} className="gap-2" disabled={isLoading}>
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
                   Import {parsedData.length} Customers
                 </Button>
               </div>
