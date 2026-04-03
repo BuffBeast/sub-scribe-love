@@ -136,6 +136,27 @@ const HEADER_ALIASES: Record<string, string> = {
   'has_vod_trial': 'has_vod_trial',
 };
 
+// All importable internal fields with user-friendly labels
+const IMPORTABLE_FIELDS: { value: string; label: string }[] = [
+  { value: 'name', label: 'Name' },
+  { value: 'email', label: 'Email' },
+  { value: 'phone', label: 'Phone' },
+  { value: 'company', label: 'Notes' },
+  { value: 'subscription_status', label: 'Status' },
+  { value: 'subscription_plan', label: 'LIVE Plan' },
+  { value: 'subscription_start_date', label: 'LIVE Start Date' },
+  { value: 'subscription_end_date', label: 'LIVE Expiry' },
+  { value: 'vod_plan', label: 'VOD Plan' },
+  { value: 'vod_start_date', label: 'VOD Start Date' },
+  { value: 'vod_end_date', label: 'VOD Expiry' },
+  { value: 'total_spent', label: 'Price / Total Spent' },
+  { value: 'service', label: 'Service' },
+  { value: 'device', label: 'Device' },
+  { value: 'has_trial', label: 'Trial' },
+  { value: 'has_live_trial', label: 'LIVE Trial' },
+  { value: 'has_vod_trial', label: 'VOD Trial' },
+];
+
 interface ParsedCustomer {
   [key: string]: string | number;
 }
