@@ -156,16 +156,23 @@ export function useUpdateColumnVisibility() {
 export function useUpdateColumnOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (orderedColumns: { column_name: string; sort_order: number }[]) => {
+    mutationFn: async (orderedColumns: { column_name: string; sort_order: number; is_visible?: boolean }[]) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Batch upsert all column orders in a single query
+      // Fetch existing visibility states so we don't overwrite them
+      const { data: existing } = await supabase
+        .from('column_visibility')
+        .select('column_name, is_visible')
+        .eq('user_id', user.id);
+      const visMap = new Map((existing || []).map(e => [e.column_name, e.is_visible]));
+
+      // Batch upsert all column orders, preserving existing is_visible
       const rows = orderedColumns.map(col => ({
         column_name: col.column_name,
         sort_order: col.sort_order,
         user_id: user.id,
-        is_visible: true,
+        is_visible: col.is_visible ?? visMap.get(col.column_name) ?? true,
       }));
 
       const { error } = await supabase
