@@ -223,6 +223,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
   const [savedTemplates, setSavedTemplates] = useState<MappingTemplate[]>(loadTemplates());
   const [templateName, setTemplateName] = useState('');
   const [appliedTemplateName, setAppliedTemplateName] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createCustomer = useCreateCustomer();
   const updateCustomer = useUpdateCustomer();
