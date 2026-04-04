@@ -176,6 +176,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
               </div>
             </PopoverContent>
           </Popover>
+        </div>
         {addonOptions.length > 0 && (
           <div className="space-y-1 col-span-2">
             <span className="text-xs text-muted-foreground">Add-Ons</span>
