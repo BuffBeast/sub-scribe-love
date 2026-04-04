@@ -355,7 +355,32 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     });
   };
 
-  const mapToCustomer = (row: ParsedCustomer) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  };
+
     // Use the header mapping to pull values by internal field name
     const getField = (field: string): string => {
       for (const [csvHeader, mappedField] of Object.entries(headerMapping)) {
