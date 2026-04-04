@@ -104,6 +104,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const updateOrder = useUpdateColumnOrder();
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
+  const allAddonOptions = useAllAddonOptions();
   const deleteCustomer = useDeleteCustomer();
   const updateCustomer = useUpdateCustomer();
   const { toast } = useToast();
