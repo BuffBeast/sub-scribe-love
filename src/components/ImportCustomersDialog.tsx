@@ -220,6 +220,9 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
   const [columns, setColumns] = useState<string[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [headerMapping, setHeaderMapping] = useState<Record<string, string>>({});
+  const [savedTemplates, setSavedTemplates] = useState<MappingTemplate[]>(loadTemplates());
+  const [templateName, setTemplateName] = useState('');
+  const [appliedTemplateName, setAppliedTemplateName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createCustomer = useCreateCustomer();
   const updateCustomer = useUpdateCustomer();
