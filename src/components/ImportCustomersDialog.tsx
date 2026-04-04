@@ -244,10 +244,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     onOpenChange?.(isOpen);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const processFile = (file: File) => {
     // File size validation
     if (file.size > MAX_FILE_SIZE_BYTES) {
       toast({
@@ -256,6 +253,17 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
         variant: 'destructive',
       });
       if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const validExtensions = ['.csv', '.xlsx', '.xls'];
+    const fileExt = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+    if (!validExtensions.includes(fileExt)) {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Please upload a CSV or Excel file (.csv, .xlsx, .xls).',
+        variant: 'destructive',
+      });
       return;
     }
 
