@@ -223,6 +223,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
   const [savedTemplates, setSavedTemplates] = useState<MappingTemplate[]>(loadTemplates());
   const [templateName, setTemplateName] = useState('');
   const [appliedTemplateName, setAppliedTemplateName] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createCustomer = useCreateCustomer();
   const updateCustomer = useUpdateCustomer();
@@ -243,10 +244,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     onOpenChange?.(isOpen);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const processFile = (file: File) => {
     // File size validation
     if (file.size > MAX_FILE_SIZE_BYTES) {
       toast({
@@ -255,6 +253,17 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
         variant: 'destructive',
       });
       if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const validExtensions = ['.csv', '.xlsx', '.xls'];
+    const fileExt = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+    if (!validExtensions.includes(fileExt)) {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Please upload a CSV or Excel file (.csv, .xlsx, .xls).',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -344,6 +353,32 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
         });
       },
     });
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
   };
 
   const mapToCustomer = (row: ParsedCustomer) => {
@@ -498,11 +533,14 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
         <div className="space-y-4 py-4">
           {/* Upload Section */}
           <div 
-            className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragOver ? 'border-primary bg-primary/10' : 'hover:bg-muted/50'}`}
             onClick={() => {
               if (fileInputRef.current) fileInputRef.current.value = '';
               fileInputRef.current?.click();
             }}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
             <input
               ref={fileInputRef}
@@ -520,7 +558,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
               <div className="flex flex-col items-center gap-2">
                 <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
                 <p className="font-medium">
-                  {parsedData.length > 0 ? 'Click to upload a different file' : 'Click to upload CSV or Excel file'}
+                  {isDragOver ? 'Drop your file here' : parsedData.length > 0 ? 'Click or drag to upload a different file' : 'Drag & drop or click to upload CSV/Excel'}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Export your customer list from ourpanel.live and upload it here
