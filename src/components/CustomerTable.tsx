@@ -301,7 +301,37 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
         return <TableCell key={col.id} className="text-center text-muted-foreground">{customer.connections ?? 1}</TableCell>;
       case 'selected_addons': {
         const addons = Array.isArray(customer.selected_addons) ? (customer.selected_addons as string[]) : [];
-        return <TableCell key={col.id} className="text-muted-foreground">{addons.length > 0 ? addons.join(', ') : '-'}</TableCell>;
+        return (
+          <TableCell key={col.id} onClick={(e) => e.stopPropagation()}>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" className="h-auto px-2 py-1 text-sm text-muted-foreground hover:text-foreground">
+                  {addons.length > 0 ? addons.join(', ') : '-'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-3" align="start" onClick={(e) => e.stopPropagation()}>
+                <div className="space-y-2">
+                  {allAddonOptions.map(a => (
+                    <div key={a} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`addon-${customer.id}-${a}`}
+                        checked={addons.includes(a)}
+                        onCheckedChange={(checked) => {
+                          const newAddons = checked
+                            ? [...addons, a]
+                            : addons.filter(x => x !== a);
+                          updateCustomer.mutate({ id: customer.id, selected_addons: newAddons } as any);
+                        }}
+                      />
+                      <label htmlFor={`addon-${customer.id}-${a}`} className="text-sm cursor-pointer">{a}</label>
+                    </div>
+                  ))}
+                  {allAddonOptions.length === 0 && <p className="text-xs text-muted-foreground">No add-ons configured</p>}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </TableCell>
+        );
       }
       case 'subscription_status': {
         const effectiveStatus = customer.subscription_status === 'active' && (isExpiringSoon(customer.subscription_end_date) || isExpiringSoon(customer.vod_end_date)) ? 'expiring' : (customer.subscription_status || 'active');
