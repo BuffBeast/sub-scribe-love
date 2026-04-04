@@ -35,6 +35,7 @@ import {
 import { Check, X, Bell, BellOff, Trash2, ChevronRight, CalendarIcon, Mail, AlertTriangle } from 'lucide-react';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
+import { useAllAddonOptions } from '@/hooks/useAddonTypes';
 import { cn } from '@/lib/utils';
 import { isExpiringSoon } from '@/lib/dateUtils';
 
