@@ -558,7 +558,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
               <div className="flex flex-col items-center gap-2">
                 <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
                 <p className="font-medium">
-                  {parsedData.length > 0 ? 'Click to upload a different file' : 'Click to upload CSV or Excel file'}
+                  {isDragOver ? 'Drop your file here' : parsedData.length > 0 ? 'Click or drag to upload a different file' : 'Drag & drop or click to upload CSV/Excel'}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Export your customer list from ourpanel.live and upload it here
