@@ -381,6 +381,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     if (file) processFile(file);
   };
 
+  const mapToCustomer = (row: ParsedCustomer) => {
     // Use the header mapping to pull values by internal field name
     const getField = (field: string): string => {
       for (const [csvHeader, mappedField] of Object.entries(headerMapping)) {
