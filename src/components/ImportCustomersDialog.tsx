@@ -337,7 +337,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
       vod_end_date: getDate('vod_end_date'),
       total_spent: getNumber('total_spent'),
       service: getField('service') || null,
-      device: getField('device') ? getField('device').split(',').map(d => d.trim()).filter(Boolean) : [],
+      device: getField('device') || '',
       has_trial: getBool('has_trial'),
       has_live_trial: getBool('has_live_trial'),
       has_vod_trial: getBool('has_vod_trial'),
