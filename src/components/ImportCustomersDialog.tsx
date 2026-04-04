@@ -301,7 +301,28 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
         }
 
         const csvHeaders = Object.keys(data[0]);
-        const mapping = buildHeaderMapping(csvHeaders);
+        
+        // Check for a saved template that matches these headers
+        const matchedTemplate = findMatchingTemplate(csvHeaders);
+        let mapping: Record<string, string>;
+        
+        if (matchedTemplate) {
+          // Re-key the template mapping to use exact current headers
+          mapping = {};
+          for (const header of csvHeaders) {
+            const templateEntry = Object.entries(matchedTemplate.mapping).find(
+              ([k]) => k.trim().toLowerCase() === header.trim().toLowerCase()
+            );
+            if (templateEntry) {
+              mapping[header] = templateEntry[1];
+            }
+          }
+          setAppliedTemplateName(matchedTemplate.name);
+        } else {
+          mapping = buildHeaderMapping(csvHeaders);
+          setAppliedTemplateName(null);
+        }
+        
         setHeaderMapping(mapping);
         setColumns(csvHeaders);
         setParsedData(data);
@@ -310,7 +331,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
         const unmappedCount = csvHeaders.length - mappedCount;
         
         toast({
-          title: 'File Parsed',
+          title: matchedTemplate ? `Template "${matchedTemplate.name}" Applied` : 'File Parsed',
           description: `Found ${data.length} records. ${mappedCount} columns mapped${unmappedCount > 0 ? `, ${unmappedCount} unrecognised (will be skipped)` : ''}.`,
         });
       },
