@@ -533,11 +533,14 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
         <div className="space-y-4 py-4">
           {/* Upload Section */}
           <div 
-            className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragOver ? 'border-primary bg-primary/10' : 'hover:bg-muted/50'}`}
             onClick={() => {
               if (fileInputRef.current) fileInputRef.current.value = '';
               fileInputRef.current?.click();
             }}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
             <input
               ref={fileInputRef}
