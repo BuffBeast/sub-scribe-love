@@ -53,6 +53,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
   const deleteCustomer = useDeleteCustomer();
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
+  const addonOptions = useAllAddonOptions();
 
   const getInitials = (name: string) => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
