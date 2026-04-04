@@ -536,14 +536,18 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
           {parsedData.length > 0 && columns.length > 0 && (
             <div className="border rounded-md p-3 bg-muted/30 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Column Mapping</p>
+                <div>
+                  <p className="text-sm font-medium">Column Mapping</p>
+                  {appliedTemplateName && (
+                    <p className="text-xs text-primary">Template "{appliedTemplateName}" auto-applied</p>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">Click any dropdown to remap</p>
               </div>
               <ScrollArea className="max-h-[180px]">
                 <div className="space-y-2 pr-3">
                   {columns.map((csvHeader) => {
                     const currentField = headerMapping[csvHeader] || '__skip__';
-                    // Fields already used by other CSV columns (prevent duplicates)
                     const usedFields = new Set(
                       Object.entries(headerMapping)
                         .filter(([h]) => h !== csvHeader)
@@ -567,6 +571,7 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
                               }
                               return next;
                             });
+                            setAppliedTemplateName(null);
                           }}
                         >
                           <SelectTrigger className="h-8 text-xs w-[180px]">
@@ -596,6 +601,78 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
                   })}
                 </div>
               </ScrollArea>
+
+              {/* Save / Manage Templates */}
+              <div className="border-t pt-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Template name (e.g. OurPanel Export)"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    className="h-8 text-xs flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs shrink-0"
+                    disabled={!templateName.trim() || Object.keys(headerMapping).length === 0}
+                    onClick={() => {
+                      const newTemplate: MappingTemplate = {
+                        name: templateName.trim(),
+                        headers: columns,
+                        mapping: { ...headerMapping },
+                      };
+                      const existing = loadTemplates().filter(t => t.name !== newTemplate.name);
+                      const updated = [...existing, newTemplate];
+                      saveTemplates(updated);
+                      setSavedTemplates(updated);
+                      setTemplateName('');
+                      toast({ title: 'Template Saved', description: `"${newTemplate.name}" will auto-apply next time you import with the same headers.` });
+                    }}
+                  >
+                    <Save className="h-3 w-3" />
+                    Save
+                  </Button>
+                </div>
+                {savedTemplates.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-xs text-muted-foreground py-1">Saved:</span>
+                    {savedTemplates.map((t) => (
+                      <div key={t.name} className="flex items-center gap-0.5 bg-background border rounded px-2 py-0.5">
+                        <button
+                          className="text-xs hover:underline text-foreground"
+                          onClick={() => {
+                            // Apply this template to current columns
+                            const newMapping: Record<string, string> = {};
+                            for (const header of columns) {
+                              const entry = Object.entries(t.mapping).find(
+                                ([k]) => k.trim().toLowerCase() === header.trim().toLowerCase()
+                              );
+                              if (entry) newMapping[header] = entry[1];
+                            }
+                            setHeaderMapping(newMapping);
+                            setAppliedTemplateName(t.name);
+                            toast({ title: `Applied "${t.name}"` });
+                          }}
+                        >
+                          {t.name}
+                        </button>
+                        <button
+                          className="text-muted-foreground hover:text-destructive ml-1"
+                          onClick={() => {
+                            const updated = savedTemplates.filter(s => s.name !== t.name);
+                            saveTemplates(updated);
+                            setSavedTemplates(updated);
+                            if (appliedTemplateName === t.name) setAppliedTemplateName(null);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
