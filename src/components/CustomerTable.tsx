@@ -321,7 +321,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
                           const newAddons = checked
                             ? [...addons, a]
                             : addons.filter(x => x !== a);
-                          updateCustomer.mutate({ id: customer.id, selected_addons: newAddons } as any);
+                          updateCustomer.mutate({ id: customer.id, selected_addons: newAddons, add_ons: newAddons.length } as any);
                         }}
                       />
                       <label htmlFor={`addon-${customer.id}-${a}`} className="text-sm cursor-pointer">{a}</label>
