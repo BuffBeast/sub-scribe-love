@@ -162,6 +162,40 @@ interface ParsedCustomer {
   [key: string]: string | number;
 }
 
+// --- Mapping Template Storage ---
+const TEMPLATE_STORAGE_KEY = 'csv-import-mapping-templates';
+
+interface MappingTemplate {
+  name: string;
+  /** The CSV headers this template was created from */
+  headers: string[];
+  /** CSV header → internal field name */
+  mapping: Record<string, string>;
+}
+
+function loadTemplates(): MappingTemplate[] {
+  try {
+    const raw = localStorage.getItem(TEMPLATE_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveTemplates(templates: MappingTemplate[]) {
+  localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+}
+
+/** Check if a saved template matches the current CSV headers (all template headers present) */
+function findMatchingTemplate(csvHeaders: string[]): MappingTemplate | null {
+  const templates = loadTemplates();
+  const headerSet = new Set(csvHeaders.map(h => h.trim().toLowerCase()));
+  // Find the first template where all its headers exist in the current CSV
+  return templates.find(t =>
+    t.headers.every(h => headerSet.has(h.trim().toLowerCase()))
+  ) || null;
+}
+
 /** Build a mapping from CSV header → internal field name */
 function buildHeaderMapping(csvHeaders: string[]): Record<string, string> {
   const mapping: Record<string, string> = {};
