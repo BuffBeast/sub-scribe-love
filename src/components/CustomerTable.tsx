@@ -42,6 +42,7 @@ import { useOrderedColumns, useUpdateColumnOrder, COLUMN_LABELS, UnifiedColumn }
 import { useDeleteCustomer } from '@/hooks/useCustomers';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
+import { useAllAddonOptions } from '@/hooks/useAddonTypes';
 import { useToast } from '@/hooks/use-toast';
 import {
   DndContext,
