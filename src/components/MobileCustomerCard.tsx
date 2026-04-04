@@ -35,6 +35,7 @@ import {
 import { Check, X, Bell, BellOff, Trash2, ChevronRight, CalendarIcon, Mail, AlertTriangle } from 'lucide-react';
 import { useAllDeviceOptions } from '@/hooks/useDeviceTypes';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
+import { useAllAddonOptions } from '@/hooks/useAddonTypes';
 import { cn } from '@/lib/utils';
 import { isExpiringSoon } from '@/lib/dateUtils';
 
@@ -52,6 +53,7 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
   const deleteCustomer = useDeleteCustomer();
   const deviceOptions = useAllDeviceOptions();
   const serviceOptions = useAllServiceOptions();
+  const addonOptions = useAllAddonOptions();
 
   const getInitials = (name: string) => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
@@ -175,6 +177,42 @@ export function MobileCustomerCard({ customer, selected, onSelect, onClick }: Mo
             </PopoverContent>
           </Popover>
         </div>
+        {addonOptions.length > 0 && (
+          <div className="space-y-1 col-span-2">
+            <span className="text-xs text-muted-foreground">Add-Ons</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 w-full justify-start text-xs font-normal">
+                  {Array.isArray(customer.selected_addons) && customer.selected_addons.length > 0
+                    ? (customer.selected_addons as string[]).join(', ')
+                    : <span className="text-muted-foreground">None</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-2" align="start">
+                <div className="space-y-1">
+                  {addonOptions.map((a) => {
+                    const addons = Array.isArray(customer.selected_addons) ? (customer.selected_addons as string[]) : [];
+                    return (
+                      <div key={a} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`mobile-addon-${customer.id}-${a}`}
+                          checked={addons.includes(a)}
+                          onCheckedChange={(checked) => {
+                            const newAddons = checked
+                              ? [...addons, a]
+                              : addons.filter(x => x !== a);
+                            updateCustomer.mutate({ id: customer.id, selected_addons: newAddons, add_ons: newAddons.length } as any);
+                          }}
+                        />
+                        <label htmlFor={`mobile-addon-${customer.id}-${a}`} className="text-xs cursor-pointer">{a}</label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
       </div>
 
       {/* Toggle Buttons: LIVE, LIVE Trial, VOD, VOD Trial, Reminders */}
