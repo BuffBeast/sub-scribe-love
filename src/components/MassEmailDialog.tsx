@@ -443,9 +443,9 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
               className="flex-1 min-h-[120px]"
               maxLength={5000}
             />
-            <p className="text-xs text-muted-foreground">
-              Use <code className="bg-muted px-1 rounded">{'{name}'}</code> to personalize with customer name, 
-              <code className="bg-muted px-1 rounded ml-1">{'{plan}'}</code> for their subscription plan.
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Use <code className="bg-muted px-1 py-0.5 rounded">{'{name}'}</code> to personalize with customer name and{' '}
+              <code className="bg-muted px-1 py-0.5 rounded">{'{plan}'}</code> for their subscription plan.
             </p>
           </div>
 
