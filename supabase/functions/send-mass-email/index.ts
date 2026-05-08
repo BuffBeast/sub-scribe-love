@@ -150,8 +150,11 @@ serve(async (req: Request): Promise<Response> => {
       throw new Error("Missing Supabase configuration");
     }
 
-    if (!RESEND_API_KEY) {
-      throw new Error("Missing RESEND_API_KEY");
+    if (!BREVO_API_KEY) {
+      throw new Error("Missing BREVO_API_KEY");
+    }
+    if (!LOVABLE_API_KEY) {
+      throw new Error("Missing LOVABLE_API_KEY");
     }
 
     // Verify JWT authentication
