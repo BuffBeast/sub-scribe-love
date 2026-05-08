@@ -243,20 +243,26 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Fetch user's settings (app name and reply-to email)
+    // Fetch user's settings (Brevo sender, app name, reply-to)
     let replyToEmail: string | null = null;
-    let fromName = "Let's Stream"; // Default fallback
+    let fromName = "Let's Stream";
+    let fromEmail: string | null = null;
     const { data: settings } = await supabase
       .from('app_settings')
-      .select('reply_to_email, app_name')
+      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (settings?.reply_to_email) {
-      replyToEmail = settings.reply_to_email;
-    }
-    if (settings?.app_name) {
-      fromName = settings.app_name;
+    if (settings?.reply_to_email) replyToEmail = settings.reply_to_email;
+    if (settings?.brevo_sender_name) fromName = settings.brevo_sender_name;
+    else if (settings?.app_name) fromName = settings.app_name;
+    if (settings?.brevo_sender_email) fromEmail = settings.brevo_sender_email;
+
+    if (!fromEmail) {
+      return new Response(
+        JSON.stringify({ error: "Brevo sender email is not configured. Open Email Provider settings to set it." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const sanitizedSubject = sanitizeEmailSubject(subject);
