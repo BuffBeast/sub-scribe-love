@@ -2,7 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const BREVO_GATEWAY = "https://connector-gateway.lovable.dev/brevo";
 
 const reminderSettingsSchema = z.object({
   reminder_subject: z.string().max(200).nullable().optional(),
@@ -27,33 +29,39 @@ function sanitizeEmailSubject(subject: string): string {
   return subject.replace(/[\r\n]/g, '').replace(/[\x00-\x1F\x7F]/g, '').trim().slice(0, 200);
 }
 
-async function sendEmail(to: string, subject: string, html: string, fromName: string, replyTo?: string | null) {
-  const emailPayload: Record<string, unknown> = {
-    from: `${fromName} <noreply@letsstreamtracker.ca>`,
-    to: [to],
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  fromName: string,
+  fromEmail: string,
+  replyTo?: string | null,
+) {
+  const payload: Record<string, unknown> = {
+    sender: { name: fromName, email: fromEmail },
+    to: [{ email: to }],
     subject,
-    html,
+    htmlContent: html,
   };
   if (replyTo) {
-    emailPayload.reply_to = replyTo;
+    payload.replyTo = { email: replyTo };
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch(`${BREVO_GATEWAY}/smtp/email`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${RESEND_API_KEY}`,
+      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": BREVO_API_KEY ?? "",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(emailPayload),
+    body: JSON.stringify(payload),
   });
 
-  const result = await response.json();
-
+  const result = await response.json().catch(() => ({}));
   if (!response.ok) {
-    console.error(`Resend API error (${response.status}):`, result);
-    throw new Error(`Resend API error: ${result?.message || result?.error?.message || response.statusText}`);
+    console.error(`Brevo API error (${response.status}):`, result);
+    throw new Error(`Brevo API error: ${result?.message || result?.code || response.statusText}`);
   }
-
   return result;
 }
 
@@ -77,6 +85,8 @@ interface UserSettings {
   reminder_message: string | null;
   reply_to_email: string | null;
   app_name: string;
+  brevo_sender_email: string | null;
+  brevo_sender_name: string | null;
 }
 
 async function processUserReminders(
@@ -175,7 +185,13 @@ async function processUserReminders(
   let subjectTemplate = "Your subscription expires soon";
   let messageTemplate = `Hi {name},\n\nYour {plan} subscription expires on {date}.\n\nPlease renew to continue your service.\n\nThank you!`;
   let replyToEmail: string | null = userSettings.reply_to_email;
-  const fromName = userSettings.app_name || "Let's Stream";
+  const fromName = userSettings.brevo_sender_name || userSettings.app_name || "Let's Stream";
+  const fromEmail = userSettings.brevo_sender_email;
+
+  if (!fromEmail) {
+    console.warn(`[User ${userId}] Skipping: no Brevo sender email configured`);
+    return { userId, processed: 0, success: 0, failed: 0, skippedDuplicate: 0, results: [{ skipped: 'no_brevo_sender' }] };
+  }
 
   const validatedSettings = reminderSettingsSchema.safeParse(userSettings);
   if (validatedSettings.success) {
@@ -226,7 +242,7 @@ async function processUserReminders(
     const expiryDateForLog = customer.liveExpiring ? customer.liveDate : customer.vodDate;
 
     try {
-      const result = await sendEmail(customer.email, finalSubject, html, fromName, replyToEmail);
+      const result = await sendEmail(customer.email, finalSubject, html, fromName, fromEmail, replyToEmail);
       emailResults.push({
         email: customer.email,
         types: typeLabel,
@@ -288,8 +304,11 @@ serve(async (req: Request): Promise<Response> => {
     if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
       throw new Error("Missing Supabase configuration");
     }
-    if (!RESEND_API_KEY) {
-      throw new Error("Missing RESEND_API_KEY");
+    if (!BREVO_API_KEY) {
+      throw new Error("Missing BREVO_API_KEY");
+    }
+    if (!LOVABLE_API_KEY) {
+      throw new Error("Missing LOVABLE_API_KEY");
     }
 
     const authHeader = req.headers.get("Authorization");
@@ -342,7 +361,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const { data: settingsList } = await supabase
       .from('app_settings')
-      .select('user_id, reminder_days, reminder_subject, reminder_message, reply_to_email, app_name')
+      .select('user_id, reminder_days, reminder_subject, reminder_message, reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
       .in('user_id', userIds);
 
     const allResults: unknown[] = [];
@@ -360,6 +379,8 @@ serve(async (req: Request): Promise<Response> => {
         reminder_message: settings?.reminder_message ?? null,
         reply_to_email: settings?.reply_to_email ?? null,
         app_name: settings?.app_name ?? "Let's Stream",
+        brevo_sender_email: settings?.brevo_sender_email ?? null,
+        brevo_sender_name: settings?.brevo_sender_name ?? null,
       };
 
       const result = await processUserReminders(supabase, userSettings);

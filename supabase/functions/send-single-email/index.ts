@@ -2,7 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const BREVO_GATEWAY = "https://connector-gateway.lovable.dev/brevo";
 
 // Allowed content types for attachments
 const ALLOWED_CONTENT_TYPES = new Set([
@@ -92,8 +94,11 @@ serve(async (req: Request): Promise<Response> => {
       throw new Error("Missing Supabase configuration");
     }
 
-    if (!RESEND_API_KEY) {
-      throw new Error("Missing RESEND_API_KEY");
+    if (!BREVO_API_KEY) {
+      throw new Error("Missing BREVO_API_KEY");
+    }
+    if (!LOVABLE_API_KEY) {
+      throw new Error("Missing LOVABLE_API_KEY");
     }
 
     // Verify JWT authentication
@@ -151,12 +156,20 @@ serve(async (req: Request): Promise<Response> => {
     // Get user's settings (app name and reply-to email)
     const { data: settings } = await supabase
       .from('app_settings')
-      .select('reply_to_email, app_name')
+      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
       .eq('user_id', userId)
       .maybeSingle();
 
     const replyToEmail = settings?.reply_to_email || null;
-    const fromName = settings?.app_name || "Let's Stream";
+    const fromName = settings?.brevo_sender_name || settings?.app_name || "Let's Stream";
+    const fromEmail = settings?.brevo_sender_email;
+
+    if (!fromEmail) {
+      return new Response(
+        JSON.stringify({ error: "Brevo sender email is not configured. Open Email Provider settings to set it." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Build HTML email
     const escapedMessage = message.split('\n').map(line => `<p>${escapeHtml(line) || '&nbsp;'}</p>`).join('');
@@ -166,41 +179,40 @@ serve(async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    // Build email payload
+    // Build Brevo payload
     const emailPayload: Record<string, unknown> = {
-      from: `${fromName} <noreply@letsstreamtracker.ca>`,
-      to: [email],
+      sender: { name: fromName, email: fromEmail },
+      to: [{ email }],
       subject: sanitizeEmailSubject(subject),
-      html,
+      htmlContent: html,
     };
 
     if (replyToEmail) {
-      emailPayload.reply_to = replyToEmail;
+      emailPayload.replyTo = { email: replyToEmail };
     }
 
-    // Add attachments if provided
     if (attachments && attachments.length > 0) {
-      emailPayload.attachments = attachments.map(att => ({
-        filename: sanitizeFilename(att.filename),
+      emailPayload.attachment = attachments.map(att => ({
+        name: sanitizeFilename(att.filename),
         content: att.content,
-        type: att.contentType,
       }));
     }
 
-    // Send email via Resend
-    const response = await fetch("https://api.resend.com/emails", {
+    // Send email via Brevo (through Lovable connector gateway)
+    const response = await fetch(`${BREVO_GATEWAY}/smtp/email`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": BREVO_API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(emailPayload),
     });
 
-    const result = await response.json();
+    const result = await response.json().catch(() => ({}));
 
     const emailStatus = response.ok ? 'sent' : 'failed';
-    const errorMessage = response.ok ? null : (result?.error?.message || 'Failed to send email');
+    const errorMessage = response.ok ? null : (result?.message || result?.code || 'Failed to send email');
 
     // Log to reminder_history if we have a customerId
     if (customerId) {

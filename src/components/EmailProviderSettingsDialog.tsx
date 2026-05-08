@@ -14,20 +14,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useAppSettings } from '@/hooks/useAppSettings';
-
-type Provider = 'resend' | 'brevo';
 
 export function EmailProviderSettingsDialog() {
   const [open, setOpen] = useState(false);
-  const [provider, setProvider] = useState<Provider>('resend');
   const [senderEmail, setSenderEmail] = useState('');
   const [senderName, setSenderName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -40,7 +30,6 @@ export function EmailProviderSettingsDialog() {
 
   useEffect(() => {
     if (settings && open) {
-      setProvider(((settings as any).email_provider as Provider) || 'resend');
       setSenderEmail((settings as any).brevo_sender_email || '');
       setSenderName((settings as any).brevo_sender_name || '');
       setTestResult(null);
@@ -53,23 +42,21 @@ export function EmailProviderSettingsDialog() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      if (provider === 'brevo') {
-        if (!senderEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail)) {
-          toast.error('Please enter a valid sender email');
-          setSaving(false);
-          return;
-        }
-        if (!senderName.trim()) {
-          toast.error('Please enter a sender name');
-          setSaving(false);
-          return;
-        }
+      if (!senderEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail)) {
+        toast.error('Please enter a valid sender email');
+        setSaving(false);
+        return;
+      }
+      if (!senderName.trim()) {
+        toast.error('Please enter a sender name');
+        setSaving(false);
+        return;
       }
 
       const updates: Record<string, unknown> = {
-        email_provider: provider,
-        brevo_sender_email: senderEmail.trim() || null,
-        brevo_sender_name: senderName.trim() || null,
+        email_provider: 'brevo',
+        brevo_sender_email: senderEmail.trim(),
+        brevo_sender_name: senderName.trim(),
         user_id: user.id,
       };
 
@@ -140,99 +127,78 @@ export function EmailProviderSettingsDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Email Provider Settings</DialogTitle>
+          <DialogTitle>Email Provider (Brevo)</DialogTitle>
           <DialogDescription>
-            Choose which service sends your emails and configure sender details.
+            All emails are sent through Brevo. Configure the sender details
+            below.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label>Provider</Label>
-            <Select
-              value={provider}
-              onValueChange={(v) => setProvider(v as Provider)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="resend">Resend (default)</SelectItem>
-                <SelectItem value="brevo">Brevo</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+            Your Brevo API key is stored securely as a backend secret named{' '}
+            <code className="font-mono">BREVO_API_KEY</code>.
           </div>
 
-          {provider === 'brevo' && (
-            <>
-              <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Your Brevo API key is stored securely as a backend secret named{' '}
-                <code className="font-mono">BREVO_API_KEY</code>. To add or
-                update it, use the Secrets manager. The fields below configure
-                the sender that recipients will see.
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="brevo-sender-name">Sender name</Label>
+            <Input
+              id="brevo-sender-name"
+              placeholder="Your App"
+              value={senderName}
+              onChange={(e) => setSenderName(e.target.value)}
+              maxLength={100}
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="brevo-sender-name">Sender name</Label>
-                <Input
-                  id="brevo-sender-name"
-                  placeholder="Your App"
-                  value={senderName}
-                  onChange={(e) => setSenderName(e.target.value)}
-                  maxLength={100}
-                />
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="brevo-sender-email">Sender email</Label>
+            <Input
+              id="brevo-sender-email"
+              type="email"
+              placeholder="you@your-verified-domain.com"
+              value={senderEmail}
+              onChange={(e) => setSenderEmail(e.target.value)}
+              maxLength={255}
+            />
+            <p className="text-xs text-muted-foreground">
+              Must be from a domain verified in your Brevo account.
+            </p>
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="brevo-sender-email">Sender email</Label>
-                <Input
-                  id="brevo-sender-email"
-                  type="email"
-                  placeholder="you@your-verified-domain.com"
-                  value={senderEmail}
-                  onChange={(e) => setSenderEmail(e.target.value)}
-                  maxLength={255}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Must be from a domain verified in your Brevo account.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTest}
-                  disabled={testing}
-                  className="gap-2"
-                >
-                  {testing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Mail className="h-4 w-4" />
-                  )}
-                  Test connection
-                </Button>
-                {testResult && (
-                  <div
-                    className={`flex items-start gap-2 text-sm rounded-md p-2 ${
-                      testResult.ok
-                        ? 'bg-green-500/10 text-green-700 dark:text-green-400'
-                        : 'bg-destructive/10 text-destructive'
-                    }`}
-                  >
-                    {testResult.ok ? (
-                      <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                    )}
-                    <span>{testResult.message}</span>
-                  </div>
+          <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleTest}
+              disabled={testing}
+              className="gap-2"
+            >
+              {testing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Mail className="h-4 w-4" />
+              )}
+              Test connection
+            </Button>
+            {testResult && (
+              <div
+                className={`flex items-start gap-2 text-sm rounded-md p-2 ${
+                  testResult.ok
+                    ? 'bg-green-500/10 text-green-700 dark:text-green-400'
+                    : 'bg-destructive/10 text-destructive'
+                }`}
+              >
+                {testResult.ok ? (
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
+                ) : (
+                  <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
                 )}
+                <span>{testResult.message}</span>
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
 
         <DialogFooter>

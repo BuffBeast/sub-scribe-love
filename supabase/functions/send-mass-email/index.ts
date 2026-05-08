@@ -2,7 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const BREVO_GATEWAY = "https://connector-gateway.lovable.dev/brevo";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -90,42 +92,48 @@ interface MassEmailRequest {
 }
 
 async function sendEmail(
-  to: string, 
-  subject: string, 
-  html: string, 
+  to: string,
+  subject: string,
+  html: string,
   fromName: string,
+  fromEmail: string,
   replyTo?: string | null,
   attachments?: Attachment[]
 ) {
-  const emailPayload: Record<string, unknown> = {
-    from: `${fromName} <noreply@letsstreamtracker.ca>`,
-    to: [to],
+  const payload: Record<string, unknown> = {
+    sender: { name: fromName, email: fromEmail },
+    to: [{ email: to }],
     subject,
-    html,
+    htmlContent: html,
   };
 
   if (replyTo) {
-    emailPayload.reply_to = replyTo;
+    payload.replyTo = { email: replyTo };
   }
 
   if (attachments && attachments.length > 0) {
-    emailPayload.attachments = attachments.map(att => ({
-      filename: sanitizeFilename(att.filename),
+    payload.attachment = attachments.map(att => ({
+      name: sanitizeFilename(att.filename),
       content: att.content,
-      type: att.contentType,
     }));
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch(`${BREVO_GATEWAY}/smtp/email`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${RESEND_API_KEY}`,
+      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": BREVO_API_KEY ?? "",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(emailPayload),
+    body: JSON.stringify(payload),
   });
-  
-  return { json: await response.json(), ok: response.ok };
+
+  const json = await response.json().catch(() => ({}));
+  // Brevo returns { messageId } on success; error fields on failure
+  return {
+    ok: response.ok,
+    json: response.ok ? json : { error: json?.message || json?.code || `HTTP ${response.status}` },
+  };
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -142,8 +150,11 @@ serve(async (req: Request): Promise<Response> => {
       throw new Error("Missing Supabase configuration");
     }
 
-    if (!RESEND_API_KEY) {
-      throw new Error("Missing RESEND_API_KEY");
+    if (!BREVO_API_KEY) {
+      throw new Error("Missing BREVO_API_KEY");
+    }
+    if (!LOVABLE_API_KEY) {
+      throw new Error("Missing LOVABLE_API_KEY");
     }
 
     // Verify JWT authentication
@@ -232,20 +243,26 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Fetch user's settings (app name and reply-to email)
+    // Fetch user's settings (Brevo sender, app name, reply-to)
     let replyToEmail: string | null = null;
-    let fromName = "Let's Stream"; // Default fallback
+    let fromName = "Let's Stream";
+    let fromEmail: string | null = null;
     const { data: settings } = await supabase
       .from('app_settings')
-      .select('reply_to_email, app_name')
+      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (settings?.reply_to_email) {
-      replyToEmail = settings.reply_to_email;
-    }
-    if (settings?.app_name) {
-      fromName = settings.app_name;
+    if (settings?.reply_to_email) replyToEmail = settings.reply_to_email;
+    if (settings?.brevo_sender_name) fromName = settings.brevo_sender_name;
+    else if (settings?.app_name) fromName = settings.app_name;
+    if (settings?.brevo_sender_email) fromEmail = settings.brevo_sender_email;
+
+    if (!fromEmail) {
+      return new Response(
+        JSON.stringify({ error: "Brevo sender email is not configured. Open Email Provider settings to set it." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const sanitizedSubject = sanitizeEmailSubject(subject);
@@ -283,7 +300,7 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(customer.email, sanitizedSubject, html, fromName, replyToEmail, attachments);
+        const result = await sendEmail(customer.email, sanitizedSubject, html, fromName, fromEmail!, replyToEmail, attachments);
         if (!result.ok || result.json.error) {
           const errMsg = result.json.error?.message || result.json.error || 'Send failed';
           emailResults.push({ email: customer.email, success: false, error: errMsg });
