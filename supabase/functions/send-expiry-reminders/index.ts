@@ -2,7 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const BREVO_GATEWAY = "https://connector-gateway.lovable.dev/brevo";
 
 const reminderSettingsSchema = z.object({
   reminder_subject: z.string().max(200).nullable().optional(),
@@ -27,33 +29,39 @@ function sanitizeEmailSubject(subject: string): string {
   return subject.replace(/[\r\n]/g, '').replace(/[\x00-\x1F\x7F]/g, '').trim().slice(0, 200);
 }
 
-async function sendEmail(to: string, subject: string, html: string, fromName: string, replyTo?: string | null) {
-  const emailPayload: Record<string, unknown> = {
-    from: `${fromName} <noreply@letsstreamtracker.ca>`,
-    to: [to],
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  fromName: string,
+  fromEmail: string,
+  replyTo?: string | null,
+) {
+  const payload: Record<string, unknown> = {
+    sender: { name: fromName, email: fromEmail },
+    to: [{ email: to }],
     subject,
-    html,
+    htmlContent: html,
   };
   if (replyTo) {
-    emailPayload.reply_to = replyTo;
+    payload.replyTo = { email: replyTo };
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch(`${BREVO_GATEWAY}/smtp/email`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${RESEND_API_KEY}`,
+      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": BREVO_API_KEY ?? "",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(emailPayload),
+    body: JSON.stringify(payload),
   });
 
-  const result = await response.json();
-
+  const result = await response.json().catch(() => ({}));
   if (!response.ok) {
-    console.error(`Resend API error (${response.status}):`, result);
-    throw new Error(`Resend API error: ${result?.message || result?.error?.message || response.statusText}`);
+    console.error(`Brevo API error (${response.status}):`, result);
+    throw new Error(`Brevo API error: ${result?.message || result?.code || response.statusText}`);
   }
-
   return result;
 }
 
