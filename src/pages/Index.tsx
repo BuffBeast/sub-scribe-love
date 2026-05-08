@@ -25,6 +25,7 @@ import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { ExportCSVButton } from '@/components/ExportCSVButton';
 import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
+import { EmailProviderSettingsDialog } from '@/components/EmailProviderSettingsDialog';
 import { MassEmailDialog } from '@/components/MassEmailDialog';
 import { StockTracker } from '@/components/StockTracker';
 import { CreditTracker } from '@/components/CreditTracker';
@@ -357,6 +358,7 @@ const Index = () => {
               
               <ColumnSettingsDialog />
               <BrandingSettingsDialog />
+              <EmailProviderSettingsDialog />
               <Link to="/analytics">
                 <Button variant="ghost" size="icon" title="Analytics">
                   <BarChart3 className="h-4 w-4" />
