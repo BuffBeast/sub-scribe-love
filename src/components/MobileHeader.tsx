@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { ExportCSVButton } from '@/components/ExportCSVButton';
 import { ColumnSettingsDialog } from '@/components/ColumnSettingsDialog';
 import { BrandingSettingsDialog } from '@/components/BrandingSettingsDialog';
+import { EmailProviderSettingsDialog } from '@/components/EmailProviderSettingsDialog';
 import { ImportCustomersDialog } from '@/components/ImportCustomersDialog';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { MassEmailDialog } from '@/components/MassEmailDialog';
