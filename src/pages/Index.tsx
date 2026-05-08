@@ -357,6 +357,7 @@ const Index = () => {
               
               <ColumnSettingsDialog />
               <BrandingSettingsDialog />
+              <EmailProviderSettingsDialog />
               <Link to="/analytics">
                 <Button variant="ghost" size="icon" title="Analytics">
                   <BarChart3 className="h-4 w-4" />

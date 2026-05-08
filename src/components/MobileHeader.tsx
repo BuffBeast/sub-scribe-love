@@ -135,6 +135,7 @@ export function MobileHeader({
                 <div className="flex gap-2 py-2">
                   <ColumnSettingsDialog />
                   <BrandingSettingsDialog />
+                  <EmailProviderSettingsDialog />
                 </div>
                 
                 {/* Install App Button - only show if not installed and prompt available */}
