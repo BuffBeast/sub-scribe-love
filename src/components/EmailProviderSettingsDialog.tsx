@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import { Mail, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
-export function EmailProviderSettingsDialog() {
+export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElement }) {
   const [open, setOpen] = useState(false);
   const [senderEmail, setSenderEmail] = useState('');
   const [senderName, setSenderName] = useState('');
