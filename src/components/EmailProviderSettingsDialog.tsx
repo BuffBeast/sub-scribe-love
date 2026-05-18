@@ -121,9 +121,11 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="Email Provider Settings">
-          <Mail className="h-4 w-4" />
-        </Button>
+        {trigger || (
+          <Button variant="ghost" size="icon" title="Email Provider Settings">
+            <Mail className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
