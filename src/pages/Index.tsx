@@ -358,7 +358,7 @@ const Index = () => {
               
               <ColumnSettingsDialog />
               <BrandingSettingsDialog />
-              <EmailProviderSettingsDialog />
+              <EmailProviderSettingsDialog trigger={<Button variant="outline" size="sm" className="gap-2"><Mail className="h-4 w-4" />Email settings</Button>} />
               <Link to="/analytics">
                 <Button variant="ghost" size="icon" title="Analytics">
                   <BarChart3 className="h-4 w-4" />
