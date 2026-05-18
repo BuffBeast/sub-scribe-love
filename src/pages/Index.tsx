@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { isExpiringSoon } from '@/lib/dateUtils';
-import { Users, Clock, Tv, Video, LogOut, BarChart3, AlertTriangle, Bell } from 'lucide-react';
+import { Users, Clock, Tv, Video, LogOut, BarChart3, AlertTriangle, Bell, Mail } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
 import { useCustomFields } from '@/hooks/useCustomFields';
@@ -358,7 +358,7 @@ const Index = () => {
               
               <ColumnSettingsDialog />
               <BrandingSettingsDialog />
-              <EmailProviderSettingsDialog />
+              <EmailProviderSettingsDialog trigger={<Button variant="outline" size="sm" className="gap-2"><Mail className="h-4 w-4" />Email settings</Button>} />
               <Link to="/analytics">
                 <Button variant="ghost" size="icon" title="Analytics">
                   <BarChart3 className="h-4 w-4" />

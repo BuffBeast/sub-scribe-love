@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, Menu, Download, BarChart3, Bell } from 'lucide-react';
+import { LogOut, Menu, Download, BarChart3, Bell, Mail } from 'lucide-react';
 import { isExpiringSoon } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -136,7 +136,9 @@ export function MobileHeader({
                 <div className="flex gap-2 py-2">
                   <ColumnSettingsDialog />
                   <BrandingSettingsDialog />
-                  <EmailProviderSettingsDialog />
+                </div>
+                <div className="py-2">
+                  <EmailProviderSettingsDialog trigger={<Button variant="outline" className="w-full justify-start gap-2"><Mail className="h-4 w-4" />Email settings</Button>} />
                 </div>
                 
                 {/* Install App Button - only show if not installed and prompt available */}
