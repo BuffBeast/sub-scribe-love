@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, Menu, Download, BarChart3, Bell } from 'lucide-react';
+import { LogOut, Menu, Download, BarChart3, Bell, Mail } from 'lucide-react';
 import { isExpiringSoon } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
