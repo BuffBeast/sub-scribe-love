@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { isExpiringSoon } from '@/lib/dateUtils';
-import { Users, Clock, Tv, Video, LogOut, BarChart3, AlertTriangle, Bell } from 'lucide-react';
+import { Users, Clock, Tv, Video, LogOut, BarChart3, AlertTriangle, Bell, Mail } from 'lucide-react';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useAllServiceOptions } from '@/hooks/useServiceTypes';
 import { useCustomFields } from '@/hooks/useCustomFields';
