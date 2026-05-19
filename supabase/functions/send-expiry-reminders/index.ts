@@ -88,6 +88,7 @@ interface UserSettings {
   app_name: string;
   brevo_sender_email: string | null;
   brevo_sender_name: string | null;
+  brevo_api_key: string | null;
 }
 
 async function processUserReminders(
