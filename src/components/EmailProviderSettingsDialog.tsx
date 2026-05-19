@@ -63,6 +63,13 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
         brevo_sender_name: senderName.trim(),
         user_id: user.id,
       };
+      if (apiKey.trim()) {
+        updates.brevo_api_key = apiKey.trim();
+      } else if (!hasExistingKey) {
+        toast.error('Please enter your Brevo API key');
+        setSaving(false);
+        return;
+      }
 
       const { data: existing } = await supabase
         .from('app_settings')
