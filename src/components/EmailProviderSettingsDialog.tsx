@@ -30,6 +30,7 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
   >(null);
 
   const { data: settings } = useAppSettings();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (settings && open) {
