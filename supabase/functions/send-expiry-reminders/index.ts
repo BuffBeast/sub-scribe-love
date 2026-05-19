@@ -250,7 +250,7 @@ async function processUserReminders(
     const expiryDateForLog = customer.liveExpiring ? customer.liveDate : customer.vodDate;
 
     try {
-      const result = await sendEmail(customer.email, finalSubject, html, fromName, fromEmail, replyToEmail);
+      const result = await sendEmail(customer.email, finalSubject, html, fromName, fromEmail, brevoApiKey, replyToEmail);
       emailResults.push({
         email: customer.email,
         types: typeLabel,
