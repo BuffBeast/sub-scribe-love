@@ -92,6 +92,7 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
         if (error) throw error;
       }
 
+      await queryClient.invalidateQueries({ queryKey: ['app-settings'] });
       toast.success('Email provider settings saved');
       setOpen(false);
     } catch (e: any) {
