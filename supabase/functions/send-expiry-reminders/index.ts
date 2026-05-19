@@ -312,9 +312,6 @@ serve(async (req: Request): Promise<Response> => {
     if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
       throw new Error("Missing Supabase configuration");
     }
-    if (!BREVO_API_KEY) {
-      throw new Error("Missing BREVO_API_KEY");
-    }
     if (!LOVABLE_API_KEY) {
       throw new Error("Missing LOVABLE_API_KEY");
     }
