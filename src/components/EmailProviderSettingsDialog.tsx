@@ -20,6 +20,8 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
   const [open, setOpen] = useState(false);
   const [senderEmail, setSenderEmail] = useState('');
   const [senderName, setSenderName] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [hasExistingKey, setHasExistingKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<
@@ -32,6 +34,8 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
     if (settings && open) {
       setSenderEmail((settings as any).brevo_sender_email || '');
       setSenderName((settings as any).brevo_sender_name || '');
+      setApiKey('');
+      setHasExistingKey(!!(settings as any).brevo_api_key);
       setTestResult(null);
     }
   }, [settings, open]);
