@@ -247,7 +247,7 @@ serve(async (req: Request): Promise<Response> => {
     let fromEmail: string | null = null;
     const { data: settings } = await supabase
       .from('app_settings')
-      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
+      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name, brevo_api_key')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -255,10 +255,18 @@ serve(async (req: Request): Promise<Response> => {
     if (settings?.brevo_sender_name) fromName = settings.brevo_sender_name;
     else if (settings?.app_name) fromName = settings.app_name;
     if (settings?.brevo_sender_email) fromEmail = settings.brevo_sender_email;
+    const brevoApiKey = settings?.brevo_api_key || FALLBACK_BREVO_API_KEY;
+
+    if (!brevoApiKey) {
+      return new Response(
+        JSON.stringify({ error: "Brevo API key is not configured. Open Email settings to add your Brevo API key." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     if (!fromEmail) {
       return new Response(
-        JSON.stringify({ error: "Brevo sender email is not configured. Open Email Provider settings to set it." }),
+        JSON.stringify({ error: "Brevo sender email is not configured. Open Email settings to set it." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
