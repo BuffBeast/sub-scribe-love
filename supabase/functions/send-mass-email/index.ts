@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const FALLBACK_BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_GATEWAY = "https://connector-gateway.lovable.dev/brevo";
 
 const corsHeaders = {
@@ -97,6 +97,7 @@ async function sendEmail(
   html: string,
   fromName: string,
   fromEmail: string,
+  brevoApiKey: string,
   replyTo?: string | null,
   attachments?: Attachment[]
 ) {
@@ -122,7 +123,7 @@ async function sendEmail(
     method: "POST",
     headers: {
       "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": BREVO_API_KEY ?? "",
+      "X-Connection-Api-Key": brevoApiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -150,9 +151,6 @@ serve(async (req: Request): Promise<Response> => {
       throw new Error("Missing Supabase configuration");
     }
 
-    if (!BREVO_API_KEY) {
-      throw new Error("Missing BREVO_API_KEY");
-    }
     if (!LOVABLE_API_KEY) {
       throw new Error("Missing LOVABLE_API_KEY");
     }
@@ -249,7 +247,7 @@ serve(async (req: Request): Promise<Response> => {
     let fromEmail: string | null = null;
     const { data: settings } = await supabase
       .from('app_settings')
-      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
+      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name, brevo_api_key')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -257,10 +255,18 @@ serve(async (req: Request): Promise<Response> => {
     if (settings?.brevo_sender_name) fromName = settings.brevo_sender_name;
     else if (settings?.app_name) fromName = settings.app_name;
     if (settings?.brevo_sender_email) fromEmail = settings.brevo_sender_email;
+    const brevoApiKey = settings?.brevo_api_key || FALLBACK_BREVO_API_KEY;
+
+    if (!brevoApiKey) {
+      return new Response(
+        JSON.stringify({ error: "Brevo API key is not configured. Open Email settings to add your Brevo API key." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     if (!fromEmail) {
       return new Response(
-        JSON.stringify({ error: "Brevo sender email is not configured. Open Email Provider settings to set it." }),
+        JSON.stringify({ error: "Brevo sender email is not configured. Open Email settings to set it." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -300,7 +306,7 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(customer.email, sanitizedSubject, html, fromName, fromEmail!, replyToEmail, attachments);
+        const result = await sendEmail(customer.email, sanitizedSubject, html, fromName, fromEmail!, brevoApiKey, replyToEmail, attachments);
         if (!result.ok || result.json.error) {
           const errMsg = result.json.error?.message || result.json.error || 'Send failed';
           emailResults.push({ email: customer.email, success: false, error: errMsg });

@@ -71,6 +71,7 @@ export type Database = {
       app_settings: {
         Row: {
           app_name: string
+          brevo_api_key: string | null
           brevo_sender_email: string | null
           brevo_sender_name: string | null
           created_at: string
@@ -89,6 +90,7 @@ export type Database = {
         }
         Insert: {
           app_name?: string
+          brevo_api_key?: string | null
           brevo_sender_email?: string | null
           brevo_sender_name?: string | null
           created_at?: string
@@ -107,6 +109,7 @@ export type Database = {
         }
         Update: {
           app_name?: string
+          brevo_api_key?: string | null
           brevo_sender_email?: string | null
           brevo_sender_name?: string | null
           created_at?: string

@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const FALLBACK_BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_GATEWAY = "https://connector-gateway.lovable.dev/brevo";
 
 // Allowed content types for attachments
@@ -94,9 +94,6 @@ serve(async (req: Request): Promise<Response> => {
       throw new Error("Missing Supabase configuration");
     }
 
-    if (!BREVO_API_KEY) {
-      throw new Error("Missing BREVO_API_KEY");
-    }
     if (!LOVABLE_API_KEY) {
       throw new Error("Missing LOVABLE_API_KEY");
     }
@@ -156,17 +153,25 @@ serve(async (req: Request): Promise<Response> => {
     // Get user's settings (app name and reply-to email)
     const { data: settings } = await supabase
       .from('app_settings')
-      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
+      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name, brevo_api_key')
       .eq('user_id', userId)
       .maybeSingle();
 
     const replyToEmail = settings?.reply_to_email || null;
     const fromName = settings?.brevo_sender_name || settings?.app_name || "Let's Stream";
     const fromEmail = settings?.brevo_sender_email;
+    const brevoApiKey = settings?.brevo_api_key || FALLBACK_BREVO_API_KEY;
+
+    if (!brevoApiKey) {
+      return new Response(
+        JSON.stringify({ error: "Brevo API key is not configured. Open Email settings to add your Brevo API key." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     if (!fromEmail) {
       return new Response(
-        JSON.stringify({ error: "Brevo sender email is not configured. Open Email Provider settings to set it." }),
+        JSON.stringify({ error: "Brevo sender email is not configured. Open Email settings to set it." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -203,7 +208,7 @@ serve(async (req: Request): Promise<Response> => {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": BREVO_API_KEY,
+        "X-Connection-Api-Key": brevoApiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(emailPayload),

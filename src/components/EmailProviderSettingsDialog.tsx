@@ -20,6 +20,8 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
   const [open, setOpen] = useState(false);
   const [senderEmail, setSenderEmail] = useState('');
   const [senderName, setSenderName] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [hasExistingKey, setHasExistingKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<
@@ -32,6 +34,8 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
     if (settings && open) {
       setSenderEmail((settings as any).brevo_sender_email || '');
       setSenderName((settings as any).brevo_sender_name || '');
+      setApiKey('');
+      setHasExistingKey(!!(settings as any).brevo_api_key);
       setTestResult(null);
     }
   }, [settings, open]);
@@ -59,6 +63,13 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
         brevo_sender_name: senderName.trim(),
         user_id: user.id,
       };
+      if (apiKey.trim()) {
+        updates.brevo_api_key = apiKey.trim();
+      } else if (!hasExistingKey) {
+        toast.error('Please enter your Brevo API key');
+        setSaving(false);
+        return;
+      }
 
       const { data: existing } = await supabase
         .from('app_settings')
@@ -137,9 +148,29 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-            Your Brevo API key is stored securely as a backend secret named{' '}
-            <code className="font-mono">BREVO_API_KEY</code>.
+          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground">How to get your Brevo API key</p>
+            <ol className="list-decimal pl-4 space-y-0.5">
+              <li>Sign in at <a href="https://app.brevo.com" target="_blank" rel="noreferrer" className="underline">app.brevo.com</a> (free plan: 300 emails/day)</li>
+              <li>Verify your sender domain under <span className="font-mono">Senders &amp; IP</span></li>
+              <li>Go to <span className="font-mono">SMTP &amp; API → API Keys → Generate a new API key</span></li>
+              <li>Paste it below</li>
+            </ol>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="brevo-api-key">
+              Brevo API key {hasExistingKey && <span className="text-xs text-muted-foreground">(saved — leave blank to keep)</span>}
+            </Label>
+            <Input
+              id="brevo-api-key"
+              type="password"
+              placeholder={hasExistingKey ? '••••••••••••••••' : 'xkeysib-...'}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              autoComplete="off"
+              maxLength={255}
+            />
           </div>
 
           <div className="space-y-2">

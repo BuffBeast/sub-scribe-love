@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const FALLBACK_BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_GATEWAY = "https://connector-gateway.lovable.dev/brevo";
 
 const reminderSettingsSchema = z.object({
@@ -35,6 +35,7 @@ async function sendEmail(
   html: string,
   fromName: string,
   fromEmail: string,
+  brevoApiKey: string,
   replyTo?: string | null,
 ) {
   const payload: Record<string, unknown> = {
@@ -51,7 +52,7 @@ async function sendEmail(
     method: "POST",
     headers: {
       "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": BREVO_API_KEY ?? "",
+      "X-Connection-Api-Key": brevoApiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -87,6 +88,7 @@ interface UserSettings {
   app_name: string;
   brevo_sender_email: string | null;
   brevo_sender_name: string | null;
+  brevo_api_key: string | null;
 }
 
 async function processUserReminders(
@@ -187,10 +189,16 @@ async function processUserReminders(
   let replyToEmail: string | null = userSettings.reply_to_email;
   const fromName = userSettings.brevo_sender_name || userSettings.app_name || "Let's Stream";
   const fromEmail = userSettings.brevo_sender_email;
+  const brevoApiKey = userSettings.brevo_api_key || FALLBACK_BREVO_API_KEY;
 
   if (!fromEmail) {
     console.warn(`[User ${userId}] Skipping: no Brevo sender email configured`);
     return { userId, processed: 0, success: 0, failed: 0, skippedDuplicate: 0, results: [{ skipped: 'no_brevo_sender' }] };
+  }
+
+  if (!brevoApiKey) {
+    console.warn(`[User ${userId}] Skipping: no Brevo API key configured`);
+    return { userId, processed: 0, success: 0, failed: 0, skippedDuplicate: 0, results: [{ skipped: 'no_brevo_api_key' }] };
   }
 
   const validatedSettings = reminderSettingsSchema.safeParse(userSettings);
@@ -242,7 +250,7 @@ async function processUserReminders(
     const expiryDateForLog = customer.liveExpiring ? customer.liveDate : customer.vodDate;
 
     try {
-      const result = await sendEmail(customer.email, finalSubject, html, fromName, fromEmail, replyToEmail);
+      const result = await sendEmail(customer.email, finalSubject, html, fromName, fromEmail, brevoApiKey, replyToEmail);
       emailResults.push({
         email: customer.email,
         types: typeLabel,
@@ -304,9 +312,6 @@ serve(async (req: Request): Promise<Response> => {
     if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
       throw new Error("Missing Supabase configuration");
     }
-    if (!BREVO_API_KEY) {
-      throw new Error("Missing BREVO_API_KEY");
-    }
     if (!LOVABLE_API_KEY) {
       throw new Error("Missing LOVABLE_API_KEY");
     }
@@ -361,7 +366,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const { data: settingsList } = await supabase
       .from('app_settings')
-      .select('user_id, reminder_days, reminder_subject, reminder_message, reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
+      .select('user_id, reminder_days, reminder_subject, reminder_message, reply_to_email, app_name, brevo_sender_email, brevo_sender_name, brevo_api_key')
       .in('user_id', userIds);
 
     const allResults: unknown[] = [];
@@ -381,6 +386,7 @@ serve(async (req: Request): Promise<Response> => {
         app_name: settings?.app_name ?? "Let's Stream",
         brevo_sender_email: settings?.brevo_sender_email ?? null,
         brevo_sender_name: settings?.brevo_sender_name ?? null,
+        brevo_api_key: settings?.brevo_api_key ?? null,
       };
 
       const result = await processUserReminders(supabase, userSettings);
