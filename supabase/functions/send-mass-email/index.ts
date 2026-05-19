@@ -97,6 +97,7 @@ async function sendEmail(
   html: string,
   fromName: string,
   fromEmail: string,
+  brevoApiKey: string,
   replyTo?: string | null,
   attachments?: Attachment[]
 ) {
