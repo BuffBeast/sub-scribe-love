@@ -306,7 +306,7 @@ serve(async (req: Request): Promise<Response> => {
       `;
 
       try {
-        const result = await sendEmail(customer.email, sanitizedSubject, html, fromName, fromEmail!, replyToEmail, attachments);
+        const result = await sendEmail(customer.email, sanitizedSubject, html, fromName, fromEmail!, brevoApiKey, replyToEmail, attachments);
         if (!result.ok || result.json.error) {
           const errMsg = result.json.error?.message || result.json.error || 'Send failed';
           emailResults.push({ email: customer.email, success: false, error: errMsg });
