@@ -4,7 +4,7 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const FALLBACK_BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
-const BREVO_GATEWAY = "https://connector-gateway.lovable.dev/brevo";
+const BREVO_GATEWAY = "https://api.brevo.com/v3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -122,9 +122,9 @@ async function sendEmail(
   const response = await fetch(`${BREVO_GATEWAY}/smtp/email`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": brevoApiKey,
+      "api-key": brevoApiKey,
       "Content-Type": "application/json",
+      "Accept": "application/json",
     },
     body: JSON.stringify(payload),
   });

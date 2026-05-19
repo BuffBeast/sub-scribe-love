@@ -66,24 +66,14 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!lovableApiKey) {
-      return new Response(
-        JSON.stringify({ ok: false, error: "LOVABLE_API_KEY is not configured" }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
-      );
-    }
-
-    // Call Brevo /account via the connector gateway
-    const resp = await fetch(
-      "https://connector-gateway.lovable.dev/brevo/account",
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${lovableApiKey}`,
-          "X-Connection-Api-Key": brevoKey,
-        },
+    // Call Brevo /account directly with the user's API key
+    const resp = await fetch("https://api.brevo.com/v3/account", {
+      method: "GET",
+      headers: {
+        "api-key": brevoKey,
+        "Accept": "application/json",
       },
-    );
+    });
 
     const data = await resp.json().catch(() => ({}));
 
