@@ -386,6 +386,7 @@ serve(async (req: Request): Promise<Response> => {
         app_name: settings?.app_name ?? "Let's Stream",
         brevo_sender_email: settings?.brevo_sender_email ?? null,
         brevo_sender_name: settings?.brevo_sender_name ?? null,
+        brevo_api_key: settings?.brevo_api_key ?? null,
       };
 
       const result = await processUserReminders(supabase, userSettings);
