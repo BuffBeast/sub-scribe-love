@@ -189,10 +189,16 @@ async function processUserReminders(
   let replyToEmail: string | null = userSettings.reply_to_email;
   const fromName = userSettings.brevo_sender_name || userSettings.app_name || "Let's Stream";
   const fromEmail = userSettings.brevo_sender_email;
+  const brevoApiKey = userSettings.brevo_api_key || FALLBACK_BREVO_API_KEY;
 
   if (!fromEmail) {
     console.warn(`[User ${userId}] Skipping: no Brevo sender email configured`);
     return { userId, processed: 0, success: 0, failed: 0, skippedDuplicate: 0, results: [{ skipped: 'no_brevo_sender' }] };
+  }
+
+  if (!brevoApiKey) {
+    console.warn(`[User ${userId}] Skipping: no Brevo API key configured`);
+    return { userId, processed: 0, success: 0, failed: 0, skippedDuplicate: 0, results: [{ skipped: 'no_brevo_api_key' }] };
   }
 
   const validatedSettings = reminderSettingsSchema.safeParse(userSettings);
