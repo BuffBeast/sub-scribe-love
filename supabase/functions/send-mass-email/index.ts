@@ -123,7 +123,7 @@ async function sendEmail(
     method: "POST",
     headers: {
       "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": BREVO_API_KEY ?? "",
+      "X-Connection-Api-Key": brevoApiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
