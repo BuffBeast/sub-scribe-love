@@ -366,7 +366,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const { data: settingsList } = await supabase
       .from('app_settings')
-      .select('user_id, reminder_days, reminder_subject, reminder_message, reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
+      .select('user_id, reminder_days, reminder_subject, reminder_message, reply_to_email, app_name, brevo_sender_email, brevo_sender_name, brevo_api_key')
       .in('user_id', userIds);
 
     const allResults: unknown[] = [];
