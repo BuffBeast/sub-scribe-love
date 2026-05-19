@@ -15,10 +15,11 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    const brevoKey = Deno.env.get("BREVO_API_KEY");
+    const fallbackBrevoKey = Deno.env.get("BREVO_API_KEY");
 
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
       throw new Error("Missing Supabase configuration");
     }
 
@@ -43,12 +44,23 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
+    const userId = claims.claims.sub as string;
+
+    // Look up the calling user's Brevo API key
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: settings } = await adminClient
+      .from('app_settings')
+      .select('brevo_api_key')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const brevoKey = (settings as any)?.brevo_api_key || fallbackBrevoKey;
+
     if (!brevoKey) {
       return new Response(
         JSON.stringify({
           ok: false,
-          error:
-            "BREVO_API_KEY is not configured. Please add it in your project secrets.",
+          error: "Brevo API key is not configured. Add your Brevo API key in Email settings first.",
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
       );
