@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactElement } from 'react';
-import { Mail, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Mail, CheckCircle2, XCircle, Loader2, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -138,7 +138,7 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Email Provider (Brevo)</DialogTitle>
           <DialogDescription>
@@ -148,15 +148,46 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
-            <p className="font-medium text-foreground">How to get your Brevo API key</p>
-            <ol className="list-decimal pl-4 space-y-0.5">
-              <li>Sign in at <a href="https://app.brevo.com" target="_blank" rel="noreferrer" className="underline">app.brevo.com</a> (free plan: 300 emails/day)</li>
-              <li>Verify your sender domain under <span className="font-mono">Senders &amp; IP</span></li>
-              <li>Go to <span className="font-mono">SMTP &amp; API → API Keys → Generate a new API key</span></li>
-              <li>Paste it below</li>
-            </ol>
-          </div>
+          <details className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground group">
+            <summary className="flex items-center gap-2 cursor-pointer font-medium text-foreground list-none">
+              <HelpCircle className="h-4 w-4" />
+              <span className="flex-1">Full setup guide (5 minutes)</span>
+              <span className="text-muted-foreground group-open:rotate-180 transition-transform">▾</span>
+            </summary>
+            <div className="mt-3 space-y-3">
+              <div>
+                <p className="font-medium text-foreground">Step 1 — Create your Brevo account</p>
+                <ol className="list-decimal pl-4 space-y-0.5 mt-1">
+                  <li>Go to <a href="https://app.brevo.com" target="_blank" rel="noreferrer" className="underline">app.brevo.com</a> and sign up (free plan: 300 emails/day).</li>
+                  <li>Verify your email when Brevo sends a confirmation.</li>
+                </ol>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Step 2 — Verify your sender email</p>
+                <ol className="list-decimal pl-4 space-y-0.5 mt-1">
+                  <li>In Brevo, open <span className="font-mono">Senders, Domains &amp; Dedicated IPs → Senders</span>.</li>
+                  <li>Click <span className="font-mono">Add a sender</span>, enter your name and the email you'll send from.</li>
+                  <li>Open the confirmation email Brevo sends and click the verification link.</li>
+                  <li>(Recommended) Also verify your domain under the <span className="font-mono">Domains</span> tab for better deliverability.</li>
+                </ol>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Step 3 — Generate an API key</p>
+                <ol className="list-decimal pl-4 space-y-0.5 mt-1">
+                  <li>Go to <span className="font-mono">SMTP &amp; API → API Keys</span>.</li>
+                  <li>Click <span className="font-mono">Generate a new API key</span>, name it (e.g. "My App"), and copy the key (starts with <span className="font-mono">xkeysib-</span>).</li>
+                  <li>Save it somewhere safe — Brevo won't show it again.</li>
+                </ol>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Step 4 — Paste into the fields below</p>
+                <ol className="list-decimal pl-4 space-y-0.5 mt-1">
+                  <li>Fill in <span className="font-medium">Sender name</span>, <span className="font-medium">Sender email</span> (from Step 2), and <span className="font-medium">Brevo API key</span> (from Step 3).</li>
+                  <li>Click <span className="font-medium">Save</span>, then <span className="font-medium">Test connection</span> to confirm.</li>
+                </ol>
+              </div>
+            </div>
+          </details>
 
           <div className="space-y-2">
             <Label htmlFor="brevo-api-key">
