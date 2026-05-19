@@ -35,6 +35,7 @@ async function sendEmail(
   html: string,
   fromName: string,
   fromEmail: string,
+  brevoApiKey: string,
   replyTo?: string | null,
 ) {
   const payload: Record<string, unknown> = {
@@ -51,7 +52,7 @@ async function sendEmail(
     method: "POST",
     headers: {
       "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": BREVO_API_KEY ?? "",
+      "X-Connection-Api-Key": brevoApiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
