@@ -61,14 +61,23 @@ export default defineConfig(({ mode }) => ({
             urlPattern: /\/~oauth\/.*/i,
             handler: "NetworkOnly",
           },
+          // Auth endpoints (sessions, tokens) must NEVER be cached — stale
+          // tokens after a deploy can wedge users in a logged-out / 401 state.
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/v1\/.*/i,
+            handler: "NetworkOnly",
+          },
+          // Other Supabase API calls: short cache to recover offline, but
+          // refresh aggressively so deploys don't serve stale data.
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: "NetworkFirst",
             options: {
               cacheName: "supabase-cache",
+              networkTimeoutSeconds: 5,
               expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24, // 24 hours
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 5, // 5 minutes
               },
               cacheableResponse: {
                 statuses: [0, 200],

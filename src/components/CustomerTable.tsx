@@ -110,6 +110,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null);
 
   // Separate name column from others for sticky behavior
@@ -147,6 +148,8 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   };
 
   const handleBulkDelete = async () => {
+    if (isBulkDeleting) return; // guard against rapid double-clicks
+    setIsBulkDeleting(true);
     const count = selectedIds.size;
     const ids = Array.from(selectedIds);
     try {
@@ -157,8 +160,10 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
     } catch (e) {
       if (import.meta.env.DEV) console.error('Failed to delete customers:', e);
       toast({ title: 'Failed to delete some customers', variant: 'destructive' });
+    } finally {
+      setSelectedIds(new Set());
+      setIsBulkDeleting(false);
     }
-    setSelectedIds(new Set());
   };
 
   const getHeaderLabel = (col: UnifiedColumn) => {
@@ -363,8 +368,8 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
-          <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={deleteCustomer.isPending}>
-            <Trash2 className="h-4 w-4 mr-2" />Delete Selected
+          <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={isBulkDeleting || deleteCustomer.isPending}>
+            <Trash2 className="h-4 w-4 mr-2" />{isBulkDeleting ? 'Deleting…' : 'Delete Selected'}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear Selection</Button>
         </div>

@@ -288,70 +288,78 @@ serve(async (req: Request): Promise<Response> => {
       error_message: string | null;
     }> = [];
 
-    for (const customer of customers) {
-      if (!customer.email) continue;
+    // Process in parallel chunks to stay under the 150s edge function timeout
+    // (sequential 1000 × ~250ms ≈ 250s would time out).
+    // 20 in parallel × ~50 chunks (1000 recipients) × ~600ms per chunk ≈ 30s.
+    const CHUNK_SIZE = 20;
+    const INTER_CHUNK_DELAY_MS = 500;
 
-      // Escape each line of the message first, then replace placeholders with pre-escaped values
-      const escapedName = escapeHtml(customer.name);
-      const escapedPlan = escapeHtml(customer.subscription_plan || 'N/A');
-      
-      // Build HTML email: escape each line individually, then substitute placeholders
-      const html = `
+    const buildHtml = (msg: string, escapedName: string, escapedPlan: string) => `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          ${message.split('\n').map(line => {
+          ${msg.split('\n').map(line => {
             const escapedLine = escapeHtml(line) || '&nbsp;';
             return `<p style="margin: 0 0 10px 0;">${escapedLine.replace(/\{name\}/g, escapedName).replace(/\{plan\}/g, escapedPlan)}</p>`;
           }).join('')}
         </div>
       `;
 
-      try {
-        const result = await sendEmail(customer.email, sanitizedSubject, html, fromName, fromEmail!, brevoApiKey, replyToEmail, attachments);
-        if (!result.ok || result.json.error) {
-          const errMsg = result.json.error?.message || result.json.error || 'Send failed';
-          emailResults.push({ email: customer.email, success: false, error: errMsg });
-          failCount++;
-          historyEntries.push({
-            user_id: userId,
-            customer_id: customer.id,
-            customer_name: customer.name,
-            customer_email: customer.email,
-            reminder_type: 'mass_email',
-            plan_description: sanitizedSubject,
-            status: 'failed',
-            error_message: typeof errMsg === 'string' ? errMsg : String(errMsg),
-          });
-        } else {
-          emailResults.push({ email: customer.email, success: true });
+    const validCustomers = customers.filter(c => !!c.email);
+
+    for (let i = 0; i < validCustomers.length; i += CHUNK_SIZE) {
+      const chunk = validCustomers.slice(i, i + CHUNK_SIZE);
+
+      const chunkResults = await Promise.all(chunk.map(async (customer) => {
+        const escapedName = escapeHtml(customer.name);
+        const escapedPlan = escapeHtml(customer.subscription_plan || 'N/A');
+        const html = buildHtml(message, escapedName, escapedPlan);
+
+        try {
+          const result = await sendEmail(customer.email!, sanitizedSubject, html, fromName, fromEmail!, brevoApiKey, replyToEmail, attachments);
+          if (!result.ok || result.json.error) {
+            const errMsg = result.json.error?.message || result.json.error || 'Send failed';
+            return { customer, ok: false, errMsg: typeof errMsg === 'string' ? errMsg : String(errMsg) };
+          }
+          return { customer, ok: true as const };
+        } catch (e) {
+          return { customer, ok: false, errMsg: 'Send error' };
+        }
+      }));
+
+      for (const r of chunkResults) {
+        if (r.ok) {
+          emailResults.push({ email: r.customer.email!, success: true });
           successCount++;
           historyEntries.push({
             user_id: userId,
-            customer_id: customer.id,
-            customer_name: customer.name,
-            customer_email: customer.email,
+            customer_id: r.customer.id,
+            customer_name: r.customer.name,
+            customer_email: r.customer.email!,
             reminder_type: 'mass_email',
             plan_description: sanitizedSubject,
             status: 'sent',
             error_message: null,
           });
+        } else {
+          emailResults.push({ email: r.customer.email!, success: false, error: r.errMsg });
+          failCount++;
+          historyEntries.push({
+            user_id: userId,
+            customer_id: r.customer.id,
+            customer_name: r.customer.name,
+            customer_email: r.customer.email!,
+            reminder_type: 'mass_email',
+            plan_description: sanitizedSubject,
+            status: 'failed',
+            error_message: r.errMsg,
+          });
         }
-      } catch (e) {
-        emailResults.push({ email: customer.email, success: false, error: String(e) });
-        failCount++;
-        historyEntries.push({
-          user_id: userId,
-          customer_id: customer.id,
-          customer_name: customer.name,
-          customer_email: customer.email,
-          reminder_type: 'mass_email',
-          plan_description: sanitizedSubject,
-          status: 'failed',
-          error_message: 'Send error',
-        });
       }
 
-      // Small delay to stay well under Brevo's transactional send limits (free tier: 300/day; paid tiers throttle per-second)
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Brief pause between chunks to stay under Brevo's per-second throttle
+      // (free tier: 300/day; paid tiers have per-second limits).
+      if (i + CHUNK_SIZE < validCustomers.length) {
+        await new Promise(resolve => setTimeout(resolve, INTER_CHUNK_DELAY_MS));
+      }
     }
 
     // Batch insert all history entries
