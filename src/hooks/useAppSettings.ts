@@ -21,6 +21,7 @@ export interface AppSettings {
 export function useAppSettings() {
   return useQuery({
     queryKey: ['app-settings'],
+    staleTime: 60_000,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
@@ -46,11 +47,16 @@ export function useAppSettings() {
         data = legacyData;
       }
 
+      // Signed-URL lifetime: 6 days. Kept below the 7-day max so a cached
+      // app-settings query (staleTime 60s, gcTime default) never serves an
+      // expired URL.
+      const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 6;
+
       // If logo_url is a storage path (not a full URL), generate a fresh signed URL
       if (data?.logo_url && !data.logo_url.startsWith('http')) {
         const { data: signedUrlData } = await supabase.storage
           .from('logos')
-          .createSignedUrl(data.logo_url, 60 * 60 * 24 * 7); // 7 days
+          .createSignedUrl(data.logo_url, SIGNED_URL_TTL_SECONDS);
         if (signedUrlData?.signedUrl) {
           data = { ...data, logo_url: signedUrlData.signedUrl };
         }
@@ -61,7 +67,7 @@ export function useAppSettings() {
           const filePath = decodeURIComponent(match[1]);
           const { data: signedUrlData } = await supabase.storage
             .from('logos')
-            .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+            .createSignedUrl(filePath, SIGNED_URL_TTL_SECONDS);
           if (signedUrlData?.signedUrl) {
             data = { ...data, logo_url: signedUrlData.signedUrl };
           }
