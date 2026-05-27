@@ -13,6 +13,10 @@ export interface AppSettings {
   theme_color: string | null;
   reminder_days: number;
   credit_warning_threshold: number | null;
+  email_provider: string | null;
+  brevo_api_key: string | null;
+  brevo_sender_email: string | null;
+  brevo_sender_name: string | null;
   created_at: string;
   updated_at: string;
   user_id: string | null;
