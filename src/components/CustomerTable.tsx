@@ -368,8 +368,8 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
-          <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={deleteCustomer.isPending}>
-            <Trash2 className="h-4 w-4 mr-2" />Delete Selected
+          <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={isBulkDeleting || deleteCustomer.isPending}>
+            <Trash2 className="h-4 w-4 mr-2" />{isBulkDeleting ? 'Deleting…' : 'Delete Selected'}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear Selection</Button>
         </div>
