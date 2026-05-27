@@ -97,9 +97,13 @@ export function useCustomers() {
     }
 
     if (updates.length > 0) {
-      Promise.all(updates).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['customers'] });
-      });
+      Promise.all(updates)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['customers'] });
+        })
+        .catch((err) => {
+          if (import.meta.env.DEV) console.error('Auto-expire/reactivate failed:', err);
+        });
     }
   }, [query.data, queryClient]);
 
