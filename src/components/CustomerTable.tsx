@@ -110,6 +110,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null);
 
   // Separate name column from others for sticky behavior
