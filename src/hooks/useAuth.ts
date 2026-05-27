@@ -28,7 +28,11 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      if (import.meta.env.DEV) console.error('Sign out failed:', error);
+      throw error;
+    }
   };
 
   return { user, session, loading, signOut };
