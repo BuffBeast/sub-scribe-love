@@ -11,10 +11,10 @@ export function usePWA() {
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(registration) {
-      console.log('SW Registered:', registration);
+      if (import.meta.env.DEV) console.log('SW Registered:', registration);
     },
     onRegisterError(error) {
-      console.log('SW Registration Error:', error);
+      if (import.meta.env.DEV) console.log('SW Registration Error:', error);
     },
   });
 

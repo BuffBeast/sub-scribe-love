@@ -86,9 +86,10 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
           .eq('id', existing.id);
         if (error) throw error;
       } else {
+        // Use the sender name as the initial app_name; BrandingSettingsDialog can override later.
         const { error } = await supabase
           .from('app_settings')
-          .insert({ ...updates, app_name: 'My App' } as any);
+          .insert({ ...updates, app_name: senderName.trim() } as any);
         if (error) throw error;
       }
 

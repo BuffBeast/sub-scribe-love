@@ -350,7 +350,7 @@ serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Small delay to avoid rate limiting (Resend allows 10 emails/second on free tier)
+      // Small delay to stay well under Brevo's transactional send limits (free tier: 300/day; paid tiers throttle per-second)
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 

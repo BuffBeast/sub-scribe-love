@@ -155,7 +155,7 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast({ title: `Deleted ${count} customer${count > 1 ? 's' : ''}` });
     } catch (e) {
-      console.error('Failed to delete customers:', e);
+      if (import.meta.env.DEV) console.error('Failed to delete customers:', e);
       toast({ title: 'Failed to delete some customers', variant: 'destructive' });
     }
     setSelectedIds(new Set());
