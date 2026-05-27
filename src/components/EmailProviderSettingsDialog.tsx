@@ -34,10 +34,10 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
 
   useEffect(() => {
     if (settings && open) {
-      setSenderEmail((settings as any).brevo_sender_email || '');
-      setSenderName((settings as any).brevo_sender_name || '');
+      setSenderEmail(settings.brevo_sender_email || '');
+      setSenderName(settings.brevo_sender_name || '');
       setApiKey('');
-      setHasExistingKey(!!(settings as any).brevo_api_key);
+      setHasExistingKey(!!settings.brevo_api_key);
       setTestResult(null);
     }
   }, [settings, open]);
