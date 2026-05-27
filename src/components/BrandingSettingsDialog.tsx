@@ -89,6 +89,11 @@ export function BrandingSettingsDialog() {
       toast.error('Email message is required');
       return;
     }
+    // M6: validate reply-to email format if provided
+    if (replyToEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail.trim())) {
+      toast.error('Reply-to must be a valid email address');
+      return;
+    }
 
     let logoUrl = settings?.logo_url ?? null;
 

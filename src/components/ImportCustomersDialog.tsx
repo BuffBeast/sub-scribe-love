@@ -486,11 +486,12 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
     setIsLoading(true);
     let created = 0;
     let updated = 0;
-    
+    const failures: { name: string; reason: string }[] = [];
+
     for (const customer of validCustomers) {
       try {
         const existing = findExistingCustomer(customer);
-        
+
         if (existing) {
           await updateCustomer.mutateAsync({ id: existing.id, ...customer });
           updated++;
@@ -499,17 +500,27 @@ export function ImportCustomersDialog({ onOpenChange }: ImportCustomersDialogPro
           created++;
         }
       } catch (e) {
-        console.error('Failed to import customer:', e);
+        const reason = e instanceof Error ? e.message : 'Unknown error';
+        failures.push({ name: customer.name || customer.email || 'Unnamed row', reason });
+        if (import.meta.env.DEV) console.error('Failed to import customer:', e);
       }
     }
 
     setIsLoading(false);
-    
-    toast({
-      title: 'Import Complete',
-      description: `Created ${created} new, updated ${updated} existing customers`,
-    });
-    
+
+    const baseMsg = `Created ${created} new, updated ${updated} existing customers`;
+    if (failures.length === 0) {
+      toast({ title: 'Import Complete', description: baseMsg });
+    } else {
+      const preview = failures.slice(0, 3).map(f => `• ${f.name}: ${f.reason}`).join('\n');
+      const more = failures.length > 3 ? `\n…and ${failures.length - 3} more` : '';
+      toast({
+        title: `Import finished with ${failures.length} error${failures.length > 1 ? 's' : ''}`,
+        description: `${baseMsg}\n\n${preview}${more}`,
+        variant: 'destructive',
+      });
+    }
+
     setOpen(false);
     resetState();
   };

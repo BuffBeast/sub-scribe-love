@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Mail, Send, Users, Loader2, Check, X, Paperclip, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,31 +88,33 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
 
   const hasActiveFilters = activeServices.size > 0 || activeStatuses.size > 0 || trialFilterActive;
 
-  // Apply filters whenever they change
-  const applyFilters = (services: Set<string>, statuses: Set<string>, trial: boolean) => {
-    const noFilters = services.size === 0 && statuses.size === 0 && !trial;
+  // M4 fix: derive selection from filter state in a single effect, eliminating stale closures
+  // in the individual toggle handlers. Runs whenever any filter or the customer list changes.
+  useEffect(() => {
+    if (!open) return;
+    const noFilters = activeServices.size === 0 && activeStatuses.size === 0 && !trialFilterActive;
     if (noFilters) {
       setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
       return;
     }
     const ids = customersWithEmail.filter(c => {
-      const matchService = services.size === 0 || (c.service && services.has(c.service));
-      const matchStatus = statuses.size === 0 || (c.subscription_status && statuses.has(c.subscription_status));
-      const matchTrial = !trial || c.has_trial || c.has_live_trial || c.has_vod_trial;
+      const matchService = activeServices.size === 0 || (c.service && activeServices.has(c.service));
+      const matchStatus = activeStatuses.size === 0 || (c.subscription_status && activeStatuses.has(c.subscription_status));
+      const matchTrial = !trialFilterActive || c.has_trial || c.has_live_trial || c.has_vod_trial;
       return matchService && matchStatus && matchTrial;
     }).map(c => c.id);
     setSelectedCustomerIds(new Set(ids));
-  };
+  }, [open, activeServices, activeStatuses, trialFilterActive, customersWithEmail]);
 
-  // Initialize selection when dialog opens
+  // Initialize state when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (isOpen) {
-      setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
       setAttachments([]);
       setActiveServices(new Set());
       setActiveStatuses(new Set());
       setTrialFilterActive(false);
+      // selectedCustomerIds is initialized by the effect above
     }
   };
 
@@ -120,7 +122,6 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
     setActiveServices(prev => {
       const next = new Set(prev);
       if (next.has(service)) next.delete(service); else next.add(service);
-      applyFilters(next, activeStatuses, trialFilterActive);
       return next;
     });
   };
@@ -129,22 +130,18 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
     setActiveStatuses(prev => {
       const next = new Set(prev);
       if (next.has(status)) next.delete(status); else next.add(status);
-      applyFilters(activeServices, next, trialFilterActive);
       return next;
     });
   };
 
   const toggleTrialFilter = () => {
-    const next = !trialFilterActive;
-    setTrialFilterActive(next);
-    applyFilters(activeServices, activeStatuses, next);
+    setTrialFilterActive(prev => !prev);
   };
 
   const clearAllFilters = () => {
     setActiveServices(new Set());
     setActiveStatuses(new Set());
     setTrialFilterActive(false);
-    setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
