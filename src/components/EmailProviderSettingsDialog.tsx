@@ -59,15 +59,14 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
         return;
       }
 
-      const updates: Record<string, unknown> = {
+      const baseUpdates = {
         email_provider: 'brevo',
         brevo_sender_email: senderEmail.trim(),
         brevo_sender_name: senderName.trim(),
         user_id: user.id,
+        ...(apiKey.trim() ? { brevo_api_key: apiKey.trim() } : {}),
       };
-      if (apiKey.trim()) {
-        updates.brevo_api_key = apiKey.trim();
-      } else if (!hasExistingKey) {
+      if (!apiKey.trim() && !hasExistingKey) {
         toast.error('Please enter your Brevo API key');
         setSaving(false);
         return;
@@ -82,14 +81,13 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
       if (existing) {
         const { error } = await supabase
           .from('app_settings')
-          .update(updates)
+          .update(baseUpdates)
           .eq('id', existing.id);
         if (error) throw error;
       } else {
-        // Use the sender name as the initial app_name; BrandingSettingsDialog can override later.
         const { error } = await supabase
           .from('app_settings')
-          .insert({ ...updates, app_name: senderName.trim() });
+          .insert({ ...baseUpdates, app_name: senderName.trim() });
         if (error) throw error;
       }
 
