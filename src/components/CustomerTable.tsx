@@ -148,6 +148,8 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
   };
 
   const handleBulkDelete = async () => {
+    if (isBulkDeleting) return; // guard against rapid double-clicks
+    setIsBulkDeleting(true);
     const count = selectedIds.size;
     const ids = Array.from(selectedIds);
     try {
@@ -158,8 +160,10 @@ export function CustomerTable({ customers, onCustomerClick }: CustomerTableProps
     } catch (e) {
       if (import.meta.env.DEV) console.error('Failed to delete customers:', e);
       toast({ title: 'Failed to delete some customers', variant: 'destructive' });
+    } finally {
+      setSelectedIds(new Set());
+      setIsBulkDeleting(false);
     }
-    setSelectedIds(new Set());
   };
 
   const getHeaderLabel = (col: UnifiedColumn) => {
