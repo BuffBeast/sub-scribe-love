@@ -45,6 +45,7 @@ export function useCustomers() {
       if (error) throw error;
       return data as Customer[];
     },
+    staleTime: 30_000,
   });
 
   // Auto-mark customers as expired when all their subscription end dates have passed
