@@ -247,7 +247,14 @@ serve(async (req: Request): Promise<Response> => {
     let fromEmail: string | null = null;
     const { data: settings } = await supabase
       .from('app_settings')
-      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name, brevo_api_key')
+      .select('reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    // Brevo API key lives in a separate, non-client-readable table
+    const { data: creds } = await supabase
+      .from('user_email_credentials')
+      .select('brevo_api_key')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -255,7 +262,7 @@ serve(async (req: Request): Promise<Response> => {
     if (settings?.brevo_sender_name) fromName = settings.brevo_sender_name;
     else if (settings?.app_name) fromName = settings.app_name;
     if (settings?.brevo_sender_email) fromEmail = settings.brevo_sender_email;
-    const brevoApiKey = settings?.brevo_api_key || FALLBACK_BREVO_API_KEY;
+    const brevoApiKey = creds?.brevo_api_key || FALLBACK_BREVO_API_KEY;
 
     if (!brevoApiKey) {
       return new Response(
