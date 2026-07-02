@@ -46,15 +46,15 @@ serve(async (req: Request): Promise<Response> => {
 
     const userId = claims.claims.sub as string;
 
-    // Look up the calling user's Brevo API key
+    // Look up the calling user's Brevo API key from the private credentials table
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: settings } = await adminClient
-      .from('app_settings')
+    const { data: creds } = await adminClient
+      .from('user_email_credentials')
       .select('brevo_api_key')
       .eq('user_id', userId)
       .maybeSingle();
 
-    const brevoKey = (settings as any)?.brevo_api_key || fallbackBrevoKey;
+    const brevoKey = (creds as any)?.brevo_api_key || fallbackBrevoKey;
 
     if (!brevoKey) {
       return new Response(

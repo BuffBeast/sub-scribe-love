@@ -14,7 +14,9 @@ export interface AppSettings {
   reminder_days: number;
   credit_warning_threshold: number | null;
   email_provider: string | null;
-  brevo_api_key: string | null;
+  // brevo_api_key intentionally NOT included — stored in a separate,
+  // non-client-readable table (user_email_credentials) for security.
+
   brevo_sender_email: string | null;
   brevo_sender_name: string | null;
   created_at: string;

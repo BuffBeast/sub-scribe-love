@@ -71,7 +71,6 @@ export type Database = {
       app_settings: {
         Row: {
           app_name: string
-          brevo_api_key: string | null
           brevo_sender_email: string | null
           brevo_sender_name: string | null
           created_at: string
@@ -90,7 +89,6 @@ export type Database = {
         }
         Insert: {
           app_name?: string
-          brevo_api_key?: string | null
           brevo_sender_email?: string | null
           brevo_sender_name?: string | null
           created_at?: string
@@ -109,7 +107,6 @@ export type Database = {
         }
         Update: {
           app_name?: string
-          brevo_api_key?: string | null
           brevo_sender_email?: string | null
           brevo_sender_name?: string | null
           created_at?: string
@@ -447,12 +444,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_email_credentials: {
+        Row: {
+          brevo_api_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brevo_api_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brevo_api_key?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_brevo_api_key: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

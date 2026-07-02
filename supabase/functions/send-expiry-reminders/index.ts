@@ -366,7 +366,13 @@ serve(async (req: Request): Promise<Response> => {
 
     const { data: settingsList } = await supabase
       .from('app_settings')
-      .select('user_id, reminder_days, reminder_subject, reminder_message, reply_to_email, app_name, brevo_sender_email, brevo_sender_name, brevo_api_key')
+      .select('user_id, reminder_days, reminder_subject, reminder_message, reply_to_email, app_name, brevo_sender_email, brevo_sender_name')
+      .in('user_id', userIds);
+
+    // Brevo API keys live in a separate, non-client-readable table
+    const { data: credsList } = await supabase
+      .from('user_email_credentials')
+      .select('user_id, brevo_api_key')
       .in('user_id', userIds);
 
     const allResults: unknown[] = [];
@@ -377,6 +383,7 @@ serve(async (req: Request): Promise<Response> => {
 
     for (const userId of userIds) {
       const settings = settingsList?.find(s => s.user_id === userId);
+      const creds = credsList?.find(c => c.user_id === userId);
       const userSettings: UserSettings = {
         user_id: userId,
         reminder_days: settings?.reminder_days ?? 30,
@@ -386,7 +393,7 @@ serve(async (req: Request): Promise<Response> => {
         app_name: settings?.app_name ?? "Let's Stream",
         brevo_sender_email: settings?.brevo_sender_email ?? null,
         brevo_sender_name: settings?.brevo_sender_name ?? null,
-        brevo_api_key: settings?.brevo_api_key ?? null,
+        brevo_api_key: creds?.brevo_api_key ?? null,
       };
 
       const result = await processUserReminders(supabase, userSettings);
