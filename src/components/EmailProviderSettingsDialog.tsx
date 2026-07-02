@@ -68,7 +68,6 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
         brevo_sender_email: senderEmail.trim(),
         brevo_sender_name: senderName.trim(),
         user_id: user.id,
-        ...(apiKey.trim() ? { brevo_api_key: apiKey.trim() } : {}),
       };
       if (!apiKey.trim() && !hasExistingKey) {
         toast.error('Please enter your Brevo API key');
@@ -93,6 +92,18 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
           .from('app_settings')
           .insert({ ...baseUpdates, app_name: senderName.trim() });
         if (error) throw error;
+      }
+
+      // Save the API key to the private credentials table (only when the user
+      // typed a new key — leaving it blank keeps the existing stored value).
+      if (apiKey.trim()) {
+        const { error: credErr } = await supabase
+          .from('user_email_credentials')
+          .upsert(
+            { user_id: user.id, brevo_api_key: apiKey.trim(), updated_at: new Date().toISOString() },
+            { onConflict: 'user_id' },
+          );
+        if (credErr) throw credErr;
       }
 
       await queryClient.invalidateQueries({ queryKey: ['app-settings'] });
