@@ -88,10 +88,19 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
 
   const hasActiveFilters = activeServices.size > 0 || activeStatuses.size > 0 || trialFilterActive;
 
-  // M4 fix: derive selection from filter state in a single effect, eliminating stale closures
-  // in the individual toggle handlers. Runs whenever any filter or the customer list changes.
+  // Recompute selection from filters ONLY when the user changes filters or opens the dialog.
+  // Background customer refetches must NOT overwrite manual selections.
+  const filterSig = `${Array.from(activeServices).sort().join(',')}|${Array.from(activeStatuses).sort().join(',')}|${trialFilterActive}`;
+  const lastAppliedFilterSig = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      lastAppliedFilterSig.current = null;
+      return;
+    }
+    if (lastAppliedFilterSig.current === filterSig) return;
+    lastAppliedFilterSig.current = filterSig;
+
     const noFilters = activeServices.size === 0 && activeStatuses.size === 0 && !trialFilterActive;
     if (noFilters) {
       setSelectedCustomerIds(new Set(customersWithEmail.map(c => c.id)));
@@ -104,7 +113,23 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
       return matchService && matchStatus && matchTrial;
     }).map(c => c.id);
     setSelectedCustomerIds(new Set(ids));
-  }, [open, activeServices, activeStatuses, trialFilterActive, customersWithEmail]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, filterSig]);
+
+  // On customer list refetch, prune selected IDs that no longer exist. Never re-add.
+  useEffect(() => {
+    if (!open) return;
+    setSelectedCustomerIds(prev => {
+      const valid = new Set(customersWithEmail.map(c => c.id));
+      const next = new Set<string>();
+      let changed = false;
+      prev.forEach(id => {
+        if (valid.has(id)) next.add(id);
+        else changed = true;
+      });
+      return changed ? next : prev;
+    });
+  }, [open, customersWithEmail]);
 
   // Initialize state when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
@@ -114,7 +139,7 @@ export function MassEmailDialog({ customers }: MassEmailDialogProps) {
       setActiveServices(new Set());
       setActiveStatuses(new Set());
       setTrialFilterActive(false);
-      // selectedCustomerIds is initialized by the effect above
+      // selectedCustomerIds initialized by filter effect above
     }
   };
 
