@@ -37,8 +37,12 @@ export function EmailProviderSettingsDialog({ trigger }: { trigger?: ReactElemen
       setSenderEmail(settings.brevo_sender_email || '');
       setSenderName(settings.brevo_sender_name || '');
       setApiKey('');
-      setHasExistingKey(!!settings.brevo_api_key);
       setTestResult(null);
+      // Ask the DB (via SECURITY DEFINER RPC) whether a key is on file —
+      // the key value itself is never sent to the client.
+      supabase.rpc('has_brevo_api_key').then(({ data }) => {
+        setHasExistingKey(!!data);
+      });
     }
   }, [settings, open]);
 
