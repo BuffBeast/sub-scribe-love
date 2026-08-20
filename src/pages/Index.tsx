@@ -30,6 +30,7 @@ import { MassEmailDialog } from '@/components/MassEmailDialog';
 import { StockTracker } from '@/components/StockTracker';
 import { CreditTracker } from '@/components/CreditTracker';
 import { ExpiringBanner } from '@/components/ExpiringBanner';
+import { EmailSetupBanner } from '@/components/EmailSetupBanner';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
@@ -234,6 +235,9 @@ const Index = () => {
             {/* Expiring Banner */}
             <ExpiringBanner customers={customers} onFilterExpiring={() => setStatusFilter('expiring')} />
 
+            {/* Email Setup Banner */}
+            <EmailSetupBanner />
+
             {/* Stock Tracker */}
             <StockTracker />
 
@@ -376,6 +380,11 @@ const Index = () => {
         {/* Expiring Banner */}
         <div className="mb-6">
           <ExpiringBanner customers={customers} onFilterExpiring={() => setStatusFilter('expiring')} />
+        </div>
+
+        {/* Email Setup Banner */}
+        <div className="mb-6">
+          <EmailSetupBanner />
         </div>
 
         {/* Metrics */}
