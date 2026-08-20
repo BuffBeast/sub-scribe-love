@@ -30,6 +30,7 @@ import { MassEmailDialog } from '@/components/MassEmailDialog';
 import { StockTracker } from '@/components/StockTracker';
 import { CreditTracker } from '@/components/CreditTracker';
 import { ExpiringBanner } from '@/components/ExpiringBanner';
+import { EmailSetupBanner } from '@/components/EmailSetupBanner';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import letsStreamLogo from '@/assets/lets-stream-logo.png';
