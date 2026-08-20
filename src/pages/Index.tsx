@@ -235,6 +235,9 @@ const Index = () => {
             {/* Expiring Banner */}
             <ExpiringBanner customers={customers} onFilterExpiring={() => setStatusFilter('expiring')} />
 
+            {/* Email Setup Banner */}
+            <EmailSetupBanner />
+
             {/* Stock Tracker */}
             <StockTracker />
 
@@ -377,6 +380,11 @@ const Index = () => {
         {/* Expiring Banner */}
         <div className="mb-6">
           <ExpiringBanner customers={customers} onFilterExpiring={() => setStatusFilter('expiring')} />
+        </div>
+
+        {/* Email Setup Banner */}
+        <div className="mb-6">
+          <EmailSetupBanner />
         </div>
 
         {/* Metrics */}
